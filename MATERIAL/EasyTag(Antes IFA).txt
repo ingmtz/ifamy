@@ -1,0 +1,68 @@
+*** Propuesta para rentar IFA: **** Enero de 2021 - Jorge Ramirez lo pasó a un posible cliente:
+$7,000 por servicio.
+- Uso y alojamiento del sistema y aplicación Android. por hasta 7 días.
+- 3 horas de capacitación y asistencia en inicializar el sistema. Presencial y/o remota dentro de la ciudad.
+- Hasta 3 horas de soporte via llamada/mensaje durante el inventario.
+- Límites: 50,000 Tags, 15,000 números de parte, 5,000 ubicaciones, 200 usuarios
+- Ajustes y/o adaptaciones, se cotizan con costo extra preferencial.
+===========================>
+
+Descripción:
+Easy inventory es un sistema web y una aplicación Android para la realización de inventarios físicos.
+
+Características principales:
+- Sistema web y aplicación Android para rápido conteo.
+	La aplicación Android puede usarse sin internet, con hand held o un teléfono celular.
+- Fácil de usar, en 5 sencillos pasos puedes comenzar a registrar conteos.
+- Reportes en tiempo real del avance y variación de los conteos.
+- Exporta todos los datos resultantes a Excel.
+
+
+
+Texto del anuncio:
+⭐ ¡ Demostración gratis !
+⭐ Termina tus inventarios más rápido ⚡
+⭐ !Aplicación Android que no necesita internet!
+⭐ Escanea con Handheld o celulares.
+⭐ Variedad de reportes.
+⭐ Exporta todos los datos a Excel.
+
+
+
+
+
+El objetivo es crear un servicio de renta que permita al usuario sentirse cómodo con el monto a pagar, además de ser flexible.
+
+La expansión del servicio y su crecimiento en funciones se dará mediante el sistema de referidos y recompensas.
+===============================>
+¿Que le falta para comercializarse?
+
+- Importante que lo usen en CVG para testearlo.
+- Ordenar el proceso a seguir para un inventario exitoso.
+	* Validaciones para evitar errores o problemas.
+- Ordenar la estructura y nombres de almacen. En lo posible renombrar los niveles.
+- Completar la funcionalidad de los prefijos.
+- Documentación y ayuda.
+- Impresión de tags. Ofrecer uno o dos tamaños y una tabla con todos los datos disponibles para exportar en caso de que se requiera impresión personalizada.
+- En la restauración de BD, se eliminan los 0's de los tags.
+- Ajustar la app para uso por locación y demás ajustes que se hicieron en la app.
+- Al iniciar sesión, cerrar si está usando en otro lugar.
+===========================>
+
+¿Cuánto cobrar? -- Revisar en internet y opinión de Paco.
+
+Por usuarios/tiempo, por ejemplo:
+
+Plan Demo: Gratis
+- 1 usuario por tiempo ilimitado.
+- Todas las funciones habilitadas.
+- Hasta 3 respaldos de bases de datos.
+
+Plan Inicio: $5,000 MXN
+- Hasta 5 usuarios por mes
+
+Cómo comercializar?
+
+- Buen sistema de referidos y recompensas.
+	* Proponer ajustes o nuevos módulos. Si se aceptan se dará saldo a favor.
+	* Al referir

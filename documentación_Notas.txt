@@ -1,0 +1,92 @@
+Proceso para inventario en IFA:
+
+- Importar archivos:
+	* Perpetuo.- Posible importar en cuaquier momento.
+	* Locaciones. ¿Es posible reimportar en cualquier momento?
+	* Item master. Posible en cualquier momento.
+- Creación de tags asociados a WH.
+- Impresión y colocación de tags.
+- Conteo
+- Captura de tags en sistema
+
+
+Por hacer:
+- Configurar los prefijos de tag e item
+- Trasladar esto a la app.
+
+- Los campos que atlantic agregó. Ver posibilidad de ponerlos customizables
+Estructura de Locaciones soportada: 4 niveles
+Planta => Area => WH => Location
+
+
+Futuro:=============================>
+- Renombrar las etiquetas de los 4 niveles de 
+
+Publicar con un costo de $50 MXN
+
+
+
+Descripción para Mercado Libre ===============================================================>
+Se te brindará acceso a un DEMO completo para que explores las funcionalidades.
+**** Descripción del sistema: ******
+
+Easy Inventory es un sistema para la realización y análisis de inventarios físicos, consta de una aplicación para dispositivos Android en la que podrán capturar los conteos (incluso sin necesitar internet) y una aplicación web donde podrás monitorear el progreso en tiempo real.
+
+El sistema web cuenta con las siguientes funciones:
+
+* Importación de archivos. Mediante archivos de Excel preparas el sistema con la información de ubicaciones, items y cantidades de inventario.
+* Gestión de Marbetes (Tags). Permite crear los marbetes a utilizar, imprimirlos y capturarlos por rango.
+* Módulo de auditoría. Permite la asignación de tags para ser recontados y validar su veracidad.
+* Módulo de captura. Además de registrar conteos mediante la aplicación Android, también es posible hacerlo desde el sistema web.
+
+** Reportes **
+* Reporte total de captura. Visualizar y descargar toda la captura realizada en el inventario.
+* Reporte de progreso. Visualiza en tiempo real el avance del conteo por cada área.
+* Despliegue de marbetes auditables y su resultado.
+* Reporte de variación de cada Item (Producto). En cantidad y dinero.
+* Cantidad de marbetes contados por área/producto.
+* Cantidad de marbetes contados por área/usuario.
+* Todos los reportes son exportables a Excel.
+
+* Módulo para gestión de base de datos. Posibilidad de hacer respaldos, puntos de control, limpieza, nuevo inventario.
+* Sistema con textos en inglés y español.
+* Impresión de etiquetas de productos.
+* Gestión de usuarios. Crea los usuarios que tendrán acceso al sistema y los conteos con diferentes niveles de permisos.
+* Módulo de escaners. Complemento para el registro de asignación de dispositivos a las personas que contarán.
+
+La aplicación Android cuenta con las siguientes funciones:
+
+* Posibilidad de funcionar con internet intermitente o sin el.
+* Acceso mediante usuario/contraseña.
+* Módulo de captura. Escaneo de marbete, producto, ubicación, cantidad.
+* Posibilidad de Editar o corregir conteo previo de marbete mediante clave especial de supervisor.
+* Módulo para auditoría de marbetes.
+* Se puede usar escaner con Android o celulares (Función de escaneo con cámara integrada)
+
+====================>
+* Si necesita algún ajuste o adecuación a su proceso se puede analizar y realizar.
+* Usuarios y dispositivos ilimitados.
+* Hasta 100,000 marbetes / ubicaciones / Productos. Este límite es para asegurar un desempeño ideal de los recursos del servidor, pero si requiere aumentar los límites con gusto lo tratamos.
+* Soporte para dudas o aclaraciones.
+
+Puedes ver las imágenes y el video para ver el funcionamiento.
+
+Después de realizar la compra, te enviaremos mensaje y correo con dirección, usuario y contraseña de acceso.
+
+
+*** PREGUNTAS FRECUENTES ***
+
+¿Se puede personalizar el logo y nombre del sistema?
+	Si, nos proporcionas los datos y con gusto lo cambiamos.
+¿Cuál es el esquema de pago?
+	El costo de esta publicación cubre un DEMO para que explores las funcionalidades y establecer contacto.
+	El costo de la licencia de uso mensual es de: $1,000 MXN.
+¿Que incluye el pago?
+	El pago de $50 de esta publicación incluye acceso a un demo por un día con fines de prueba.
+	El pago de la licencia mensual, incluye alojamiento, respaldo y soporte técnico.
+Si requiero ajustes, nuevos reportes o algún agregado, ¿Tiene costo?
+	Si, de acuerdo a su requerimiento le podemos cotizar.
+¿Cuento con soporte técnico?
+	Si, al adquirir la licencia se dedicará una hora a transferir conocimiento de uso del sistema.
+	Además se asegura el correcto funcionamiento del sistema y alojamiento.
+	Si se requiere apoyo constante durante su inventario para preparar y/o analizar la información lo podemos tratar.

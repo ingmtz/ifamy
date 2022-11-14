@@ -1,0 +1,56 @@
+<svg width="569.61865234375" height="469.2146301269531" xmlns="http://www.w3.org/2000/svg" class="canvas" version="1.1">
+ <defs>
+  <radialGradient gradientTransform="matrix(1,0,0,1,-14.900730967521667,-5.960464477539063e-8)" gradientUnits="userSpaceOnUse" r="167.5792" cy="-5.7412" cx="59.2607" id="SVGID_1_">
+   <stop stop-color="#00ADEE" offset="0"/>
+   <stop stop-color="#01ADEE" offset="0.0016"/>
+   <stop stop-color="#15ABE6" offset="0.0526"/>
+   <stop stop-color="#22A9E2" offset="0.1029"/>
+   <stop stop-color="#26A9E0" offset="0.1515"/>
+   <stop stop-color="#1B75BB" offset="0.3273"/>
+   <stop stop-color="#2B388F" offset="0.5212"/>
+   <stop stop-color="#1C1651" offset="0.7576"/>
+   <stop stop-color="#120742" offset="1"/>
+  </radialGradient>
+  <radialGradient gradientTransform="matrix(1,0,0,1,-14.900730967521667,-5.960464477539063e-8)" gradientUnits="userSpaceOnUse" r="175.2623" cy="-10.3042" cx="37.6958" id="SVGID_2_">
+   <stop stop-color="#00ADEE" offset="0"/>
+   <stop stop-color="#01ADEE" offset="0.0016"/>
+   <stop stop-color="#15ABE6" offset="0.0526"/>
+   <stop stop-color="#22A9E2" offset="0.1029"/>
+   <stop stop-color="#26A9E0" offset="0.1515"/>
+   <stop stop-color="#1B75BB" offset="0.3273"/>
+   <stop stop-color="#2B388F" offset="0.5212"/>
+   <stop stop-color="#1C1651" offset="0.7576"/>
+   <stop stop-color="#120742" offset="1"/>
+  </radialGradient>
+  <radialGradient gradientTransform="matrix(1,0,0,1,-14.900730967521667,-5.960464477539063e-8)" gradientUnits="userSpaceOnUse" r="167.5785" cy="-5.7397" cx="59.2607" id="SVGID_3_">
+   <stop stop-color="#00ADEE" offset="0"/>
+   <stop stop-color="#01ADEE" offset="0.0016"/>
+   <stop stop-color="#15ABE6" offset="0.0526"/>
+   <stop stop-color="#22A9E2" offset="0.1029"/>
+   <stop stop-color="#26A9E0" offset="0.1515"/>
+   <stop stop-color="#1B75BB" offset="0.3273"/>
+   <stop stop-color="#2B388F" offset="0.5212"/>
+   <stop stop-color="#1C1651" offset="0.7576"/>
+   <stop stop-color="#120742" offset="1"/>
+  </radialGradient>
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <g class="logo__item" id="logo__item--business" data-item="Business" data-item-type="text"/>
+  <g class="logo__item logo__item--active logo__item-part--active" id="logo__item--logo_0" data-item="Image" data-item-type="image">
+   <g id="svg_3" transform="translate(105.169 -28.5) scale(5.03331 5.03331)" class="logo__item__inner">
+    <g id="svg_4">
+     <rect id="svg_5" class="logo__part--active" data-part-id="logo__item--logo_0__0" height="24.166" width="24.166" fill="#14BDEF" y="22.375" x="5.24327"/>
+     <rect id="svg_6" data-part-id="logo__item--logo_0__1" height="10.263" width="10.266" fill="#14BDEF" y="9.058" x="2.96227"/>
+     <rect id="svg_7" data-part-id="logo__item--logo_0__2" height="7.516" width="7.52" fill="#14BDEF" y="16.202" x="-7.26173"/>
+     <path id="svg_8" data-part-id="logo__item--logo_0__3" d="m33.96327,56.931l0,17.804l-24.166,0l0,-24.166l19.607,0c4.558,-0.105 4.848,-2.3 4.558,-9.729l0,-14.906l24.167,0l0,24.17l-16.215,0c0,0 -7.951,-0.031 -7.951,6.827z" fill="url(#SVGID_1_)"/>
+     <path id="svg_9" data-part-id="logo__item--logo_0__4" d="m74.77927,33.961c-2.19,-2.905 -5.577,-4.66 -9.743,-5.333c1.491,0.8 2.761,1.849 3.753,3.167c6.756,8.962 -1.63,26.679 -18.743,39.58c-17.104,12.893 -36.453,16.083 -43.205,7.121c-1.68,-2.226 -2.423,-4.991 -2.33,-8.095c-1.849,6.042 -1.519,11.503 1.451,15.437c7.503,9.954 28.993,6.41 47.996,-7.913c19.001,-14.323 28.325,-34.007 20.821,-43.964z" fill="url(#SVGID_2_)"/>
+     <path id="svg_10" data-part-id="logo__item--logo_0__5" d="m74.77927,33.961c-2.19,-2.905 -5.577,-4.66 -9.743,-5.333c1.491,0.8 2.761,1.849 3.753,3.167c6.756,8.962 -1.63,26.679 -18.743,39.58c-17.104,12.893 -36.453,16.083 -43.205,7.121c-1.68,-2.226 -2.423,-4.991 -2.33,-8.095c-1.849,6.042 -1.519,11.503 1.451,15.437c7.503,9.954 28.993,6.41 47.996,-7.913c19.001,-14.323 28.325,-34.007 20.821,-43.964z" fill="url(#SVGID_3_)"/>
+     <g id="svg_11">
+      <path id="svg_12" data-part-id="logo__item--logo_0__6" d="m47.49127,68.682c5.997,-4.517 10.916,-9.627 14.492,-14.741l0,-0.041l-24.168,0l0,20.948c3.239,-1.709 6.497,-3.77 9.676,-6.166z" fill="#14BDEF"/>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

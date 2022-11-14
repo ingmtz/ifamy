@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+        <script src="js/jquery-1.11.1.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        <title>APICS</title>
+    </head>
+    <body>
+        <div id="wrapper">
+            <div class="overlay"></div>
+            <!-- Sidebar -->
+            <nav class="navbar navbar-inverse navbar-fixed-top" id="sidebar-wrapper" role="navigation">
+                <ul class="nav sidebar-nav">
+                    <li class="sidebar-brand">
+                        <a href="#">
+                           APICS
+                        </a>
+                    </li>
+                    <li>
+                        <a href="login.html">Capture</a>
+                    </li>
+                    <li>
+                        <a href="login.html?id=audit">Audit</a>
+                    </li>
+                    <li>
+                        <a href="index.html?id=1">Config</a>
+                    </li>
+                    <li>
+                        <a target="_blank" href="javascript:alert('Novarumsystems.com');">About</a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- /#sidebar-wrapper -->
+
+            <!-- Page Content -->
+            <div id="page-content-wrapper">
+                <button type="button" class="hamburger is-closed" data-toggle="offcanvas">
+                    <span class="hamb-top"></span>
+                    <span class="hamb-middle"></span>
+                    <span class="hamb-bottom"></span>
+                </button>
+                <div style="position: fixed; top: 0px; left: 100px; margin-top: 5px;">
+                    <h3>Configuration</h3>
+                </div>
+                <div class="container">
+                    <!--
+                    <div class="row form-group">
+                        <div class="col-md-6">
+                            Server URL:
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="serverurl" value="http://10.191.0.50/APICS/">
+                        </div>
+                    </div>
+                -->
+                    <div class="row form-group">
+                        <div class="col-md-6">
+                            Branch:
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-control" id="serverurl">
+                                <option value="https://novarumsystems.com/APICS">PRUEBAS</option>
+                                <option value="https://novarumsystems.com/APICSCABOS">APICSCABOS</option>
+                                <option value="https://novarumsystems.com/APICSCANCUN">APICSCANCUN</option>
+                                <option value="https://novarumsystems.com/APICSGUADALAJARA">APICSGUADALAJARA</option>
+                                <option value="https://novarumsystems.com/APICSMATRIZ">APICSMATRIZ</option>
+                                <option value="https://novarumsystems.com/APICSMEXICO">APICSMEXICO</option>
+                                <option value="https://novarumsystems.com/APICSMONTERREY">APICSMONTERREY</option>
+                                <option value="https://novarumsystems.com/APICSVALLARTA">APICSVALLARTA</option>
+                                <option value="https://novarumsystems.com/APICSSALTILLO">APICSSALTILLO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row form-group">
+                        <div class="col-xs-6">
+                            <input type="button" class="btn btn-info" value="Download database" id="btndownload">
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-md-12">
+                            <p style="margin-top: 10px;" id="lblstatus"></p>
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-md-12">
+                            <p style="margin-top: 10px;">Version 5.5 2022-07-27</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var db;
+        </script>
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $('#btndownload').click(function(event) {
+                    window.localStorage.apiurl=$('#serverurl').val();
+                    $('#btndownload').prop('disabled', true).val('Wait...');
+                    syncdb(true);
+                });
+                //===============>
+                var trigger = $('.hamburger'),
+                  overlay = $('.overlay'),
+                 isClosed = false;
+
+                trigger.click(function () {
+                  hamburger_cross();      
+                });
+
+                function hamburger_cross() {
+                  if (isClosed == true) {          
+                    overlay.hide();
+                    trigger.removeClass('is-open');
+                    trigger.addClass('is-closed');
+                    isClosed = false;
+                  } else {   
+                    overlay.show();
+                    trigger.removeClass('is-closed');
+                    trigger.addClass('is-open');
+                    isClosed = true;
+                  }
+                }
+              
+                $('[data-toggle="offcanvas"]').click(function () {
+                    $('#wrapper').toggleClass('toggled');
+                });  
+            });
+            function listDir(path){
+              window.resolveLocalFileSystemURL(path,
+                function (fileSystem) {
+                  var reader = fileSystem.createReader();
+                  reader.readEntries(
+                    function (entries) {
+                        alert(JSON.stringify(entries));
+                      console.log(entries);
+                    },
+                    function (err) {
+                        alert(err);
+                      console.log(err);
+                    }
+                  );
+                }, function (err) {
+                  console.log(err);
+                }
+              );
+            }
+            function testdownloadeddb(){
+                window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
+                db.transaction(function(tx){
+                    tx.executeSql('select count(*) as total from tags;', [], function (tx, res) {
+                        if(res.rows.length>0){
+                            alert('Total tags:'+res.rows.item(0).total);
+                        }else{
+                            alert('No data');
+                        }
+                        $('#folio').val('');
+                    }, function(error){
+                        alert(error.message);
+                    });
+                }, function(error){
+                    alert(error.message);
+                });
+            }
+            function start(){
+                window.resolveLocalFileSystemURL(cordova.file.applicationStorageDirectory+'databases/' + 'db4.db', 
+                    function(){
+                        //=>
+                        window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
+                        db.transaction(function(tx){
+                            //Check if row exists
+                            tx.executeSql('SELECT * from config', [], function (tx, res) {
+                                if(res.rows.length>0){
+                                    window.localStorage.apiurl=res.rows.item(0).apiurl;
+                                    window.localStorage.tagprefix=res.rows.item(0).tagprefix;
+                                    window.localStorage.itemprefix=res.rows.item(0).itemprefix;
+                                    if(res.rows.item(0).apiurl!=''){
+                                        var url=res.rows.item(0).apiurl;
+                                        if(url.endsWith('/')){
+                                            url=url.substring(0, url.length - 1);
+                                        }
+                                        $('#serverurl').val(url);
+                                        //alert(res.rows.item(0).apiurl);
+                                    }
+
+                                    $('#lblstatus').html('Last sync: '+res.rows.item(0).lastupdate+'<br/>');
+                                    if(!window.location.href.includes('?id=1')){
+                                        window.location.href="login.html";
+                                    }
+                                }else{
+                                    tx.executeSql('insert into config values(?, ?, ?)', [device.uuid, "Never", $('#serverurl').val()], function(){}, function(error){alert(error.message);});
+                                    $('#lblstatus').html('Last sync: Never<br/>');
+                                }
+                            }, function(error){
+                                //alert('You need to download database.');
+                                alert(error.message);
+                            });
+                        }, function(error){
+                            //alert('You need to download database');
+                            alert(error.message);
+                        });
+                        //=>
+                    }, function(){
+                        //$('#btndownload').click();
+                    });
+            }
+        </script>
+    </body>
+</html>

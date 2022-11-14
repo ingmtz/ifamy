@@ -1,0 +1,37 @@
+{
+  "prepare_queue": {
+    "installed": [],
+    "uninstalled": []
+  },
+  "config_munge": {
+    "files": {}
+  },
+  "installed_plugins": {
+    "cordova-plugin-device": {
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-plugin-dialogs": {
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-plugin-file": {
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-plugin-file-transfer": {
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-plugin-qr-barcode-scanner": {
+      "ANDROID_SUPPORT_V4_VERSION": "27.+",
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-plugin-whitelist": {
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-plugin-x-toast": {
+      "PACKAGE_NAME": "io.ns.apics"
+    },
+    "cordova-sqlite-storage": {
+      "PACKAGE_NAME": "io.ns.apics"
+    }
+  },
+  "dependent_plugins": {}
+}

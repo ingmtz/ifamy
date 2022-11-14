@@ -1,0 +1,114 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class Capture extends MY_Controller {
+	function __construct() {
+		parent::__construct();
+		$this->load->model('capture_model');
+		$this->load->library(array('datatable','excel'));
+	}
+	public function index(){
+		$data['mode']='1';//capture or report
+		$data['locations']=$this->capture_model->getalllocations();
+		$data['validationstep']=$this->capture_model->getStep();
+		$data['warehouse']=$this->capture_model->getwarehouseByArea($this->session->userdata('ifatrimplant'), $this->session->userdata('ifatrimarea'));
+		$data['counters']=$this->capture_model->getcounters();
+		$data['auditors']=$this->capture_model->getauditors();
+		$data['config']=$this->capture_model->getConfig();
+		$data['title']=$this->lang->line('Capture');
+		$this->load->view('capture_view',$data);
+	}
+	public function gettag(){
+		$result=$this->capture_model->gettag($_POST['tag']);
+		echo json_encode($result);
+	}
+	public function getitemcode(){
+		$result=$this->capture_model->getitemcode($_POST['itemcode']);
+		echo json_encode($result);
+	}
+	public function getlocations(){
+		$result=$this->capture_model->getlocations($_POST['wh']);
+		echo json_encode($result);
+	}
+	public function updatecapture(){
+		$_POST['iduser']=$this->session->userdata('ifatrimuserid');
+		$_POST['itemcode']=strtoupper($_POST['itemcode']);
+		if($_POST['status']=='Blank' || $_POST['status']=='Voided'){
+			$_POST['itemcode']='';
+			$_POST['qty']='';
+			$_POST['warehouse']='';
+			$_POST['location']='';
+		}
+		$this->capture_model->updatecapture($_POST);
+		$result=$this->capture_model->gettag($_POST['tag']);
+		echo json_encode($result);
+	}
+	public function resetcapture(){
+		$this->capture_model->resetcapture($_POST['id']);
+	}
+	/*function loaddata(){
+        $query="select a.*, b.description, b.uom, b.type, d.name, b.cost_price, e.name as counter, f.name as auditor, g.area as areadesc
+					from tags a 
+                    left join masterdata b on a.itemcode=b.itemcode
+                    left join users d on a.iduser=d.Id
+                    left join users e on a.idcounter=e.Id
+                    left join areas g on g.Id=a.area
+                    left join users f on a.iduseraudit=f.Id where a.iduser=".$this->session->userdata('ifatrimuserid')." and g.area='".$this->session->userdata('ifatrimarea')."'";
+        $primaryKey = 'Id';
+        //echo $query;exit(0);
+
+		$columns = array(
+		    array( 'db' => 'tag', 'dt' => 0 ),
+		    array( 'db' => 'areadesc',  'dt' => 1 ),
+		    array( 'db' => 'warehouse',  'dt' => 2 ),
+		    array( 'db' => 'location',  'dt' => 3 ),
+		    array( 'db' => 'itemcode',  'dt' => 4 ),
+		    array( 'db' => 'status',  'dt' => 5 ),
+		    array(
+		        'db'        => 'qty',
+		        'dt'        => 6,
+		        'formatter' => function( $d, $row ) {
+		        	return ''.number_format($d, 2, '.', ',');//$
+		        }
+		    ),
+		    array( 'db' => 'openbox',  'dt' => 7 ),
+		    array(
+		        'db'        => 'cost_price',
+		        'dt'        => 8,
+		        'formatter' => function( $d, $row ) {
+		        	return '$'.number_format($d, 2, '.', ',');
+		        }
+		    ),
+		    array(
+		        'db'        => 'cost_price',
+		        'dt'        => 9,
+		        'formatter' => function( $d, $row ) {
+		        	return '$'.number_format($d*$row['qty'], 2, '.', ',');
+		        }
+		    ),
+		    array( 'db' => 'description',  'dt' => 10 ),
+		    array( 'db' => 'uom',  'dt' => 11 ),
+		    //array( 'db' => 'type',  'dt' => 9 ),
+		    array( 'db' => 'name',  'dt' => 12 ),
+		    array( 'db' => 'counter',  'dt' => 13 ),
+		    array( 'db' => 'auditor',  'dt' => 14 ),
+		    array( 'db' => 'reasontoedit',  'dt' => 15 ),
+		    array( 'db' => 'precounted',  'dt' => 16 ),
+		    array(
+		        'db'        => 'Id',
+		        'dt'        => 17,
+		        'formatter' => function( $d, $row ) {
+		        	$str='';
+		        	if($this->session->userdata('ifatrimidprofile')==1 || $this->session->userdata('ifatrimidprofile')==3){
+		        		$str='<i class="fa fa-edit" style="cursor:pointer;"></i><i class="fa fa-remove" style="cursor:pointer;"></i>';
+		        	}
+		        	return $str;
+		        }
+		    )
+		);
+		
+		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
+		//print_r($data);
+		$data=$this->utf8_encode_deep($data);
+		echo json_encode($data);
+	}*/
+}
