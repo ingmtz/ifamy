@@ -102,33 +102,34 @@ class Reports extends MY_Controller {
         $sheet->setTitle('totalcapture');
 
         $sheet->setCellValue("A1", 'Tag');
-        $sheet->setCellValue("B1", 'Area');
-        $sheet->setCellValue("C1", 'Rack');
-        $sheet->setCellValue("D1", 'Location');
-        $sheet->setCellValue("E1", 'Item code');
-        $sheet->setCellValue("F1", 'Type');
-        $sheet->setCellValue("G1", 'Status');
-        $sheet->setCellValue("H1", 'Quantity');
-        $sheet->setCellValue("I1", 'Open box');
-        $sheet->setCellValue("J1", 'Unit price');
-        $sheet->setCellValue("K1", 'Unit extended');
-        $sheet->setCellValue("L1", 'Audit counter');
-        $sheet->setCellValue("M1", 'Item description');
-        $sheet->setCellValue("N1", 'UOM');
-        $sheet->setCellValue("O1", 'User');
-        $sheet->setCellValue("P1", 'Team Leader');
-        $sheet->setCellValue("Q1", 'Auditor');
-        $sheet->setCellValue("R1", 'Comments');
-        $sheet->setCellValue("S1", 'Lot');
-        $sheet->setCellValue("T1", 'Packing date');
-        $sheet->setCellValue("U1", 'UOM');
+        $sheet->setCellValue("B1", 'Plant');
+        $sheet->setCellValue("C1", 'Area');
+        $sheet->setCellValue("D1", 'Rack');
+        $sheet->setCellValue("E1", 'Location');
+        $sheet->setCellValue("F1", 'Item code');
+        $sheet->setCellValue("G1", 'Type');
+        $sheet->setCellValue("H1", 'Status');
+        $sheet->setCellValue("I1", 'Quantity');
+        $sheet->setCellValue("J1", 'Open box');
+        $sheet->setCellValue("K1", 'Unit price');
+        $sheet->setCellValue("L1", 'Unit extended');
+        $sheet->setCellValue("M1", 'Audit counter');
+        $sheet->setCellValue("N1", 'Item description');
+        $sheet->setCellValue("O1", 'UOM');
+        $sheet->setCellValue("P1", 'User');
+        $sheet->setCellValue("Q1", 'Team Leader');
+        $sheet->setCellValue("R1", 'Auditor');
+        $sheet->setCellValue("S1", 'Comments');
+        $sheet->setCellValue("T1", 'Lot');
+        $sheet->setCellValue("U1", 'Packing date');
+        $sheet->setCellValue("V1", 'UOM');
 
-        for ($i=1; $i < 21; $i++) {
+        for ($i=1; $i < 22; $i++) {
         	$colString = PHPExcel_Cell::stringFromColumnIndex($i);
         	$sheet->getColumnDimension($colString)->setAutoSize(true);
         }
 
-        $objPHPExcel->getActiveSheet()->getStyle('A1:U1')->getFill()
+        $objPHPExcel->getActiveSheet()->getStyle('A1:V1')->getFill()
         ->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
         ->getStartColor()->setRGB('99CCFF');
 
@@ -137,7 +138,7 @@ class Reports extends MY_Controller {
 		        'bold' => true
 		    )
 		);
-		$sheet->getStyle('A1:U1')->applyFromArray($styleArray);
+		$sheet->getStyle('A1:V1')->applyFromArray($styleArray);
 
 		// Datos============>
 		$contador=1;
@@ -145,32 +146,33 @@ class Reports extends MY_Controller {
             $contador++;
             //$sheet->setCellValue("A$contador", '');
             $sheet->setCellValueExplicit("A$contador", $value->tag,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("B$contador", $value->areadesc,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("C$contador", $value->warehouse,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("D$contador", $value->location,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("E$contador", $value->itemcode,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("F$contador", $value->type,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("G$contador", $value->status,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("H$contador", number_format($value->qty, 2, '.', ','),  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("B$contador", $value->plant,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("C$contador", $value->areadesc,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("D$contador", $value->warehouse,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("E$contador", $value->location,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("F$contador", $value->itemcode,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("G$contador", $value->type,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("H$contador", $value->status,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("I$contador", number_format($value->qty, 2, '.', ','),  PHPExcel_Cell_DataType::TYPE_STRING);
 	        //$sheet->setCellValue('H'.$contador, $value->qty);
 
-	        $sheet->setCellValueExplicit("I$contador", $value->openbox,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("J$contador", '$'.number_format($value->cost_price, 2, '.', ','),  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("J$contador", $value->openbox,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("K$contador", '$'.number_format($value->cost_price, 2, '.', ','),  PHPExcel_Cell_DataType::TYPE_STRING);
 	        //$sheet->setCellValue('J'.$contador, $value->cost_price);
 
-	        $sheet->setCellValueExplicit("K$contador", '$'.number_format($value->cost_price*$value->qty, 2, '.', ','),  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("L$contador", '$'.number_format($value->cost_price*$value->qty, 2, '.', ','),  PHPExcel_Cell_DataType::TYPE_STRING);
 	        //$sheet->setCellValue('K'.$contador, '=J'.$contador.'*G'.$contador);
 
-	        $sheet->setCellValueExplicit("L$contador", $value->auditcounter,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("M$contador", $value->description,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("N$contador", $this->config->item('client')=='CVG' ? $value->uom2 : $value->uom,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("O$contador", $value->name,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("P$contador", $value->counter,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("Q$contador", $value->auditor,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("R$contador", $value->reasontoedit,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("S$contador", $value->lot,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("T$contador", $value->packingdate,  PHPExcel_Cell_DataType::TYPE_STRING);
-	        $sheet->setCellValueExplicit("U$contador", $this->config->item('client')=='CVG' ? $value->uom2 : $value->uom,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("M$contador", $value->auditcounter,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("N$contador", $value->description,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("O$contador", $this->config->item('client')=='CVG' ? $value->uom2 : $value->uom,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("P$contador", $value->name,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("Q$contador", $value->counter,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("R$contador", $value->auditor,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("S$contador", $value->reasontoedit,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("T$contador", $value->lot,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("U$contador", $value->packingdate,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("V$contador", $this->config->item('client')=='CVG' ? $value->uom2 : $value->uom,  PHPExcel_Cell_DataType::TYPE_STRING);
         }
 
         /*

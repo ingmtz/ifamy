@@ -142,8 +142,8 @@
 									<?php } ?>
 								</tr>
 								<tr>
-									<!--<th></th>-->
-									<th colspan="2" style="text-align:right;"><?php echo $this->lang->line('Current time'); ?></th>
+									<th id="lblprogress" style="font-size: 20px; font-weight:bold;"></th>
+									<th style="text-align:right;"><?php echo $this->lang->line('Current time'); ?></th>
 									<th colspan="<?php echo sizeof($range)-1; ?>" style="text-align:right;padding: 12px 0px;position:relative;"><!-- position:relative; -->
 										<div id="time" class="bartime" style="float:left;"></div>
 										<div class="redlinetop" style="position: absolute; left: 40%; background-color:red;  height:20px;width:3px;"></div>
@@ -437,6 +437,8 @@
 			//(Number(totalused).formatMoney()).replace('.00','')
 			//(Number(totaltags).formatMoney()).replace('.00','')
 			$('#lbltotals').html(totalused+'/'+totaltags);
+			var percenttotal=totalused*100/totaltags;
+			$('#lblprogress').html('Progress: '+percenttotal.formatMoney()+'%');
 			//position+=1;
 			var redlinetop=position*tdheight;
 			//maxpositions+=1;

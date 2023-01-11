@@ -15,7 +15,7 @@ $config['title']='Easy Inventory';*/
 
 //=======================>
 //https://novarumsystems.com/ifa/
-$config['base_url']	= '';
+$config['base_url']	= 'http://localhost/ifamy/';
 
 //$tmparr=explode('/', $_SERVER['REQUEST_URI']);
 //$config['base_url']    = 'https://'.$_SERVER['HTTP_HOST'].'/'.$tmparr[1].'/';
@@ -249,6 +249,9 @@ $config['encryption_key'] = 'ifamy123';
 | 'sess_time_to_update'		= how many seconds between CI refreshing Session Information
 |
 */
+$config['sess_driver'] = 'files';
+$config['sess_save_path'] = sys_get_temp_dir();
+
 $config['sess_cookie_name']		= 'ifamy_session';
 $config['sess_expiration']		= 0;//7200
 $config['sess_expire_on_close']	= TRUE;

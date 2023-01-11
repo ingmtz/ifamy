@@ -227,11 +227,11 @@ class Reports_model extends CI_Model {
         }
     }*/
     function getScannedbyuser(){
-        $querystr="select a.area, b.name, count(*) as cuantos from tags a
+        $querystr="select a.plant, a.area, b.name, count(*) as cuantos from tags a
             left join users b on a.iduser=b.Id
             left join scanners c on b.Id=c.assigneduser
             where a.status='Used'
-            group by a.area, b.name
+            group by a.plant, a.area, b.name
             order by count(*) desc";
         $query=$this->db->query($querystr);
         return $query->result();

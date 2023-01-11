@@ -61,7 +61,7 @@ class Login extends CI_Controller
                             'ifatrimusername'      =>         $check_user->username,
                             'ifatrimname'          =>         $check_user->name,
                             'ifatrimplant'         =>         $tmparr[0],
-                            'ifatrimarea'          =>         $tmparr[1],
+                            'ifatrimarea'          =>         isset($tmparr[1]) ? $tmparr[1] : '',
                             'changepassword'       =>         $check_user->changepassword,
                             'inventorytype'        =>         ''
                             );

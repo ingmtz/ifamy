@@ -84,6 +84,7 @@
 							<thead>
 								<tr>
 									<th>#</th>
+									<th>Plant</th>
 									<th>Area</th>
 									<th>User</th>
 									<th>Counted tags</th>
@@ -93,6 +94,7 @@
 								<?php foreach ($users as $key => $value) { ?>
 									<tr>
 										<td><?php echo $key+1; ?></td>
+										<td><?php echo $value->plant; ?></td>
 										<td><?php echo $value->area; ?></td>
 										<td><?php echo $value->name; ?></td>
 										<td><?php echo $value->cuantos; ?></td>
