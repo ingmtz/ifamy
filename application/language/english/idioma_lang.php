@@ -17,6 +17,7 @@ $lang['Audit'] 						= 'Audit';
 $lang['Tags'] 						= 'Tags';
 $lang['Areas'] 						= 'Areas';
 $lang['Locations'] 					= 'Locations';
+$lang['Providers'] 					= 'Providers';
 $lang['Users'] 						= 'Users';
 $lang['Settings'] 					= 'Settings';
 $lang['Scanners'] 					= 'Scanners';
@@ -178,3 +179,8 @@ $lang['Assigned user'] 				= 'Assigned user';
 $lang['Assignment time'] 			= 'Assignment time';
 
 $lang['Branch'] 						= 'Branch';
+
+//Providers=============>
+$lang['Barcode Structure']			= 'Barcode Structure';
+$lang['New Provider'] 				= 'New Provider';
+$lang['Edit Provider'] 				= 'Edit Provider';
