@@ -110,13 +110,17 @@
 								<thead>
 									<tr>
 										<th colspan="2" style="font-size: 20px; font-weight:bold;">
-											<?php $percent = ($totals->extcounted / $totals->extonhand) * 100;
+											<?php $extonhand = 1;
+											if($totals->extonhand>0){
+												$extonhand = $totals->extonhand;
+											}
+											$percent = ($totals->extcounted / $extonhand) * 100;
 											if($percent > 100){
 												$percent = 100;
 											}
 											echo 'Progress: ' . number_format($percent, $decimals, '.', ',').'%';
 											?>
-										</th>
+										</th> 
 										<th colspan="3" style="background-color:rgba(59, 27, 103, 0.13);"><?php echo $this->lang->line('On hand'); ?></th>
 										<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
 										<th colspan="2" style="background-color:beige;"><?php echo $this->lang->line('Counted'); ?></th>
