@@ -9,6 +9,11 @@ class Webservices_model extends CI_Model {
         //$query=$this->db->query('select Top 1 * from tags');
         return $query->result();
     }
+    function getAudits(){
+        $query=$this->db->get('audits');
+        //$query=$this->db->query('select Top 1 * from tags');
+        return $query->result();
+    }
     function getItems(){
     	$this->db->select('Id, itemcode, description, uom');
         $query=$this->db->get('masterdata');
@@ -42,5 +47,8 @@ class Webservices_model extends CI_Model {
     function getConfig(){
         $query=$this->db->get('config');
         return $query->row();
+    }
+    function insertAudit($audit){
+        $this->db->insert('audits', $audit);
     }
 }

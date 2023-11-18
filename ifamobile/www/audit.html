@@ -135,6 +135,7 @@
             var cfolio='';
             var clocacion='';
             var citemnumber='';
+            var cauditcounter = 0;
             var cqty=0;
             var copenbox='';
             var creasontoedit='';
@@ -304,6 +305,8 @@
                             cqty = res.rows.item(0).qty;
                             copenbox = res.rows.item(0).openbox;
                             cfolio = res.rows.item(0).tag;
+                            cauditcounter = Number(res.rows.item(0).auditcounter);
+
 
                             $('#lblstep').html("2.- Select correct or incorrect:");
                             cmsg = "Folio: " + $('#folio').val()+"<br/>";
@@ -529,8 +532,9 @@
             }
             function saveCapture(){
                 window.db.transaction(function (tx) {
-                  tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=auditcounter+1, resultaudit=?, lot=?, packingdate=?, uom=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, clot, cpackingdate, cuom, cfolio], function(){
+                  tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=?, resultaudit=?, lot=?, packingdate=?, uom=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cauditcounter+1,cresult, clot, cpackingdate, cuom, cfolio], function(){
                     //Init vars
+                    saveAuditLog();
                     setTimeout(function(){
                         $('#lblstep').html("1.- Scan folio:");
                         $('body').css("background-color","white");
@@ -566,6 +570,15 @@
             }
             function onConfirm(buttonIndex) {
                 copenbox = (buttonIndex=='1' ? 'Ok' : 'No');
+            }
+            function saveAuditLog(){
+                window.db.transaction(function (tx) {
+                  tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, packingdate, uom, datetimeaudit, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cauditcounter+1, cpackingdate, cuom], function(){
+                  
+                  }, function(error){alert(error.message);});
+                }, function(error){
+                    alert(error.message);
+                });
             }
         </script>
     </body>

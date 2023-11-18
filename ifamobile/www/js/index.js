@@ -30,6 +30,7 @@ var app = {
 app.initialize();
 
 function syncdb(download) {
+    syncAudits();
     window.resolveLocalFileSystemURL(cordova.file.applicationStorageDirectory + 'databases/' + 'db4.db',
         function () {
             //==============>
@@ -47,7 +48,7 @@ function syncdb(download) {
                         ids = ids.substring(0, ids.length - 1);
                     }
                     //alert(JSON.stringify(datatosend));
-                    //alert(window.localStorage.apiurl+"/webservices/receiveTags");
+                    //alert("http://192.168.100.16/ifamy" + "/webservices/receiveTags");
                     if (datatosend.length > 0) {
                         $.post(window.localStorage.apiurl + "/webservices/receiveTags", { data: datatosend }, function (result) {
                             if (result == 'ok') {
@@ -83,7 +84,7 @@ function syncdb(download) {
                         }
                     }
                 }, function (error) {
-                    //alert('5'+error.message);
+                    
                     if (download) {
                         window.plugins.toast.showWithOptions({
                             message: 'Local database is corrupted. A new it will be downloaded.',//error.message,
@@ -106,6 +107,7 @@ function syncdb(download) {
                     }
                 });
             }, function (error) {
+            
                 //alert('6'+error.message);
                 window.plugins.toast.showWithOptions({
                     message: error.message,
@@ -157,10 +159,113 @@ function tosync0(ids) {
         });
     });
 }
+function tosyncAuditsIds() {
+    window.db = window.sqlitePlugin.openDatabase({ name: 'db4.db', location: 'default' });
+    db.transaction(function (tx) {
+        tx.executeSql('update audits set tosync=0 where Id IS NULL', [], function (tx, res) {
+           
+        }, function (error) {
+            window.plugins.toast.showWithOptions({
+                message: JSON.stringify(error),
+                duration: "long",
+                position: "top",
+                styling: {
+                    backgroundColor: '#ff9999'
+                }
+            });
+        });
+    }, function (error) {
+        window.plugins.toast.showWithOptions({
+            message: JSON.stringify(error),
+            duration: "long",
+            position: "top",
+            styling: {
+                backgroundColor: '#ff9999'
+            }
+        });
+    });
+}
+function syncAudits(){
+    window.resolveLocalFileSystemURL(cordova.file.applicationStorageDirectory + 'databases/' + 'db4.db',
+        function () {
+            //==============>
+            window.db = window.sqlitePlugin.openDatabase({ name: 'db4.db', location: 'default' });
+            db.transaction(function (tx) {
+                tx.executeSql('select Id, tag, itemcode, qty, location, reasontoedit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, packingdate, uom from audits where tosync=1', [], function (tx, res) {
+                    var datatosend = [];
+                    for (var i = 0; i < res.rows.length > 0; i++) {
+                        var currentaudit = res.rows.item(i);
+                        datatosend.push(currentaudit);
+                    }
+                    
+                    if (datatosend.length > 0) {
+                        $.post(window.localStorage.apiurl + "/webservices/receiveAudits", { data: datatosend }, function (result) {
+                            if (result == 'ok') {
+                                tosyncAuditsIds();
+                            } else {
+                                window.plugins.toast.showWithOptions({
+                                    message: 'Problem: ' + result,
+                                    duration: "long",
+                                    position: "top",
+                                    styling: {
+                                        backgroundColor: '#ff9999'
+                                    }
+                                });
+                            }
+                        }).fail(function (xhr, status, error) {
+                            $('#lblstatus').html(xhr.responseText);
+                            window.plugins.toast.showWithOptions({
+                                message: 'Problem: ' + xhr.responseText,
+                                duration: "long",
+                                position: "top",
+                                styling: {
+                                    backgroundColor: '#ff9999'
+                                }
+                            });
+                        });
+                    } 
+                }, function (error) {
+                    //alert('5'+error.message);
+                    if (download) {
+                        window.plugins.toast.showWithOptions({
+                            message: 'Local database is corrupted. A new it will be downloaded.',//error.message,
+                            duration: "long",
+                            position: "top",
+                            styling: {
+                                backgroundColor: '#ff9999'
+                            }
+                        });
+                        downloaddb();
+                    } else {
+                        window.plugins.toast.showWithOptions({
+                            message: 'Local database is corrupted. Download it again.',//error.message,
+                            duration: "long",
+                            position: "top",
+                            styling: {
+                                backgroundColor: '#ff9999'
+                            }
+                        });
+                    }
+                });
+            }, function (error) {
+                //alert('6'+error.message);
+                window.plugins.toast.showWithOptions({
+                    message: error.message,
+                    duration: "long",
+                    position: "top",
+                    styling: {
+                        backgroundColor: '#ff9999'
+                    }
+                });
+            });
+            //==============>
+        });
+}
 function downloaddb() {
     var fileTransfer = new FileTransfer();
     var uri = encodeURI(window.localStorage.apiurl + "/webservices/getdatabase");
     var fileURL = cordova.file.applicationStorageDirectory + 'databases/' + 'db4.db';
+    var apiurl = window.localStorage.apiurl;
 
     fileTransfer.onprogress = function (progressEvent) {
         if (progressEvent.lengthComputable) {

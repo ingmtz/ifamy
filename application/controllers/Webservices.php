@@ -29,6 +29,7 @@ class Webservices extends CI_Controller {
 		$script .= "\ncreate table if not exists config (devicename, lastupdate, apiurl, tagprefix, itemprefix); ";
 		$script .= "\ncreate table if not exists users (Id, username, password, idprofile); ";
 		$script .= "\ncreate table if not exists locations (Id, wh, location, plataforma); ";
+		$script .= "\ncreate table if not exists audits (Id primary key, tag, itemcode, qty, location, reasontoedit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, packingdate, uom, tosync); ";
 
 		$script .= "\ncreate table if not exists tags (Id, tag, area, plant, datetimecaptured, itemcode, status, qty, warehouse, location, iduser, tosync, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, reasontoedit, lot, packingdate, uom); ";
 		$script .= "\ncreate table if not exists masterdata (Id, itemcode, description, uom); ";
@@ -49,7 +50,7 @@ class Webservices extends CI_Controller {
 
 		$tags = $this->webservices_model->getTags();
 		foreach ($tags as $key => $value) {
-			$script .= "\ninsert into tags values(".$db->escape($value->Id).",'".$db->escape($value->tag)."', '".$db->escape($value->area)."', '".$db->escape($value->plant)."', '".$db->escape($value->datetimecaptured)."', '".$db->escape($value->itemcode)."', '".$db->escape($value->status)."', '".$db->escape($value->qty)."', '".$db->escape($value->warehouse)."', '".$db->escape($value->location)."', '".$db->escape($value->iduser)."', 0, '".$db->escape($value->toaudit)."', '', '', '', '".$db->escape($value->openbox)."', 0, '".$db->escape($value->reasontoedit)."', '".$db->escape($value->lot)."', '".$db->escape($value->packingdate)."', '".$db->escape($value->uom)."'); ";
+			$script .= "\ninsert into tags values(".$db->escape($value->Id).",'".$db->escape($value->tag)."', '".$db->escape($value->area)."', '".$db->escape($value->plant)."', '".$db->escape($value->datetimecaptured)."', '".$db->escape($value->itemcode)."', '".$db->escape($value->status)."', '".$db->escape($value->qty)."', '".$db->escape($value->warehouse)."', '".$db->escape($value->location)."', '".$db->escape($value->iduser)."', 0, '".$db->escape($value->toaudit)."', '', '', '', '".$db->escape($value->openbox)."', '".$db->escape($value->auditcounter)."', '".$db->escape($value->reasontoedit)."', '".$db->escape($value->lot)."', '".$db->escape($value->packingdate)."', '".$db->escape($value->uom)."'); ";
 		}
 		$items = $this->webservices_model->getItems();
 		foreach ($items as $key => $value) {
@@ -62,6 +63,13 @@ class Webservices extends CI_Controller {
 		$locations = $this->webservices_model->getLocations();
 		foreach ($locations as $key => $value) {
 			$script .= "\ninsert into locations values(".$db->escape($value->Id).",'".$db->escape($value->wh)."', '".$db->escape($value->location)."', '".$db->escape($value->plataforma)."'); ";
+		}
+		$audits = $this->webservices_model->getAudits();
+		foreach ($audits as $key => $value) {
+			$script .= "\ninsert into audits values(".$db->escape($value->Id).",'".$db->escape($value->tag)."', '".$db->escape($value->itemcode)."', '".$db->escape($value->qty)."', 
+						'".$db->escape($value->location)."', '".$db->escape($value->reasontoedit)."', '".$db->escape($value->resultaudit)."', 
+						'".$db->escape($value->iduseraudit)."', '".$db->escape($value->datetimeaudit)."', '".$db->escape($value->openbox)."', '".$db->escape($value->auditcounter)."', 
+						'".$db->escape($value->packingdate)."', '".$db->escape($value->uom)."', 0); ";
 		}
 		//echo $script;
 
@@ -84,15 +92,15 @@ class Webservices extends CI_Controller {
 		try{
 
 
-		//file_put_contents(uniqid().'.txt', print_r($_POST, true));
-		if(isset($_POST['data'])){if(is_array($_POST['data'])){
-			foreach ($_POST['data'] as $key => $tag) {
-				unset($tag['Id']);
-				unset($tag['tosync']);
-				$this->webservices_model->updateTag($tag);
-			}
-		}}
-		echo 'ok';
+			//file_put_contents(uniqid().'.txt', print_r($_POST, true));
+			if(isset($_POST['data'])){if(is_array($_POST['data'])){
+				foreach ($_POST['data'] as $key => $tag) {
+					unset($tag['Id']);
+					unset($tag['tosync']);
+					$this->webservices_model->updateTag($tag);
+				}
+			}}
+			echo 'ok';
 
 		} catch (Exception $e) {
 			file_put_contents(uniqid().'_error.txt', $e->getMessage());
@@ -109,6 +117,23 @@ class Webservices extends CI_Controller {
 		 fwrite($fh, $out);
 		 fclose($fh);
 		}*/
+	}
+
+	function receiveAudits(){
+		try{
+
+			if(isset($_POST['data'])){if(is_array($_POST['data'])){
+				foreach ($_POST['data'] as $key => $audit) {
+					unset($audit['Id']);
+					unset($audit['tosync']);
+					$this->webservices_model->insertAudit($audit);
+				}
+			}}
+			echo 'ok';
+
+		} catch (Exception $e) {
+			file_put_contents(uniqid().'_error.txt', $e->getMessage());
+		}
 	}
 
 	function test(){

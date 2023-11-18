@@ -580,6 +580,7 @@
                 window.db.transaction(function (tx) {
                   tx.executeSql("update tags set datetimecaptured=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduser=?, openbox=?, tosync=1, reasontoedit=?, lot=?, packingdate=?, uom=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, clot, cpackingdate, cuom, cfolio], function(){
                     //Init vars
+                    saveAuditLog();
                     setTimeout(function(){
                         $('#lblstep').html("2.- Scan folio:");
                         $('body').css("background-color","white");
@@ -602,6 +603,7 @@
                         cuom='';
                         $('#lblstatus').html(cmsg);
                         $('#reason').val('0');
+
                     }, 1000);
                     //=========>
                     syncdb();
@@ -636,6 +638,15 @@
                 cuom='';
                 $('#lblstatus').html(cmsg);
                 $('#reason').val('0');
+            }
+            function saveAuditLog(){
+                window.db.transaction(function (tx) {
+                  tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, packingdate, uom, datetimeaudit, auditcounter, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 0, 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cpackingdate, cuom], function(){
+                  
+                  }, function(error){alert(error.message);});
+                }, function(error){
+                    alert(error.message);
+                });
             }
         </script>
     </body>
