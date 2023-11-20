@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -53,6 +54,12 @@
         /*input{
             text-transform: uppercase;
         }*/
+		
+		@media (min-width: 1000px) {
+			.modal-xl {
+				width:1000px
+			}
+		}
     </style>
 
 </head>
@@ -330,10 +337,43 @@
 	  </div>
 	</div>
 
+	<div class="modal fade" id="modalaudits" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
+	  <div class="modal-dialog modal-xl" role="document">
+	    <div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modalauditslabel">Audits for:</h4>
+			</div><!-- /modal-header -->
+			<div class="modal-body">
+				<table class="table datatable" id="audits">
+					<thead>
+						<tr>
+							<th><?php echo $this->lang->line('Audit counter'); ?></th>
+							<th><?php echo $this->lang->line('Quantity'); ?></th>
+							<th><?php echo $this->lang->line('Location'); ?></th>
+							<th><?php echo $this->lang->line('Reason for modification'); ?></th>
+							<th><?php echo $this->lang->line('Audit result'); ?></th>
+							<th><?php echo $this->lang->line('Auditor'); ?></th>
+							<th><?php echo $this->lang->line('Audit datetime'); ?></th>
+							<th><?php echo $this->lang->line('Open box'); ?></th>
+							<th><?php echo $this->lang->line('UOM'); ?></th>
+
+							
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+	    </div>
+	  </div>
+	</div>
+
 </body>
 <script type="text/javascript">
 	var erroritemcode='Type an item code', errortag='Type a tag';
 	var datatable;
+	var datatableaudits;
+	var tagaudits = '';
 	var editmode=false;
 	var openbox='No';
 	var precounted='No';
@@ -422,6 +462,44 @@
 		        	datatable.draw();
 		    });
 		}, 3000);
+
+
+		datatableaudits=$('#audits').DataTable({
+			"language": {
+                "url": "<?php echo base_url(); ?>assets/datatables2/<?php echo $this->session->userdata('site_lang'); ?>.json",
+                buttons: {
+		            pageLength: {
+		                _: "<?php echo $this->lang->line('Showing'); ?> %d <?php echo $this->lang->line('rows'); ?>",
+		                '-1': "<?php echo $this->lang->line('Showing all'); ?>"
+		            }
+		        }
+            },
+			responsive: true,
+			"processing": true,
+        	"serverSide": true,
+			"ajax": {
+          			url: "<?php echo base_url(); ?>tags/loaddataaudits",
+          			data: function ( d ) {
+						return $.extend( {}, d, {
+	               	 		"tag": tagaudits
+	              		});
+				    }
+          		  },
+			dom: 'Bfrtip',
+			lengthMenu: [
+	            [ 10, 25, 50, -1 ],
+	            [ '10 <?php echo $this->lang->line('rows'); ?>', '25 <?php echo $this->lang->line('rows'); ?>', '50 <?php echo $this->lang->line('rows'); ?>', '<?php echo $this->lang->line('Show all'); ?>' ]
+	        ],
+	        buttons: [
+	            /*'copyHtml5',*/
+	            //'excelHtml5',
+	            /*'csvHtml5',*/
+	            //'print',
+				
+	            'excelHtml5',
+	            'pageLength'
+	        ]
+		});
 	    //======================================>
 
 		$('#tag').change(function(event) {
@@ -588,6 +666,24 @@
 			setTimeout(function(){
 				$('#location').val(location.toUpperCase()).trigger("chosen:updated").change();
 			}, 2000);//4000
+		});
+		$('#history').delegate('.fa-eye', 'click', function(event) {
+			event.preventDefault();
+
+			var basetr=$(this).parents('tr');
+			if(basetr.hasClass('child')){
+				basetr=basetr.prev();
+			}
+			tagaudits=basetr.children().eq(1).html();
+
+			$('#modalauditslabel').text('Audits for Tag: '+tagaudits);
+
+			datatableaudits.ajax.reload();
+			$('#modalaudits').modal('show');
+			setTimeout(() => {
+				datatableaudits.draw();
+			}, 150);
+			
 		});
 		$('#history').delegate('.fa-remove', 'click', function(event) {
 			var basetr=$(this).parents('tr');

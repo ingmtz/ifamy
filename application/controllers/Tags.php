@@ -290,26 +290,37 @@ class Tags extends MY_Controller {
 		$primaryKey = 'Id';
 
 		$columns = array(
-		    array( 'db' => 'tag', 'dt' => 0 ),
-		    array( 'db' => 'area',  'dt' => 1 ),
-		    array( 'db' => 'plant',  'dt' => 2 ),
-		    array( 'db' => 'printcounter',  'dt' => 3 ),
-		    array( 'db' => 'openbox',  'dt' => 4 ),
+			array(
+		        'db'        => 'Id',
+		        'dt'        => 0,
+		        'formatter' => function( $d, $row ) {
+					$str='';
+					if($this->session->userdata('ifatrimidprofile')==3){
+						$str='<i class="fa fa-2x fa-eye" style="cursor:pointer;">';
+					}
+		        	return $str;
+		        }
+		    ),
+		    array( 'db' => 'tag', 'dt' => 1 ),
+		    array( 'db' => 'area',  'dt' => 2 ),
+		    array( 'db' => 'plant',  'dt' => 3 ),
+		    array( 'db' => 'printcounter',  'dt' => 4 ),
+		    array( 'db' => 'openbox',  'dt' => 5 ),
 
-		    array( 'db' => 'qty',  'dt' => 5 ),
+		    array( 'db' => 'qty',  'dt' => 6 ),
 		    array(
 		        'db'        => 'extended',
-		        'dt'        => 6,
+		        'dt'        => 7,
 		        'formatter' => function( $d, $row ) {
 		        	return '$'.number_format($d, 2, '.', ',');
 		        }
 		    ),
 
-		    array( 'db' => 'resultaudit',  'dt' => 7 ),
-		    array( 'db' => 'name',  'dt' => 8 ),
+		    array( 'db' => 'resultaudit',  'dt' => 8 ),
+		    array( 'db' => 'name',  'dt' => 9 ),
 		    array(
 		        'db'        => 'datetimeaudit',
-		        'dt'        => 9,
+		        'dt'        => 10,
 		        'formatter' => function($d, $row ) {
 		        	$returnv='';
 		        	$pos = strpos($d, '1900');
@@ -319,8 +330,47 @@ class Tags extends MY_Controller {
 		        	return $returnv;
 		        }
 		    ),
-		    array( 'db' => 'auditcounter',  'dt' => 10 ),
-		    array( 'db' => 'precounted',  'dt' => 11 )
+		    array( 'db' => 'auditcounter',  'dt' => 11 ),
+		    array( 'db' => 'precounted',  'dt' => 12 )
+		);
+		
+		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
+		$data=$this->utf8_encode_deep($data);
+		echo json_encode($data);
+	}
+	
+	function loaddataaudits(){
+		$data=$_GET;
+
+		$query="select a.*, b.name as auditor
+					from audits a 
+                    left join users b on a.iduseraudit=b.Id
+					where a.tag = '".$data['tag']."'";
+     
+        $primaryKey = 'Id';
+
+		$columns = array(
+		    array( 'db' => 'auditcounter', 'dt' => 0 ),
+		    array( 'db' => 'qty',  'dt' => 1 ),
+		    array( 'db' => 'location',  'dt' => 2 ),
+		    array( 'db' => 'reasontoedit',  'dt' => 3 ),
+		    array( 'db' => 'resultaudit',  'dt' => 4 ),
+		    array( 'db' => 'auditor',  'dt' => 5 ),
+		    array(
+		        'db'        => 'datetimeaudit',
+		        'dt'        => 6,
+		        'formatter' => function($d, $row ) {
+		        	$returnv='';
+		        	$pos = strpos($d, '1900');
+		        	if(strpos($d, '1900') === false){
+		        		$returnv=$d;
+		        	}
+		        	return $returnv;
+		        }
+		    ),
+		    array( 'db' => 'openbox',  'dt' => 7 ),
+		    array( 'db' => 'uom',  'dt' => 8 ),
+		   
 		);
 		
 		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);

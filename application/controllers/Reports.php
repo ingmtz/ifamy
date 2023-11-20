@@ -215,9 +215,12 @@ class Reports extends MY_Controller {
 		        'db'        => 'Id',
 		        'dt'        => 0,
 		        'formatter' => function( $d, $row ) {
-		        	$str='';
+					$str = '';
+					if($this->session->userdata('ifatrimidprofile')==3){
+						$str.='<i class="fa fa-2x fa-eye" style="cursor:pointer;"></i>';
+					}
 		        	if($this->session->userdata('ifatrimidprofile')==1 || $this->session->userdata('ifatrimidprofile')==3){
-		        		$str='<i class="fa fa-2x fa-edit" style="cursor:pointer;"></i><i class="fa fa-2x fa-remove" style="cursor:pointer;"></i>';
+		        		$str.='<i class="fa fa-2x fa-edit" style="cursor:pointer;"></i><i class="fa fa-2x fa-remove" style="cursor:pointer;"></i>';
 		        	}
 		        	return $str;
 		        }

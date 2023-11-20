@@ -13,6 +13,7 @@
 	<!-- Global stylesheets -->
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="<?php echo base_url(); ?>assets/css/icons/fontawesome/styles.min.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/bootstrap.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/core.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/components.css" rel="stylesheet" type="text/css">
@@ -43,7 +44,17 @@
 	<script src="<?php echo base_url(); ?>assets/jquery.redirect.js"></script>
 	<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/core/app.js"></script>
 	<!-- /theme JS files -->
-
+	<style type="text/css">
+        /*input{
+            text-transform: uppercase;
+        }*/
+		
+		@media (min-width: 1000px) {
+			.modal-xl {
+				width:1000px
+			}
+		}
+    </style>
 </head>
 
 <body>
@@ -177,6 +188,7 @@
 							<table class="table datatable-show-all" id="tagstable">
 								<thead>
 									<tr>
+										<th class="actions"><?php echo $this->lang->line('Actions'); ?></th>
 										<th><?php echo $this->lang->line('Tag'); ?></th>
 										<th><?php echo $this->lang->line('Area'); ?></th>
 										<th><?php echo $this->lang->line('Plant'); ?></th>
@@ -214,9 +226,44 @@
 	</div>
 	<!-- /page container -->
 
+
+	<div class="modal fade" id="modalaudits" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
+	  <div class="modal-dialog modal-xl" role="document">
+	    <div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modalauditslabel">Audits for:</h4>
+			</div><!-- /modal-header -->
+			<div class="modal-body">
+				<table class="table datatable" id="audits">
+					<thead>
+						<tr>
+							<th><?php echo $this->lang->line('Audit counter'); ?></th>
+							<th><?php echo $this->lang->line('Quantity'); ?></th>
+							<th><?php echo $this->lang->line('Location'); ?></th>
+							<th><?php echo $this->lang->line('Reason for modification'); ?></th>
+							<th><?php echo $this->lang->line('Audit result'); ?></th>
+							<th><?php echo $this->lang->line('Auditor'); ?></th>
+							<th><?php echo $this->lang->line('Audit datetime'); ?></th>
+							<th><?php echo $this->lang->line('Open box'); ?></th>
+							<th><?php echo $this->lang->line('UOM'); ?></th>
+
+							
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+	    </div>
+	  </div>
+	</div>
+
 </body>
 <script type="text/javascript">
 	$(document).ready(function() {
+		var datatableaudits;
+		var tagaudits;
+
 		$('#toaudit').click(function(event) {
 			if ($('#starttag').val().length != 5 || $('#finaltag').val().length != 5 || isNaN($('#starttag').val()) || isNaN($('#finaltag').val()) || $('#finaltag').val() == '' || $('#starttag').val() == '') {
 				new PNotify({
@@ -292,6 +339,41 @@
 				'pageLength'
 			]
 		});
+
+		datatableaudits=$('#audits').DataTable({
+			"language": {
+                "url": "<?php echo base_url(); ?>assets/datatables2/<?php echo $this->session->userdata('site_lang'); ?>.json",
+                buttons: {
+		            pageLength: {
+		                _: "<?php echo $this->lang->line('Showing'); ?> %d <?php echo $this->lang->line('rows'); ?>",
+		                '-1': "<?php echo $this->lang->line('Showing all'); ?>"
+		            }
+		        }
+            },
+			responsive: true,
+			"processing": true,
+        	"serverSide": true,
+			"ajax": {
+          			url: "<?php echo base_url(); ?>tags/loaddataaudits",
+          			data: function ( d ) {
+						return $.extend( {}, d, {
+	               	 		"tag": tagaudits
+	              		});
+				    }
+          		  },
+			dom: 'Bfrtip',
+			lengthMenu: [
+	            [ 10, 25, 50, -1 ],
+	            [ '10 <?php echo $this->lang->line('rows'); ?>', '25 <?php echo $this->lang->line('rows'); ?>', '50 <?php echo $this->lang->line('rows'); ?>', '<?php echo $this->lang->line('Show all'); ?>' ]
+	        ],
+	        buttons: [
+	            /*'copyHtml5',*/
+	            'excelHtml5',
+	            /*'csvHtml5',*/
+	            //'print',
+	            'pageLength'
+	        ]
+		});
 		//End button export--------------->
 		$('#bycoma').keydown(function(e) {
 			if (e.keyCode == 13 || e.keyCode == 9) {
@@ -337,6 +419,27 @@
 				lessthan: lessthan,
 				greaterthan: greaterthan
 			}, 'POST');
+		});
+
+
+
+		$('#tagstable').delegate('.fa-eye', 'click', function(event) {
+			event.preventDefault();
+
+			var basetr=$(this).parents('tr');
+			if(basetr.hasClass('child')){
+				basetr=basetr.prev();
+			}
+			tagaudits=basetr.children().eq(1).html();
+
+			$('#modalauditslabel').text('Audits for Tag: '+tagaudits);
+
+			datatableaudits.ajax.reload();
+			$('#modalaudits').modal('show');
+			setTimeout(() => {
+				datatableaudits.draw();
+			}, 150);
+			
 		});
 	});
 </script>
