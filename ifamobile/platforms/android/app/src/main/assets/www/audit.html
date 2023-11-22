@@ -11,7 +11,7 @@
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
 
         <link rel="stylesheet" type="text/css" href="css/index.css">
-        <title>APICS</title>
+        <title>IFA</title>
     </head>
     <body>
         <div id="wrapper">
@@ -22,7 +22,7 @@
                 <ul class="nav sidebar-nav">
                     <li class="sidebar-brand">
                         <a href="#">
-                           APICS
+                           IFA
                         </a>
                     </li>
                     <li>
@@ -140,10 +140,7 @@
             var copenbox='';
             var creasontoedit='';
             var cresult='';
-
-            var cuom='';
-            var clot='';
-            var cpackingdate='';
+            var cuom = '';
             $(document).ready(function () {
                 if(window.localStorage.idprofile=='3'){
                     $('#btnmanualsync').show();
@@ -203,14 +200,12 @@
                         $('#rowopenbox').show();
                         $('#btnsave').show();
 
-                        /*
                         navigator.notification.confirm(
                             'Is the box open?',
                              onConfirm,
-                            'APICS',
+                            'IFA',
                             ['Yes','No']
                         );
-                        */
                         $('#lblstep').html("4.- Type quantity:");
                         cstep = 3;
                         cmsg += "<br/>3.- Correct item number: <br/>" + citemnumber
@@ -291,22 +286,18 @@
                 }
                 window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
                 db.transaction(function(tx){
-                    tx.executeSql("select a.*, b.description from tags a left join masterdata b on a.itemcode=b.itemcode where tag=? and status='Used'", [$('#folio').val().replace(window.localStorage.tagprefix,'')], function (tx, res) {// and (openbox='Ok' or toaudit=1)      , b.uom
+                    tx.executeSql("select a.*, b.description, b.uom from tags a left join masterdata b on a.itemcode=b.itemcode where tag=? and status='Used'", [$('#folio').val().replace(window.localStorage.tagprefix,'')], function (tx, res) {// and (openbox='Ok' or toaudit=1)
                         if(res.rows.length>0){
                             try {//Evitar cuando vienen en null
                                     cwarehouse = res.rows.item(0).warehouse.toUpperCase();
                                     clocacion = res.rows.item(0).location.toUpperCase();
                                     citemnumber = res.rows.item(0).itemcode.toUpperCase();
-
                                     cuom=res.rows.item(0).uom.toUpperCase();
-                                    clot=res.rows.item(0).lot.toUpperCase();
-                                    cpackingdate=res.rows.item(0).packingdate.toUpperCase();
                             }catch(err) {}
                             cqty = res.rows.item(0).qty;
                             copenbox = res.rows.item(0).openbox;
                             cfolio = res.rows.item(0).tag;
                             cauditcounter = Number(res.rows.item(0).auditcounter);
-
 
                             $('#lblstep').html("2.- Select correct or incorrect:");
                             cmsg = "Folio: " + $('#folio').val()+"<br/>";
@@ -328,30 +319,26 @@
                 });
             }
             function checklocation(){
-                if(!$('#folio').val().startsWith('B') && !$('#folio').val().startsWith('b')){
-                    $('#lblstatus').html("It is not a valid location. It must be starts with B " + $('#folio').val());
+                /*if(!$('#folio').val().startsWith('L') && !$('#folio').val().startsWith('l')){
+                    $('#lblstatus').html("It is not a valid location. " + $('#folio').val());
                     $('body').css("background-color","red");
                     $('#folio').val('');
                     return;
-                }
-                var folio=String($('#folio').val().replace('B',''));//.substring(1)
-                folio=folio.toUpperCase();
-                window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
-
+                }*/
                 db.transaction(function(tx){
-                    tx.executeSql('select * from locations where upper(plataforma)=?', [folio], function (tx, res) {
+                    tx.executeSql('select * from locations where upper(location)=? and upper(wh)=?', [$('#folio').val().toUpperCase(), cwarehouse.toUpperCase()], function (tx, res) {
                         if(res.rows.length>0){
                             if(res.rows.item(0).wh==cwarehouse){//next step
-                                if(folio==clocacion){
+                                if($('#folio').val().toUpperCase()==clocacion){
                                     $('body').css("background-color","red");
                                     $('#folio').val('');
                                     $('#lblstatus').html("The location must be different");
                                     return;
                                 }
-                                cmsg += "<br/>2.- Correct location: " + folio;
+                                cmsg += "<br/>2.- Correct location: " + $('#folio').val().toUpperCase();
                                 $('#lblstatus').html(cmsg);
                                 $('body').css("background-color","green");
-                                clocacion = folio;
+                                clocacion = $('#folio').val().toUpperCase();
 
                                 if($('#reason').val() == "4. Wrong Location"){
                                     saveCapture();
@@ -360,11 +347,11 @@
                                     cstep = 2;
                                 }
                             }else{
-                                $('#lblstatus').html("The location does not belong to the warehouse: " + cwarehouse + " - " + folio);
+                                $('#lblstatus').html("The location does not belong to the warehouse: " + cwarehouse + " - " + $('#folio').val().toUpperCase());
                                 $('body').css("background-color","red");
                             }
                         }else{
-                            $('#lblstatus').html("Location does not exist. " + folio);
+                            $('#lblstatus').html("Location does not exist. " + $('#folio').val().toUpperCase());
                             $('body').css("background-color","red");
                         }
                         $('#folio').val('');
@@ -376,131 +363,73 @@
                 });
             }
             function checkitemnumber(){
-                if(!$('#folio').val().startsWith('**{')){
-                    $('#lblstatus').html("It is not a valid code. Required structure:<br/> **{itemcode}U--{lot}|*{ddmmyy}|-{weight}"+"<br/>" + $('#folio').val());
+                if(!$('#folio').val().startsWith(window.localStorage.itemprefix) && !$('#folio').val().includes('/')){
+                    $('#lblstatus').html("It is not a valid item. " + $('#folio').val());
                     $('body').css("background-color","red");
                     $('#folio').val('');
                     return;
                 }
                 if($('#folio').val().length>1){
-                    if($('#folio').val().startsWith('**{')){
-                        $('#folio').val($('#folio').val().substring('**{'.length));
+                    if($('#folio').val().startsWith(window.localStorage.itemprefix)){
+                        $('#folio').val($('#folio').val().substring(window.localStorage.itemprefix.length));
                     }
-                    //====================> Obtener y validar las partes del folio
-                    var lvalid=true;
-                    var arrtmp=$('#folio').val().split('--');
-
-                    var litem='';
-                    var llote='';
-                    var lfechaempaque='';
-                    var lpeso='';
-                    var luom='';
-                    if(arrtmp.length!=2){
-                        lvalid=false
-                    }else{
-                        var arrtmp2=arrtmp[1].split('|');
-                        if(arrtmp2.length!=3){
-                            lvalid=false;
-                        }else{
-                            litem=arrtmp[0].replace('{','').replace('}','');
-                            llote=arrtmp2[0].replace('{','').replace('}','');
-                            lfechaempaque=arrtmp2[1].replace('{','').replace('}','');
-                            lpeso=arrtmp2[2].replace('{','').replace('}','');
-                        }
+                    if($('#folio').val().includes('/')){
+                        var temparr=$('#folio').val().split('/');
+                        $('#folio').val(temparr[0]);
                     }
-                    $('#folio').val('');
-                    //Hasta aquí la estructura es correcta, validar los datos individuales
-                    if(lvalid){
-                        if(!lfechaempaque.startsWith('*')){
-                            $('#lblstatus').html("It is not a valid date, it must be start with *: "+lfechaempaque);
-                            $('body').css("background-color","red");
-                            return;
-                        }else{
-                            lfechaempaque=lfechaempaque.substring(1);
-                        }
-
-                        if(!lpeso.startsWith('-')){
-                            $('#lblstatus').html("It is not a valid weight, it must be start with -: "+lpeso);
-                            $('body').css("background-color","red");
-                            return;
-                        }else{
-                            lpeso=lpeso.substring(1);
-                        }
-                        if(isNaN(lpeso)){
-                            $('#lblstatus').html("It is not a valid weight: "+lpeso);
-                            $('body').css("background-color","red");
-                            return;
-                        }
-                        if(lfechaempaque.length!=6 && lfechaempaque.length!=10){
-                            $('#lblstatus').html("It is not a valid date: "+lfechaempaque);
-                            $('body').css("background-color","red");
-                            return;
-                        }
-                        if(!litem.endsWith('K') && !litem.endsWith('L') && !litem.endsWith('P')){
-                            $('#lblstatus').html("It is not a itemcode, it must be ends with K, L or P: "+litem);
-                            $('body').css("background-color","red");
-                            return;
-                        }
-                        luom=litem.substring(litem.length - 1);
-                        litem=litem.substring(0, litem.length - 1);
-                        //Validar Item==================================>
-                        db.transaction(function(tx){
-                            tx.executeSql('select * from masterdata where upper(itemcode)=?', [litem.toUpperCase()], function (tx, res) {
-                                if(res.rows.length>0){
-                                    if($('#folio').val().toUpperCase()==citemnumber){
-                                        $('body').css("background-color","red");
-                                        $('#folio').val('');
-                                        $('#lblstatus').html("Item number must be different");
-                                        return;
-                                    }
-                                    //======>
-                                    if(res.rows.item(0).uom!='EA'){
-                                        window.plugins.toast.showWithOptions({
-                                            message: "Verifica que la unidad de medida de éste número de parte sea "+res.rows.item(0).uom,
-                                            duration: "long",
-                                            position: "top",
-                                            styling: {
-                                              backgroundColor: '#b4b700'
-                                            }
-                                        });
-                                    }
-                                    //=======>
-                                    cmsg += "<br/>3.- Correct item number:<br/>"+litem.toUpperCase()+'<br/>'+"Description: "+res.rows.item(0).description+"<br/>UOM: " + res.rows.item(0).uom;
-                                    $('#lblstatus').html(cmsg);
-                                    $('body').css("background-color","green");
-                                    citemnumber = litem.toUpperCase();
-
-                                    cqty=lpeso;
-                                    clot=llote;
-                                    cpackingdate=lfechaempaque;
-                                    cuom=luom;
-
-                                    if($('#reason').val() == "1. Part Number Error" || $('#reason').val() == "3. Unit Mesure Discrepancy"){
-                                        saveCapture();
-                                    }else{
-                                        $('#rowopenbox').show();
-                                        $('#lblstep').html("4.- Type quantity:");
-                                        cstep = 3;
-                                    }                                    
-                                }else{
-                                    $('#lblstatus').html("Item number does not exist. " + litem);
-                                    $('body').css("background-color","red");
-                                }
-                                $('#folio').val('');
-                            }, function(error){
-                                alert(error.message);
-                            });
-                        }, function(error){
-                            alert(error.message);
-                        });
-                        //============================>Fin de validar item
-                    }else{
-                        $('#lblstatus').html("It is not a valid code. Required structure:<br/> **{itemcode}U--{lot}|*{ddmmyy}|-{weight}"+"<br/>" + $('#folio').val());
-                        $('body').css("background-color","red");
-                    }
-                    //==================================================>
                 }
-                $('#folio').val('');
+                db.transaction(function(tx){
+                    tx.executeSql('select * from masterdata where upper(itemcode)=?', [$('#folio').val().toUpperCase()], function (tx, res) {
+                        if(res.rows.length>0){
+                            //alert($('#folio').val()+'<->'+citemnumber);
+                            if($('#folio').val().toUpperCase()==citemnumber){
+                                $('body').css("background-color","red");
+                                $('#folio').val('');
+                                $('#lblstatus').html("Item number must be different");
+                                return;
+                            }
+                            //======>
+                            if(res.rows.item(0).uom!='EA'){
+                                window.plugins.toast.showWithOptions({
+                                    message: "Verifica que la unidad de medida de éste número de parte sea "+res.rows.item(0).uom,
+                                    duration: "long",
+                                    position: "top",
+                                    styling: {
+                                      backgroundColor: '#b4b700'
+                                    }
+                                });
+                            }
+                            //=======>
+                            cmsg += "<br/>3.- Correct item number:<br/>"+$('#folio').val()+'<br/>'+"Description: "+res.rows.item(0).description+"<br/>UOM: " + res.rows.item(0).uom;
+                            $('#lblstatus').html(cmsg);
+                            $('body').css("background-color","green");
+                            citemnumber = $('#folio').val().toUpperCase();
+
+                            if($('#reason').val() == "1. Part Number Error" || $('#reason').val() == "3. Unit Mesure Discrepancy"){
+                                saveCapture();
+                            }else{
+                                $('#rowopenbox').show();
+
+                                navigator.notification.confirm(
+                                    'Is the box open?',
+                                     onConfirm,
+                                    'IFA',
+                                    ['Yes','No']
+                                );
+                                $('#lblstep').html("4.- Type quantity:");
+                                cstep = 3;
+                            }
+                        }else{
+                            $('#lblstatus').html("Item number does not exist. " + $('#folio').val());
+                            $('body').css("background-color","red");
+                        }
+                        $('#folio').val('');
+                    }, function(error){
+                        alert(error.message);
+                    });
+                }, function(error){
+                    alert(error.message);
+                });
             }
             function checkqty(){
                 //Si empieza con q, quitarla.
@@ -532,7 +461,7 @@
             }
             function saveCapture(){
                 window.db.transaction(function (tx) {
-                  tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=?, resultaudit=?, lot=?, packingdate=?, uom=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cauditcounter+1,cresult, clot, cpackingdate, cuom, cfolio], function(){
+                  tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=?, resultaudit=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cauditcounter+1, cresult, cfolio], function(){
                     //Init vars
                     saveAuditLog();
                     setTimeout(function(){
@@ -549,17 +478,11 @@
                         cqty=0;
                         creasontoedit='';
                         cresult='';
-
-                        clot='';
-                        cpackingdate='';
                         cuom='';
-                        
                         $('#lblstatus').html(cmsg);
                         $('#reason').val('0');
                         $('#folio').show();
                         $('#buttonsrow').hide();
-
-                        $('#folio').focus();
                     }, 3000);
                     //=========>
                     syncdb();
@@ -573,7 +496,7 @@
             }
             function saveAuditLog(){
                 window.db.transaction(function (tx) {
-                  tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, packingdate, uom, datetimeaudit, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cauditcounter+1, cpackingdate, cuom], function(){
+                  tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, uom, datetimeaudit, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cauditcounter+1, cuom], function(){
                   
                   }, function(error){alert(error.message);});
                 }, function(error){

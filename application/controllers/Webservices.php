@@ -29,7 +29,7 @@ class Webservices extends CI_Controller {
 		$script .= "\ncreate table if not exists config (devicename, lastupdate, apiurl, tagprefix, itemprefix); ";
 		$script .= "\ncreate table if not exists users (Id, username, password, idprofile); ";
 		$script .= "\ncreate table if not exists locations (Id, wh, location, plataforma); ";
-		$script .= "\ncreate table if not exists audits (Id primary key, tag, itemcode, qty, location, reasontoedit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, packingdate, uom, tosync); ";
+		$script .= "\ncreate table if not exists audits (Id primary key, tag, itemcode, qty, location, reasontoedit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, uom, tosync); ";
 
 		$script .= "\ncreate table if not exists tags (Id, tag, area, plant, datetimecaptured, itemcode, status, qty, warehouse, location, iduser, tosync, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, reasontoedit, lot, packingdate, uom); ";
 		$script .= "\ncreate table if not exists masterdata (Id, itemcode, description, uom); ";
@@ -69,7 +69,7 @@ class Webservices extends CI_Controller {
 			$script .= "\ninsert into audits values(".$db->escape($value->Id).",'".$db->escape($value->tag)."', '".$db->escape($value->itemcode)."', '".$db->escape($value->qty)."', 
 						'".$db->escape($value->location)."', '".$db->escape($value->reasontoedit)."', '".$db->escape($value->resultaudit)."', 
 						'".$db->escape($value->iduseraudit)."', '".$db->escape($value->datetimeaudit)."', '".$db->escape($value->openbox)."', '".$db->escape($value->auditcounter)."', 
-						'".$db->escape($value->packingdate)."', '".$db->escape($value->uom)."', 0); ";
+						'".$db->escape($value->uom)."', 0); ";
 		}
 		//echo $script;
 

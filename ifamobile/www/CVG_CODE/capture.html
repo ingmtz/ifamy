@@ -109,6 +109,7 @@
             var copenbox='';
             var correctionmode=false;
             var creasontoedit='';
+            var cuom = '';
             $(document).ready(function () {
                 if(window.localStorage.idprofile=='3'){
                     $('#btnmanualsync').show();
@@ -251,6 +252,7 @@
                                     cwarehouse = res.rows.item(0).warehouse.toUpperCase();
                                     clocacion = res.rows.item(0).location.toUpperCase();
                                     citemnumber = res.rows.item(0).itemcode.toUpperCase();
+                                    cuom=res.rows.item(0).uom.toUpperCase();
                                 }catch(err) {}
                                 cqty = res.rows.item(0).qty;
                                 copenbox = res.rows.item(0).openbox;
@@ -468,6 +470,7 @@
                 window.db.transaction(function (tx) {
                   tx.executeSql("update tags set datetimecaptured=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduser=?, openbox=?, tosync=1, reasontoedit=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cfolio], function(){
                     //Init vars
+                    saveAuditLog();
                     setTimeout(function(){
                         $('#lblstep').html("1.- Scan folio:");
                         $('body').css("background-color","white");
@@ -484,6 +487,7 @@
                         correctionmode=false;
                         creasontoedit='';
                         copenbox='';
+                        cuom='';
                         $('#lblstatus').html(cmsg);
                         $('#reason').val('0');
                     }, 3000);
@@ -496,6 +500,15 @@
             }
             function onConfirm(buttonIndex) {
                 copenbox = (buttonIndex=='1' ? 'Ok' : 'No');
+            }
+            function saveAuditLog(){
+                window.db.transaction(function (tx) {
+                  tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, uom, datetimeaudit, auditcounter, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 0, 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cuom], function(){
+                  
+                  }, function(error){alert(error.message);});
+                }, function(error){
+                    alert(error.message);
+                });
             }
         </script>
     </body>

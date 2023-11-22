@@ -135,10 +135,12 @@
             var cfolio='';
             var clocacion='';
             var citemnumber='';
+            var cauditcounter = 0;
             var cqty=0;
             var copenbox='';
             var creasontoedit='';
             var cresult='';
+            var cuom = '';
             $(document).ready(function () {
                 if(window.localStorage.idprofile=='3'){
                     $('#btnmanualsync').show();
@@ -290,10 +292,12 @@
                                     cwarehouse = res.rows.item(0).warehouse.toUpperCase();
                                     clocacion = res.rows.item(0).location.toUpperCase();
                                     citemnumber = res.rows.item(0).itemcode.toUpperCase();
+                                    cuom=res.rows.item(0).uom.toUpperCase();
                             }catch(err) {}
                             cqty = res.rows.item(0).qty;
                             copenbox = res.rows.item(0).openbox;
                             cfolio = res.rows.item(0).tag;
+                            cauditcounter = Number(res.rows.item(0).auditcounter);
 
                             $('#lblstep').html("2.- Select correct or incorrect:");
                             cmsg = "Folio: " + $('#folio').val()+"<br/>";
@@ -457,8 +461,9 @@
             }
             function saveCapture(){
                 window.db.transaction(function (tx) {
-                  tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=auditcounter+1, resultaudit=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cfolio], function(){
+                  tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=?, resultaudit=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cauditcounter+1, cresult, cfolio], function(){
                     //Init vars
+                    saveAuditLog();
                     setTimeout(function(){
                         $('#lblstep').html("1.- Scan folio:");
                         $('body').css("background-color","white");
@@ -473,6 +478,7 @@
                         cqty=0;
                         creasontoedit='';
                         cresult='';
+                        cuom='';
                         $('#lblstatus').html(cmsg);
                         $('#reason').val('0');
                         $('#folio').show();
@@ -487,6 +493,15 @@
             }
             function onConfirm(buttonIndex) {
                 copenbox = (buttonIndex=='1' ? 'Ok' : 'No');
+            }
+            function saveAuditLog(){
+                window.db.transaction(function (tx) {
+                  tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, uom, datetimeaudit, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cauditcounter+1, cuom], function(){
+                  
+                  }, function(error){alert(error.message);});
+                }, function(error){
+                    alert(error.message);
+                });
             }
         </script>
     </body>

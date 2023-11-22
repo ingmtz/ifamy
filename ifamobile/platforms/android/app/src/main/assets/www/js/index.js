@@ -191,7 +191,7 @@ function syncAudits(){
             //==============>
             window.db = window.sqlitePlugin.openDatabase({ name: 'db4.db', location: 'default' });
             db.transaction(function (tx) {
-                tx.executeSql('select Id, tag, itemcode, qty, location, reasontoedit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, packingdate, uom from audits where tosync=1', [], function (tx, res) {
+                tx.executeSql('select Id, tag, itemcode, qty, location, reasontoedit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, uom from audits where tosync=1', [], function (tx, res) {
                     var datatosend = [];
                     for (var i = 0; i < res.rows.length > 0; i++) {
                         var currentaudit = res.rows.item(i);
@@ -225,27 +225,14 @@ function syncAudits(){
                         });
                     } 
                 }, function (error) {
-                    //alert('5'+error.message);
-                    if (download) {
-                        window.plugins.toast.showWithOptions({
-                            message: 'Local database is corrupted. A new it will be downloaded.',//error.message,
-                            duration: "long",
-                            position: "top",
-                            styling: {
-                                backgroundColor: '#ff9999'
-                            }
-                        });
-                        downloaddb();
-                    } else {
-                        window.plugins.toast.showWithOptions({
-                            message: 'Local database is corrupted. Download it again.',//error.message,
-                            duration: "long",
-                            position: "top",
-                            styling: {
-                                backgroundColor: '#ff9999'
-                            }
-                        });
-                    }
+                    window.plugins.toast.showWithOptions({
+                        message: 'Local database is corrupted.',//error.message,
+                        duration: "long",
+                        position: "top",
+                        styling: {
+                            backgroundColor: '#ff9999'
+                        }
+                    });
                 });
             }, function (error) {
                 //alert('6'+error.message);
@@ -263,9 +250,8 @@ function syncAudits(){
 }
 function downloaddb() {
     var fileTransfer = new FileTransfer();
-    var uri = encodeURI(window.localStorage.apiurl + "/webservices/getdatabase");
+    var uri = encodeURI("http://192.168.100.16/ifamy" + "/webservices/getdatabase");
     var fileURL = cordova.file.applicationStorageDirectory + 'databases/' + 'db4.db';
-    var apiurl = window.localStorage.apiurl;
 
     fileTransfer.onprogress = function (progressEvent) {
         if (progressEvent.lengthComputable) {
