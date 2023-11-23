@@ -1,8 +1,8 @@
 {
-    "name": "APICS",
-    "displayName": "APICS",
+    "name": "IFA",
+    "displayName": "IFA",
     "version": "1.0.0",
-    "description": "APICS by Novarumsystems.com.",
+    "description": "IFA by Novarumsystems.com.",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"

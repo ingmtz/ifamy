@@ -15,7 +15,8 @@ $config['title']='Easy Inventory';*/
 
 //=======================>
 //https://novarumsystems.com/ifa/
-$config['base_url']	= 'http://localhost/ifamy/';
+// $config['base_url']	= 'http://localhost/ifamy/';
+$config['base_url']	= '';
 
 //$tmparr=explode('/', $_SERVER['REQUEST_URI']);
 //$config['base_url']    = 'https://'.$_SERVER['HTTP_HOST'].'/'.$tmparr[1].'/';
