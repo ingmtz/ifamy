@@ -8,29 +8,29 @@
   },
   "installed_plugins": {
     "cordova-plugin-device": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-plugin-dialogs": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-plugin-file": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-plugin-file-transfer": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-plugin-qr-barcode-scanner": {
       "ANDROID_SUPPORT_V4_VERSION": "27.+",
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-plugin-whitelist": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-plugin-x-toast": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     },
     "cordova-sqlite-storage": {
-      "PACKAGE_NAME": "io.ns.apics"
+      "PACKAGE_NAME": "io.ns.ifa"
     }
   },
   "dependent_plugins": {}
