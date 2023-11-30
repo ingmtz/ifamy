@@ -261,8 +261,8 @@
 </body>
 <script type="text/javascript">
 	$(document).ready(function() {
-		var datatableaudits;
-		var tagaudits;
+		var datatableaudits = null;
+		var tagaudits = '';
 
 		$('#toaudit').click(function(event) {
 			if ($('#starttag').val().length != 5 || $('#finaltag').val().length != 5 || isNaN($('#starttag').val()) || isNaN($('#finaltag').val()) || $('#finaltag').val() == '' || $('#starttag').val() == '') {
@@ -340,41 +340,7 @@
 			]
 		});
 
-		datatableaudits=$('#audits').DataTable({
-			"language": {
-                "url": "<?php echo base_url(); ?>assets/datatables2/<?php echo $this->session->userdata('site_lang'); ?>.json",
-                buttons: {
-		            pageLength: {
-		                _: "<?php echo $this->lang->line('Showing'); ?> %d <?php echo $this->lang->line('rows'); ?>",
-		                '-1': "<?php echo $this->lang->line('Showing all'); ?>"
-		            }
-		        }
-            },
-			responsive: true,
-			"processing": true,
-        	"serverSide": true,
-			"ajax": {
-          			url: "<?php echo base_url(); ?>tags/loaddataaudits",
-          			data: function ( d ) {
-						return $.extend( {}, d, {
-	               	 		"tag": tagaudits
-	              		});
-				    }
-          		  },
-			dom: 'Bfrtip',
-			lengthMenu: [
-	            [ 10, 25, 50, -1 ],
-	            [ '10 <?php echo $this->lang->line('rows'); ?>', '25 <?php echo $this->lang->line('rows'); ?>', '50 <?php echo $this->lang->line('rows'); ?>', '<?php echo $this->lang->line('Show all'); ?>' ]
-	        ],
-	        buttons: [
-	            /*'copyHtml5',*/
-	            'excelHtml5',
-	            /*'csvHtml5',*/
-	            //'print',
-	            'pageLength'
-	        ]
-		});
-		//End button export--------------->
+	
 		$('#bycoma').keydown(function(e) {
 			if (e.keyCode == 13 || e.keyCode == 9) {
 				$('#btnbycoma').click();
@@ -433,14 +399,54 @@
 			tagaudits=basetr.children().eq(1).html();
 
 			$('#modalauditslabel').text('Audits for Tag: '+tagaudits);
-
-			datatableaudits.ajax.reload();
+			cargarhistorialauditorias();
 			$('#modalaudits').modal('show');
-			setTimeout(() => {
-				datatableaudits.draw();
-			}, 150);
+			
 			
 		});
+
+		function cargarhistorialauditorias(){
+			if(datatableaudits == null){
+
+				datatableaudits=$('#audits').DataTable({
+					"language": {
+						"url": "<?php echo base_url(); ?>assets/datatables2/<?php echo $this->session->userdata('site_lang'); ?>.json",
+						buttons: {
+							pageLength: {
+								_: "<?php echo $this->lang->line('Showing'); ?> %d <?php echo $this->lang->line('rows'); ?>",
+								'-1': "<?php echo $this->lang->line('Showing all'); ?>"
+							}
+						}
+					},
+					responsive: true,
+					"processing": true,
+					"serverSide": true,
+					"ajax": {
+							url: "<?php echo base_url(); ?>tags/loaddataaudits",
+							data: function ( d ) {
+								return $.extend( {}, d, {
+									"tag": tagaudits
+								});
+							}
+						},
+					dom: 'Bfrtip',
+					lengthMenu: [
+						[ 10, 25, 50, -1 ],
+						[ '10 <?php echo $this->lang->line('rows'); ?>', '25 <?php echo $this->lang->line('rows'); ?>', '50 <?php echo $this->lang->line('rows'); ?>', '<?php echo $this->lang->line('Show all'); ?>' ]
+					],
+					buttons: [
+						/*'copyHtml5',*/
+						'excelHtml5',
+						/*'csvHtml5',*/
+						//'print',
+						'pageLength'
+					]
+				});
+			}else{
+
+				datatableaudits.ajax.reload();
+			}
+		}
 	});
 </script>
 
