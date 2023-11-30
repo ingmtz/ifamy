@@ -70,7 +70,7 @@
                     </div>
                     <div class="row form-group">
                         <div class="col-md-12">
-                            <p style="margin-top: 10px;">Version 5.5 2022-07-27</p>
+                            <p style="margin-top: 10px;">Version 6.1 2023-11-30</p>
                         </div>
                     </div>
                 </div>
@@ -92,11 +92,11 @@
                         db.transaction(function(tx){
                             //Check if row exists
                             tx.executeSql('SELECT * from tags', [], function (tx, res) {
-                                if(res.rows.length>0){
+                                /*if(res.rows.length>0){
                                     alert(res.rows.item(0).tag);
                                 }else{
                                     alert('sin datos');
-                                }
+                                }*/
                             }, function(error){
                                 //alert('You need to download database.');
                                 alert(error.message);
