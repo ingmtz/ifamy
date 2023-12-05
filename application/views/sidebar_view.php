@@ -85,7 +85,7 @@
 										<li><a href="<?php echo base_url(); ?>tags"><?php echo $this->lang->line('Tags'); ?></a></li>
 										<!--<li><a href="<?php echo base_url(); ?>areas"><?php echo $this->lang->line('Areas'); ?></a></li>-->
 										<li><a href="<?php echo base_url(); ?>tags/locations"><?php echo $this->lang->line('Locations'); ?></a></li>
-										<li><a href="<?php echo base_url(); ?>providers"><?php echo $this->lang->line('Providers'); ?></a></li>
+										<!-- <li><a href="<?php echo base_url(); ?>providers"><?php echo $this->lang->line('Providers'); ?></a></li> -->
 										<li><a href="<?php echo base_url(); ?>settings"><?php echo $this->lang->line('Settings'); ?></a></li>
 										<li><a href="<?php echo base_url(); ?>users"><?php echo $this->lang->line('Users'); ?></a></li>
 										<!--<li><a href="<?php echo base_url(); ?>users/specialusers">Special Users</a></li>-->
