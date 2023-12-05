@@ -218,6 +218,7 @@
                     $('#folio').focus();
                 });
                 $('#btnmanualsync').click(function(event) {
+                    $('#btnmanualsync').prop('disabled', true).val('Wait...');
                     /*window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
                     db.transaction(function(tx){
                         tx.executeSql('select * from tags', [], function (tx, res) {
@@ -380,6 +381,7 @@
                 }
                 db.transaction(function(tx){
                     tx.executeSql('select * from masterdata where upper(itemcode)=?', [$('#folio').val().toUpperCase()], function (tx, res) {
+                        
                         if(res.rows.length>0){
                             //alert($('#folio').val()+'<->'+citemnumber);
                             if($('#folio').val().toUpperCase()==citemnumber){
@@ -463,6 +465,7 @@
                 window.db.transaction(function (tx) {
                   tx.executeSql("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduseraudit=?, openbox=?, tosync=1, reasontoedit=?, auditcounter=?, resultaudit=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cauditcounter+1, cresult, cfolio], function(){
                     //Init vars
+                    guardarlog("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode="+citemnumber+", status='Used', qty="+cqty+", location="+clocacion+", iduseraudit="+window.localStorage.iduser+", openbox="+copenbox+", tosync=1, reasontoedit="+creasontoedit+", auditcounter="+(cauditcounter+1)+", resultaudit="+cresult+" where tag="+cfolio+"");
                     saveAuditLog();
                     setTimeout(function(){
                         $('#lblstep').html("1.- Scan folio:");
@@ -497,7 +500,7 @@
             function saveAuditLog(){
                 window.db.transaction(function (tx) {
                   tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, uom, datetimeaudit, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cauditcounter+1, cuom], function(){
-                  
+                    guardarlog("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, uom, datetimeaudit, tosync)  VALUES("+cfolio+", "+citemnumber+", "+cqty+", "+clocacion+", "+window.localStorage.iduser+", "+copenbox+", "+creasontoedit+", "+cresult+", "+(cauditcounter+1)+", "+cuom+", datetime('now', 'localtime'), 1)");
                   }, function(error){alert(error.message);});
                 }, function(error){
                     alert(error.message);

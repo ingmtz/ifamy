@@ -51,4 +51,11 @@ class Webservices_model extends CI_Model {
     function insertAudit($audit){
         $this->db->insert('audits', $audit);
     }
+
+    function getAudit($audit){
+        $this->db->where('tag', $audit['tag']);
+        $this->db->where('auditcounter', $audit['auditcounter']);
+        $query=$this->db->get('audits');
+        return $query->result();
+    }
 }

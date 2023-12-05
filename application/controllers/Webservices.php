@@ -124,9 +124,12 @@ class Webservices extends CI_Controller {
 
 			if(isset($_POST['data'])){if(is_array($_POST['data'])){
 				foreach ($_POST['data'] as $key => $audit) {
-					unset($audit['Id']);
-					unset($audit['tosync']);
-					$this->webservices_model->insertAudit($audit);
+					$existAudit = $this->webservices_model->getAudit($audit);
+					if(empty($existAudit)){
+						unset($audit['Id']);
+						unset($audit['tosync']);
+						$this->webservices_model->insertAudit($audit);
+					}
 				}
 			}}
 			echo 'ok';

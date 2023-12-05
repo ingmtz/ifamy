@@ -470,6 +470,7 @@
                 window.db.transaction(function (tx) {
                   tx.executeSql("update tags set datetimecaptured=datetime('now', 'localtime'), itemcode=?, status='Used', qty=?, location=?, iduser=?, openbox=?, tosync=1, reasontoedit=? where tag=?", [citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cfolio], function(){
                     //Init vars
+                    guardarlog("update tags set datetimeaudit=datetime('now', 'localtime'), itemcode="+citemnumber+", status='Used', qty="+cqty+", location="+clocacion+", iduser="+window.localStorage.iduser+", openbox="+copenbox+", tosync=1, reasontoedit="+creasontoedit+"uom, datetimeaudit, auditcounter, tosyncwhere tag="+cfolio+"");
                     saveAuditLog();
                     setTimeout(function(){
                         $('#lblstep').html("1.- Scan folio:");
@@ -504,7 +505,7 @@
             function saveAuditLog(){
                 window.db.transaction(function (tx) {
                   tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, uom, datetimeaudit, auditcounter, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 0, 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cuom], function(){
-                  
+                    guardarlog("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, uom, datetimeaudit, auditcounter, tosync)  VALUES("+cfolio+", "+citemnumber+", "+cqty+", "+clocacion+", "+window.localStorage.iduser+", "+copenbox+", "+creasontoedit+", "+cuom+", datetime('now', 'localtime'), 0, 1)");
                   }, function(error){alert(error.message);});
                 }, function(error){
                     alert(error.message);

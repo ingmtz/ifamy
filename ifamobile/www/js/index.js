@@ -66,6 +66,8 @@ function syncdb(download) {
                                         backgroundColor: '#ff9999'
                                     }
                                 });
+                                
+                                $('#btnmanualsync').prop('disabled', false).val('Manual send');
                             }
                         }).fail(function (xhr, status, error) {
                             $('#lblstatus').html(xhr.responseText);
@@ -77,10 +79,14 @@ function syncdb(download) {
                                     backgroundColor: '#ff9999'
                                 }
                             });
+                            
+                            $('#btnmanualsync').prop('disabled', false).val('Manual send');
                         });
                     } else {
                         if (download) {
                             downloaddb();
+                        }else{
+                            $('#btnmanualsync').prop('disabled', false).val('Manual send');
                         }
                     }
                 }, function (error) {
@@ -128,6 +134,9 @@ function tosync0(ids) {
     db.transaction(function (tx) {
         //alert('update tags set tosync=0 where Id in ('+ids+')');
         tx.executeSql('update tags set tosync=0 where Id in (' + ids + ')', [], function (tx, res) {
+            guardarlog('update tags set tosync=0 where Id in (' + ids + ')');
+            
+            $('#btnmanualsync').prop('disabled', false).val('Manual send');
             window.plugins.toast.showWithOptions({
                 message: 'Successfully sync',
                 duration: "long",
@@ -163,6 +172,7 @@ function tosyncAuditsIds() {
     window.db = window.sqlitePlugin.openDatabase({ name: 'db4.db', location: 'default' });
     db.transaction(function (tx) {
         tx.executeSql('update audits set tosync=0 where Id IS NULL', [], function (tx, res) {
+            guardarlog('update audits set tosync=0 where Id IS NULL');
            
         }, function (error) {
             window.plugins.toast.showWithOptions({
@@ -267,6 +277,7 @@ function downloaddb() {
         fileURL,
         function (entry) {
             $('#btndownload').prop('disabled', false).val('Download database');
+            $('#btnreplacedb').prop('disabled', false).val('Replace database');
             window.localStorage.apiurl = $('#serverurl').val();
             //alert("download complete: " + entry.toURL());
             //listDir(cordova.file.applicationStorageDirectory+'databases/');
@@ -275,6 +286,7 @@ function downloaddb() {
         },
         function (error) {
             $('#btndownload').prop('disabled', false).val('Download database');
+            $('#btnreplacedb').prop('disabled', false).val('Replace database');
             //alert('Error: Unable to access api url.');
             alert(JSON.stringify(error));
         },
@@ -285,4 +297,18 @@ function downloaddb() {
             }
         }
     );
+}
+
+function guardarlog(query){
+    var log = window.localStorage.getItem("logdb");
+
+    if(!log){
+        log = [];
+    }else{
+        log = JSON.parse(log);
+    }
+    log.push(query);
+
+    
+    window.localStorage.setItem("logdb", JSON.stringify(log));
 }

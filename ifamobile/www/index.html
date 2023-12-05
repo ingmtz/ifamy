@@ -70,7 +70,15 @@
                     </div>
                     <div class="row form-group">
                         <div class="col-md-12">
-                            <p style="margin-top: 10px;">Version 6.1 2023-11-30</p>
+                            <p style="margin-top: 10px;">Version 6.2 2023-12-05</p>
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-xs-6">
+                            <input type="button" class="btn btn-info" value="Show Log" id="btnlog">
+                        </div>
+                        <div class="col-xs-6">
+                            <input type="button" class="btn btn-info" value="Replace database" id="btnreplacedb">
                         </div>
                     </div>
                 </div>
@@ -84,7 +92,6 @@
         <script type="text/javascript">
             $(document).ready(function () {
                 $('#btndownload').click(function(event) {
-
                     window.resolveLocalFileSystemURL(cordova.file.applicationStorageDirectory+'databases/' + 'db4.db', 
                     function(){
                         //=>
@@ -92,11 +99,7 @@
                         db.transaction(function(tx){
                             //Check if row exists
                             tx.executeSql('SELECT * from tags', [], function (tx, res) {
-                                /*if(res.rows.length>0){
-                                    alert(res.rows.item(0).tag);
-                                }else{
-                                    alert('sin datos');
-                                }*/
+                                
                             }, function(error){
                                 //alert('You need to download database.');
                                 alert(error.message);
@@ -107,14 +110,35 @@
                         });
                         //=>
                     }, function(err){
-                        alert('Error:'+JSON.stringify(err));
+                        if(err.code != 1){
+                            alert('Error:'+JSON.stringify(err));
+                        }
                     });
 
                     
                     window.localStorage.apiurl=$('#serverurl').val();
                     $('#btndownload').prop('disabled', true).val('Wait...');
+                    $('#btnreplacedb').prop('disabled', true).val('Wait...');
                     syncdb(true);
                     
+                });
+
+                $('#btnreplacedb').click(function(){
+                    window.localStorage.apiurl=$('#serverurl').val();
+                    $('#btndownload').prop('disabled', true).val('Wait...');
+                    $('#btnreplacedb').prop('disabled', true).val('Wait...');
+                    downloaddb();
+                });
+
+                $('#btnlog').click(function(event) {
+                    var log = window.localStorage.getItem("logdb");
+
+                    if(!log){
+                        window.localStorage.setItem("logdb", []);
+                        log = window.localStorage.getItem("logdb");
+                    }
+
+                    alert(JSON.stringify(JSON.parse(log).slice(-5)));
                 });
                 //===============>
                 var trigger = $('.hamburger'),
@@ -200,7 +224,9 @@
                                         window.location.href="login.html";
                                     }
                                 }else{
-                                    tx.executeSql('insert into config values(?, ?, ?)', [device.uuid, "Never", $('#serverurl').val()], function(){}, function(error){alert(error.message);});
+                                    tx.executeSql('insert into config values(?, ?, ?)', [device.uuid, "Never", $('#serverurl').val()], function(){
+                                        guardarlog('insert into config values('+device.uuid+', "Never", '+ $('#serverurl').val()+')');
+                                    }, function(error){alert(error.message);});
                                     $('#lblstatus').html('Last sync: Never<br/>');
                                 }
                             }, function(error){
