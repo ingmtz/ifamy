@@ -286,6 +286,7 @@ class Tags extends MY_Controller {
 		$query="select a.Id, a.tag, a.area, a.plant, a.printcounter, a.openbox, a.qty, d.cost_price*a.qty as extended, a.resultaudit, c.name, a.datetimeaudit, auditcounter, a.precounted from tags a
 		left join masterdata d on d.itemcode=a.itemcode
 		left join users c on a.iduseraudit=c.Id 
+		where a.status = 'Used'
 		";//where a.toaudit=1 or a.openbox='Ok'
 		$primaryKey = 'Id';
 

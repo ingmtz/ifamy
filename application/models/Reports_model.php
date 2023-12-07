@@ -67,7 +67,7 @@ class Reports_model extends CI_Model {
                 *case when a.cost_price is null then 0 else a.cost_price end)>=".$params['greaterthan']."
             ) tmp2 on a.itemcode = tmp2.itemcode
 
-            where (not tmp2.itemcode is null ";
+            where a.status = 'Used' and (not tmp2.itemcode is null ";
             if($params['openbox']==1){
                 $querystr.=" or (a.openbox='Ok' or a.openbox='1') ";
             }
@@ -240,7 +240,7 @@ class Reports_model extends CI_Model {
         $querystr="select b.name, c.profile, count(*) as cuantos from tags a
         left join users b on a.iduseraudit=b.Id
         left join profiles c on b.idprofile=c.Id
-        where a.auditcounter>0
+        where a.auditcounter>0 and a.status = 'Used'
         group by b.name
         order by count(*) desc";
         $query=$this->db->query($querystr);
