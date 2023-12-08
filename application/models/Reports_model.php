@@ -265,7 +265,7 @@ class Reports_model extends CI_Model {
         ROW_NUMBER() OVER (
             ORDER BY temp.plant, temp.area
         ) AS Id,
-        COALESCE(temp.plant, 'Without plant') AS plant, COALESCE(temp.area, 'Without area') AS area,
+        case when temp.plant is null then 'Without plant'  else temp.plant end AS plant, case when temp.area is null then 'Without area'  else temp.area end AS area,
         sum((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
         from masterdata a
         left join perpetuo b on a.itemcode=b.itemcode
