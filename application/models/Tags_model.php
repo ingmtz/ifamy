@@ -67,7 +67,7 @@ class Tags_model extends CI_Model {
     }
     //Routines
     function getRoutineOpenBox(){
-        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant,
+        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant, a.auditcounter,
 
         tmp2.total as extended
         , case when a.precounted='Ok' or a.precounted='1' then 'Yes' else 'No' end as precounted
@@ -97,7 +97,7 @@ class Tags_model extends CI_Model {
         return $query->result();
     }
     function getRoutinePrecounted(){
-        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant,
+        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant, a.auditcounter,
 
         tmp2.total as extended
         , case when a.precounted='Ok' or a.precounted='1' then 'Yes' else 'No' end as precounted
@@ -127,7 +127,7 @@ class Tags_model extends CI_Model {
         return $query->result();
     }
     function greaterthan($param){
-        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant,
+        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant, a.auditcounter,
 
         tmp2.total as extended
         , case when a.precounted='Ok' or a.precounted='1' then 'Yes' else 'No' end as precounted
@@ -159,7 +159,7 @@ class Tags_model extends CI_Model {
         return $query->result();
     }
     function lessthan($param){
-        $querystr=$querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant,
+        $querystr=$querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant, a.auditcounter,
 
         tmp2.total as extended
         , case when a.precounted='Ok' or a.precounted='1' then 'Yes' else 'No' end as precounted
@@ -191,7 +191,7 @@ class Tags_model extends CI_Model {
         return $query->result();
     }
     function routinesall($lessthan, $greaterthan){
-        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant,
+        $querystr="select a.datetimecaptured, a.tag, a.area as areadesc, a.warehouse, a.location, a.itemcode, b.uom, a.status, a.qty, b.description, b.type, d.name, b.cost_price, a.plant, a.auditcounter,
 
         tmp2.total as extended
 

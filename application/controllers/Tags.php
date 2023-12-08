@@ -464,8 +464,10 @@ class Tags extends MY_Controller {
         if($this->config->item('client')=='AtlanticPrime'){
         	$sheet->setCellValue("Q1", 'Precounted');
         	$sheet->setCellValue("R1", 'Routine');
+        	$sheet->setCellValue("S1", 'Audit counter');
         }else{
         	$sheet->setCellValue("Q1", 'Routine');
+        	$sheet->setCellValue("R1", 'Audit counter');
         }
 
         //--------------> Ancho de las columnas
@@ -486,16 +488,17 @@ class Tags extends MY_Controller {
 	        $sheet->getColumnDimension('O')->setAutoSize(true);
 	        $sheet->getColumnDimension('P')->setAutoSize(true);
 	        $sheet->getColumnDimension('Q')->setAutoSize(true);
+			$sheet->getColumnDimension('R')->setAutoSize(true);
 	        if($this->config->item('client')=='AtlanticPrime'){
-	        	$sheet->getColumnDimension('R')->setAutoSize(true);
+	        	$sheet->getColumnDimension('S')->setAutoSize(true);
 	        }
         //-----------------------------------> Color
         if($this->config->item('client')=='AtlanticPrime'){
-        	$objPHPExcel->getActiveSheet()->getStyle('A1:R1')->getFill()
+        	$objPHPExcel->getActiveSheet()->getStyle('A1:S1')->getFill()
         ->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
         ->getStartColor()->setARGB('FFE8E5E5');
         }else{
-        	$objPHPExcel->getActiveSheet()->getStyle('A1:Q1')->getFill()
+        	$objPHPExcel->getActiveSheet()->getStyle('A1:R1')->getFill()
 	        ->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
 	        ->getStartColor()->setARGB('FFE8E5E5');
         }
@@ -523,8 +526,10 @@ class Tags extends MY_Controller {
             if($this->config->item('client')=='AtlanticPrime'){
 	        	$sheet->setCellValueExplicit("Q$contador", $value->precounted,PHPExcel_Cell_DataType::TYPE_STRING);
 	        	$sheet->setCellValueExplicit("R$contador", $value->routine,PHPExcel_Cell_DataType::TYPE_STRING);
+	        	$sheet->setCellValueExplicit("S$contador", $value->auditcounter,PHPExcel_Cell_DataType::TYPE_STRING);
 	        }else{
 	        	$sheet->setCellValueExplicit("Q$contador", $value->routine,PHPExcel_Cell_DataType::TYPE_STRING);
+	        	$sheet->setCellValueExplicit("R$contador", $value->auditcounter,PHPExcel_Cell_DataType::TYPE_STRING);
 	        }
         }
                     
