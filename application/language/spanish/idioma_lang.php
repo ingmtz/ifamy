@@ -8,6 +8,7 @@ $lang['Total capture report'] 		= 'Reporte de captura';
 $lang['Progress report'] 			= 'Reporte de progreso de captura';
 $lang['Audit progress report'] 		= 'Reporte de progreso de auditoría';
 $lang['Variation report by item'] 	= 'Reporte de variación por número de parte';
+$lang['Variation report by area'] 	= 'Reporte de variación por área';
 $lang['Locations report'] 			= 'Reporte por locaciones';
 $lang['Import files'] 				= 'Importar archivos';
 $lang['Database config'] 			= 'Bases de datos';

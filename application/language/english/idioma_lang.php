@@ -8,6 +8,7 @@ $lang['Total capture report'] 		= 'Total capture report';
 $lang['Progress report'] 			= 'Capture progress report';
 $lang['Audit progress report'] 		= 'Audit progress report';
 $lang['Variation report by item'] 	= 'Variation report by item';
+$lang['Variation report by area'] 	= 'Variation report by area';
 $lang['Locations report'] 			= 'Locations report';
 $lang['Import files'] 				= 'Import files';
 $lang['Database config'] 			= 'Database config';

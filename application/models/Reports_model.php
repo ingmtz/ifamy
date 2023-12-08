@@ -259,4 +259,25 @@ class Reports_model extends CI_Model {
         $query=$this->db->query($querystr);
         return $query->result();
     }
+
+    function getvariationarea(){
+        $querystr="select           
+        ROW_NUMBER() OVER (
+            ORDER BY temp.plant, temp.area
+        ) AS Id,
+        COALESCE(temp.plant, 'Without plant') AS plant, COALESCE(temp.area, 'Without area') AS area,
+        sum((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
+        from masterdata a
+        left join perpetuo b on a.itemcode=b.itemcode
+        left join (
+                                select a.itemcode, sum(qty) as total, plant, area
+                                from tags a
+                                where not a.itemcode is null
+                                group by a.itemcode
+                                ) as temp on temp.itemcode=a.itemcode
+           group by
+           temp.plant, temp.area";
+        $query=$this->db->query($querystr);
+        return $query->result();
+    }
 }

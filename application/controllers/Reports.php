@@ -595,6 +595,36 @@ class Reports extends MY_Controller {
 		sleep(1);
 		echo json_encode($result);
 	}
+
+	//------>
+	public function variationarea(){
+		$this->load->view('reportvariationarea_view');
+	}
+	public function getdatareportvariationarea(){
+		$variationarea = $this->reports_model->getvariationarea();
+		$data = array();
+		foreach($variationarea as $key => $value){
+			$parent = array('id' => $value->Id, 'name' => $value->plant);
+			if(!in_array($parent, $data)){
+				$data[] = $parent;
+			}
+
+			//$data[] = array('id' => $value->area, 'name' => $value->area, 'color' => $this->randcolor());
+			$data[] = array('parent' => $value->Id, 'name' => $value->area.' ($'.number_format($value->extvariation, 2).')', 'value' => $value->extvariation);
+			
+		}
+
+		foreach($data as $key => $value){
+			if(isset($value['id'])){
+				$data[$key]['color'] = $this->randcolor();
+			}
+		}
+		echo json_encode($data);
+	}
+	function randcolor() {
+		return '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+	}
+	//=======>
 	//------>
 	function variationbywarehouse(){
 		$data['totals']=$this->reports_model->getvariationreporttotals();

@@ -126,7 +126,7 @@
 										<th colspan="2" style="background-color:beige;"><?php echo $this->lang->line('Counted'); ?></th>
 										<th style="text-align:right;background-color:beige;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
 										<th colspan="2" style="background-color:aliceblue;"><?php echo $this->lang->line('Variation'); ?></th>
-										<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?>
+										<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>;color:<?php if ($totals->extvariation < 0) { ?>white<?php } else { ?>black;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?>
 									</b></th>
 									</tr>
 									<tr>
@@ -156,7 +156,7 @@
 										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
 										<th></th>
 										<th></th>
-										<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?></b></th>
+										<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>;color:<?php if ($totals->extvariation < 0) { ?>white<?php } else { ?>black;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?></b></th>
 									</tr>
 								</tfoot>
 							</table>
