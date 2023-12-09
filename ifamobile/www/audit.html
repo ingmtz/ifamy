@@ -149,7 +149,7 @@
                 }
                 $('#folio').focus();
                 $('#folio').keydown(function(e) {
-                    if (e.keyCode == 13 || e.keyCode == 9) {
+                    if ((e.keyCode == 13 || e.keyCode == 9) && !processLocked) {
                         switch (cstep) {
                             case 0:
                                 checkfolio();
@@ -162,6 +162,9 @@
                                 break;
                             case 3:
                                 checkqty();
+                                break;
+                            default:
+                                unlockProcess();
                                 break;
                         }
                     }
@@ -279,10 +282,16 @@
                 }, 60000);
             });
             function checkfolio(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 if(!$('#folio').val().startsWith(window.localStorage.tagprefix)){
                     $('#lblstatus').html("It is not a valid folio. " + $('#folio').val());
                     $('body').css("background-color","red");
                     $('#folio').val('');
+                    unlockProcess();
                     return;
                 }
                 window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
@@ -311,15 +320,23 @@
                             $('#lblstatus').html("Folio does not exist or has no status used. " + $('#folio').val());
                             $('body').css("background-color","red");
                         }
+                        unlockProcess();
                         $('#folio').val('');
                     }, function(error){
+                        unlockProcess();
                         alert(error.message);
                     });
                 }, function(error){
+                    unlockProcess();
                     alert(error.message);
                 });
             }
             function checklocation(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 /*if(!$('#folio').val().startsWith('L') && !$('#folio').val().startsWith('l')){
                     $('#lblstatus').html("It is not a valid location. " + $('#folio').val());
                     $('body').css("background-color","red");
@@ -334,6 +351,7 @@
                                     $('body').css("background-color","red");
                                     $('#folio').val('');
                                     $('#lblstatus').html("The location must be different");
+                                    unlockProcess();
                                     return;
                                 }
                                 cmsg += "<br/>2.- Correct location: " + $('#folio').val().toUpperCase();
@@ -355,19 +373,28 @@
                             $('#lblstatus').html("Location does not exist. " + $('#folio').val().toUpperCase());
                             $('body').css("background-color","red");
                         }
+                        unlockProcess();
                         $('#folio').val('');
                     }, function(error){
+                        unlockProcess();
                         alert(error.message);
                     });
                 }, function(error){
+                    unlockProcess();
                     alert(error.message);
                 });
             }
             function checkitemnumber(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 if(!$('#folio').val().startsWith(window.localStorage.itemprefix) && !$('#folio').val().includes('/')){
                     $('#lblstatus').html("It is not a valid item. " + $('#folio').val());
                     $('body').css("background-color","red");
                     $('#folio').val('');
+                    unlockProcess();
                     return;
                 }
                 if($('#folio').val().length>1){
@@ -388,6 +415,7 @@
                                 $('body').css("background-color","red");
                                 $('#folio').val('');
                                 $('#lblstatus').html("Item number must be different");
+                                unlockProcess();
                                 return;
                             }
                             //======>
@@ -425,15 +453,23 @@
                             $('#lblstatus').html("Item number does not exist. " + $('#folio').val());
                             $('body').css("background-color","red");
                         }
+                        unlockProcess();
                         $('#folio').val('');
                     }, function(error){
+                        unlockProcess();
                         alert(error.message);
                     });
                 }, function(error){
+                    unlockProcess();
                     alert(error.message);
                 });
             }
             function checkqty(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 //Si empieza con q, quitarla.
                 $('#folio').val($('#folio').val().replace('Q','').replace('q',''));
 
@@ -443,6 +479,7 @@
                             $('body').css("background-color","red");
                             $('#folio').val('');
                             $('#lblstatus').html("Quantity must be different");
+                            unlockProcess();
                             return;
                         }
                         cmsg += "<br/>4.- Correct quantity: " + $('#folio').val();
@@ -459,6 +496,7 @@
                     $('#lblstatus').html("Invalid quantity");
                     $('body').css("background-color","red");
                 }
+                unlockProcess();
                 $('#folio').val('');
             }
             function saveCapture(){
@@ -486,12 +524,15 @@
                         $('#reason').val('0');
                         $('#folio').show();
                         $('#buttonsrow').hide();
+                        unlockProcess();
                     }, 3000);
                     //=========>
                     syncdb();
-                  }, function(error){alert(error.message);});
+                  }, function(error){alert(error.message);
+                        unlockProcess();});
                 }, function(error){
                     alert(error.message);
+                        unlockProcess();
                 });
             }
             function onConfirm(buttonIndex) {
@@ -501,9 +542,11 @@
                 window.db.transaction(function (tx) {
                   tx.executeSql("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, uom, datetimeaudit, tosync)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), 1)", [cfolio, citemnumber, cqty, clocacion, window.localStorage.iduser, copenbox, creasontoedit, cresult, cauditcounter+1, cuom], function(){
                     guardarlog("insert into audits(tag, itemcode, qty, location, iduseraudit, openbox, reasontoedit, resultaudit, auditcounter, uom, datetimeaudit, tosync)  VALUES("+cfolio+", "+citemnumber+", "+cqty+", "+clocacion+", "+window.localStorage.iduser+", "+copenbox+", "+creasontoedit+", "+cresult+", "+(cauditcounter+1)+", "+cuom+", datetime('now', 'localtime'), 1)");
-                  }, function(error){alert(error.message);});
+                  }, function(error){alert(error.message);
+                        unlockProcess();});
                 }, function(error){
                     alert(error.message);
+                        unlockProcess();
                 });
             }
         </script>
