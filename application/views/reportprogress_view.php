@@ -398,6 +398,17 @@
 			var tdheight=Number($('#thportion').height())+9;//12 padding top and bottom//42.5;//43.75; //26
 			var totalused=0;
 			var totaltags=0;
+
+			obj.sort((a, b) => {
+				<?php if($type=='capture'){ ?>
+				var countedA=Number(a.used)+Number(a.voided)+Number(a.blank);
+				var countedB=Number(b.used)+Number(b.voided)+Number(b.blank);
+				<?php }else{ ?>
+				var countedA=Number(a.audit);
+				var countedB=Number(b.audit);
+				<?php }?>
+				return (countedB/b.total) - (countedA/a.total);
+			});
 			$.each(obj, function(index, val) {
 				<?php if($type=='capture'){ ?>
 				var counted=Number(val.used)+Number(val.voided)+Number(val.blank);

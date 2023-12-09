@@ -137,7 +137,7 @@ class Reports_model extends CI_Model {
         $query=$this->db->query($querystr);
         return $query->result();
     }
-    public function getvariationreporttotals(){
+    public function getvariationreporttotals($plant = '', $area = ''){
         $querystr="select           
                     sum(case when b.onhand is null then 0 else b.onhand end) as onhand, 
 
@@ -159,11 +159,18 @@ class Reports_model extends CI_Model {
                     from masterdata a
                     left join perpetuo b on a.itemcode=b.itemcode
                     left join (
-                                            select a.itemcode, sum(qty) as total
+                                            select a.itemcode, sum(qty) as total, area, plant
                                             from tags a
                                             where not a.itemcode is null
                                             group by a.itemcode
                                             ) as temp on temp.itemcode=a.itemcode";
+
+        if($plant == 'null' && $area == 'null'){
+            $querystr.=" where temp.plant is null and temp.area is null";
+
+        }else if($plant != '' && $area != ''){
+            $querystr.=" where temp.plant = '".$plant."' and temp.area = '".$area."'";
+        }
         $query=$this->db->query($querystr);
         return $query->row();
     }
@@ -262,8 +269,8 @@ class Reports_model extends CI_Model {
 
     function getvariationarea(){
         $querystr="select           
-        CONCAT(case when temp.plant is null then 'Without plant'  else temp.plant end, case when temp.area is null then 'Without area' else temp.area end) AS Id,
-        case when temp.plant is null then 'Without plant'  else temp.plant end AS plant, case when temp.area is null then 'Without area' else temp.area end AS area,
+        CONCAT(case when temp.plant is null then 'null'  else temp.plant end, '|',case when temp.area is null then 'null' else temp.area end) AS Id,
+        case when temp.plant is null then 'NO plant identified'  else temp.plant end AS plant, case when temp.area is null then 'NO area identified' else temp.area end AS area,
         sum((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
         from masterdata a
         left join perpetuo b on a.itemcode=b.itemcode
