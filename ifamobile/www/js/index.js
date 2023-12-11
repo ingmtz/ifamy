@@ -29,6 +29,18 @@ var app = {
 
 app.initialize();
 
+let processLocked = false;
+
+function lockProcess() {
+    $("#folio").prop("disabled", true);
+    processLocked = true;
+}
+
+function unlockProcess() {
+    $("#folio").prop("disabled", false);
+    processLocked = false;
+}
+
 function syncdb(download) {
     syncAudits();
     window.resolveLocalFileSystemURL(cordova.file.applicationStorageDirectory + 'databases/' + 'db4.db',

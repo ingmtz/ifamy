@@ -403,6 +403,16 @@ class Reports extends MY_Controller {
 	public function loadvariationdata(){
 		$moneysign='$';
 		$decimals=2;
+		$plant = "";
+		$area = "";
+		if(isset($_GET['plant'])){
+			$plant = $_GET['plant'];
+		}
+
+		if(isset($_GET['area'])){
+			$area = $_GET['area'];
+		}
+
 		if($this->config->item('client')=='AtlanticPrime'){
 			$moneysign='';
 			$decimals=2;
@@ -419,12 +429,18 @@ class Reports extends MY_Controller {
 					from masterdata a
 					left join perpetuo b on a.itemcode=b.itemcode
 					left join (
-						select a.itemcode, sum(qty) as total
+						select a.itemcode, sum(qty) as total, plant, area
 						from tags a
 						where not a.itemcode is null
 						group by a.itemcode
 						) as temp on temp.itemcode=a.itemcode";
 
+			if($plant == 'null' && $area == 'null'){
+				$querystr.=" where temp.plant is null and temp.area is null";
+
+			}else if($plant != '' && $area != ''){
+				$querystr.=" where temp.plant = '".$plant."' and temp.area = '".$area."'";
+			}
 			$primaryKey = 'itemcode';//'Id';
 
 			$columns = array(
@@ -595,7 +611,6 @@ class Reports extends MY_Controller {
 		sleep(1);
 		echo json_encode($result);
 	}
-
 	//------>
 	public function variationarea(){
 		$this->load->view('reportvariationarea_view');
@@ -609,8 +624,10 @@ class Reports extends MY_Controller {
 				$data[] = $parent;
 			}
 
+			$variation = ($value->extvariation < 0) ? '('.number_format(abs($value->extvariation)).')' : number_format(abs($value->extvariation));
+
 			//$data[] = array('id' => $value->area, 'name' => $value->area, 'color' => $this->randcolor());
-			$data[] = array('parent' => $value->Id, 'name' => $value->area.' ($'.number_format($value->extvariation, 2).')', 'value' => $value->extvariation);
+			$data[] = array('parent' => $value->Id, 'name' => $value->area.' <br/> '.$variation, 'value' => $value->extvariation);
 			
 		}
 
@@ -623,6 +640,75 @@ class Reports extends MY_Controller {
 	}
 	function randcolor() {
 		return '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+	}
+
+	function gettotalsvariation(){
+
+		$totals=$this->reports_model->getvariationreporttotals($_POST['plant'], $_POST['area']);
+		$header = "";
+		$footer = "";
+
+		$moneysign='$';
+		$decimals=2;
+		if($this->config->item('client')=='AtlanticPrime'){
+			$moneysign='';
+			$decimals=2;
+		}
+		if($this->config->item('client') != 'AtlanticPrime'){
+			$extonhand = 1;
+			if($totals->extonhand>0){
+				$extonhand = $totals->extonhand;
+			}
+			$percent = ($totals->extcounted / $extonhand) * 100;
+			if($percent > 100){
+				$percent = 100;
+			}
+			
+			$header .='<th colspan="2" style="font-size: 20px; font-weight:bold;">Progress: ' . number_format($percent, $decimals, '.', ',').'%</th> 
+			<th colspan="3" style="background-color:rgba(59, 27, 103, 0.13);">'.$this->lang->line('On hand').'</th>
+			<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b>'.$moneysign.number_format($totals->extonhand, $decimals, '.', ',').'</b></th>
+			<th colspan="2" style="background-color:beige;">'.$this->lang->line('Counted').'</th>
+			<th style="text-align:right;background-color:beige;"><b>'.$moneysign.number_format($totals->extcounted, $decimals, '.', ',').'</b></th>
+			<th colspan="2" style="background-color:aliceblue;">'.$this->lang->line('Variation').'</th>
+			<th style="text-align:right;background-color:'.(($totals->extvariation < 0) ? 'red' : 'aliceblue').';color:'.(($totals->extvariation < 0) ? 'white' : 'black').'"><b>'.($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ',').'</b></th>';
+
+			$footer .= '<th colspan="3">'.$this->lang->line('Totals').'</th>
+			<th style="background-color:aliceblue;text-align:right;"><b>'.number_format($totals->onhand, $decimals, '.', ',').'</b></th>
+			<th></th>
+			<th style="background-color: #EAFF5F;text-align:right;"><b>'.$moneysign.number_format($totals->extonhand, $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;text-align:right;"><b>'.number_format($totals->counted, $decimals, '.', ',').'</b></th>
+			<th></th>
+			<th style="background-color: #EAFF5F;text-align:right;"><b>'.$moneysign.number_format($totals->extcounted, $decimals, '.', ',').'</b></th>
+			<th></th>
+			<th></th>
+			<th style="text-align:right;background-color:'.(($totals->extvariation < 0) ? 'red' : 'aliceblue').';color:'.(($totals->extvariation < 0) ? 'white' : 'black').'"><b>'.($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ',').'</b></th>';
+		}else{
+			$header .= '<th></th>
+			<th></th>
+			<th></th>
+			<th style="background-color:rgba(59, 27, 103, 0.13);">'.$this->lang->line('On hand').'</th>
+			<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b>'.$moneysign.''.number_format($totals->extonhand, $decimals, '.', ',').'</b></th>
+			<th style="background-color:beige;">'.$this->lang->line('Counted').'</th>
+			<th style="text-align:right;background-color:beige;"><b>'.$moneysign.number_format($totals->extcounted, $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;">'.$this->lang->line('Variation').'</th>
+			<th style="background-color: '.(($totals->extvariation < 0) ? 'red' : '#EAFF5F').';text-align:right;"><b>'.(($totals->extvariation) < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;"><b>'.number_format($totals->variationqtyabs, $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;"><b>'.number_format($totals->extvariationabs, $decimals, '.', ',').'</b></th>';
+
+			$footer .= '<th colspan="3">'.$this->lang->line('Totals').'</th>
+			<th style="background-color:aliceblue;text-align:right;"><b>'.number_format($totals->onhand, 2, '.', ',') .'</b></th>
+			<th style="background-color: #EAFF5F;text-align:right;"><b>'.$moneysign.number_format($totals->extonhand, $decimals, '.', ',') .'</b></th>
+			<th style="background-color:aliceblue;text-align:right;"><b>'.number_format($totals->counted, 2, '.', ',').'</b></th>
+			<th style="background-color: #EAFF5F;text-align:right;"><b>'.$moneysign.number_format($totals->extcounted, $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;text-align:right;">
+				<b>'.($totals->variationqty < 0 ? '-' : '') . $moneysign . number_format(abs($totals->variationqty), 2, '.', ',').'</b>
+			</th>
+			<th style="background-color:  '.(($totals->extvariation < 0) ? 'red' : '#EAFF5F').';text-align:right;"><b>'.(($totals->extvariation) < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;"><b>'.number_format($totals->variationqtyabs, $decimals, '.', ',').'</b></th>
+			<th style="background-color:aliceblue;"><b>'.number_format($totals->extvariationabs, $decimals, '.', ',').'</b></th>';
+		}
+
+		echo json_encode(array('header' => $header, 'footer' => $footer));
 	}
 	//=======>
 	//------>

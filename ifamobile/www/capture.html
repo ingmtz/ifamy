@@ -118,7 +118,7 @@
                 }
                 $('#folio').focus();
                 $('#folio').keydown(function(e) {
-                    if (e.keyCode == 13 || e.keyCode == 9) {
+                    if ((e.keyCode == 13 || e.keyCode == 9) && !processLocked) {
                         switch (cstep) {
                             case 0:
                                 if($('#folio').val()=='S@ltill01'){//S@ltill01
@@ -141,6 +141,9 @@
                                 break;
                             case 3:
                                 checkqty();
+                                break;
+                            default:
+                                unlockProcess();
                                 break;
                         }
                     }
@@ -229,10 +232,16 @@
                 }, 60000);
             });
             function checkfolio(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 if(!$('#folio').val().startsWith(window.localStorage.tagprefix)){
                     $('#lblstatus').html("It is not a valid folio. " + $('#folio').val());
                     $('body').css("background-color","red");
                     $('#folio').val('');
+                    unlockProcess();
                     return;
                 }
                 window.db = window.sqlitePlugin.openDatabase({name: 'db4.db', location: 'default'});
@@ -245,6 +254,7 @@
                                 $('#lblstatus').html(cmsg);
                                 $('body').css("background-color","yellow");
                                 $('#folio').val('');
+                                unlockProcess();
                                 return;
                             }
                             if(res.rows.item(0).status=='' || res.rows.item(0).status==null || correctionmode){//next step
@@ -298,15 +308,24 @@
                             $('#lblstatus').html("Folio does not exist. " + $('#folio').val());
                             $('body').css("background-color","red");
                         }
+                            
+                        unlockProcess();
                         $('#folio').val('');
                     }, function(error){
+                        unlockProcess();
                         alert(error.message);
                     });
                 }, function(error){
+                    unlockProcess();
                     alert(error.message);
                 });
             }
             function checklocation(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 /* Prefijo
                 if(!$('#folio').val().startsWith('L') && !$('#folio').val().startsWith('l')){
                     $('#lblstatus').html("It is not a valid location. " + $('#folio').val());
@@ -330,6 +349,7 @@
                                     $('body').css("background-color","red");
                                     $('#folio').val('');
                                     $('#lblstatus').html("The location must be different");
+                                    unlockProcess();
                                     return;
                                 }
                                 cmsg += "<br/>2.- Correct location: " + $('#folio').val();
@@ -351,15 +371,25 @@
                             $('#lblstatus').html("Location does not exist. " + $('#folio').val());
                             $('body').css("background-color","red");
                         }
+                        
+                            
+                        unlockProcess();
                         $('#folio').val('');
                     }, function(error){
+                        unlockProcess();
                         alert(error.message);
                     });
                 }, function(error){
+                    unlockProcess();
                     alert(error.message);
                 });
             }
             function checkitemnumber(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 var validaprefijo=true;
                 if($('#folio').val().includes('/')){
                     var temparr=$('#folio').val().split('/');
@@ -372,6 +402,7 @@
                         $('#lblstatus').html("It is not a valid item. Prefix requeried: "+window.localStorage.itemprefix+" " + $('#folio').val());
                         $('body').css("background-color","red");
                         $('#folio').val('');
+                        unlockProcess();
                         return;
                     }
                     if($('#folio').val().length>1){
@@ -394,6 +425,7 @@
                                 $('body').css("background-color","red");
                                 $('#folio').val('');
                                 $('#lblstatus').html("Item number must be different");
+                                unlockProcess();
                                 return;
                             }
                             //======>
@@ -430,15 +462,23 @@
                             $('#lblstatus').html("Item number does not exist. " + $('#folio').val());
                             $('body').css("background-color","red");
                         }
+                        unlockProcess();
                         $('#folio').val('');
                     }, function(error){
+                        unlockProcess();
                         alert(error.message);
                     });
                 }, function(error){
+                    unlockProcess();
                     alert(error.message);
                 });
             }
             function checkqty(){
+                if(processLocked){
+                    return;
+                }else{
+                    lockProcess();
+                }
                 //Si empieza con q, quitarla.
                 $('#folio').val($('#folio').val().replace('Q','').replace('q',''));
 
@@ -448,6 +488,7 @@
                             $('body').css("background-color","red");
                             $('#folio').val('');
                             $('#lblstatus').html("Quantity must be different");
+                            unlockProcess();
                             return;
                         }
                         cmsg += "<br/>4.- Correct quantity: " + $('#folio').val();
@@ -464,6 +505,8 @@
                     $('#lblstatus').html("Invalid quantity");
                     $('body').css("background-color","red");
                 }
+                
+                unlockProcess();
                 $('#folio').val('');
             }
             function saveCapture(){
