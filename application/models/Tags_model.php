@@ -218,7 +218,7 @@ class Tags_model extends CI_Model {
               #Aquí iba el where
             ) tmp2 on a.itemcode = tmp2.itemcode
 
-            where (a.openbox='Ok' or a.openbox='1') or tmp2.total<".$lessthan." or tmp2.total>=".$greaterthan."
+            /*where (a.openbox='Ok' or a.openbox='1') or tmp2.total<".$lessthan." or tmp2.total>=".$greaterthan."*/
             order by a.area, a.warehouse, a.location, a.tag
            ";
         //echo $querystr;exit(0);
