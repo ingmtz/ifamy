@@ -407,7 +407,7 @@
 				var countedA=Number(a.audit);
 				var countedB=Number(b.audit);
 				<?php }?>
-				return (countedB/b.total) - (countedA/a.total);
+				return (countedA/a.total) - (countedB/b.total);
 			});
 			$.each(obj, function(index, val) {
 				<?php if($type=='capture'){ ?>
