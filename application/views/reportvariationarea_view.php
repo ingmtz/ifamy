@@ -284,7 +284,7 @@
 						val.location,
 						val.itemcode,
 						val.status,
-						Number(val.qty).formatMoney(<?php echo $decimals; ?>),
+						Number(val.qty).formatMoney(2),
 						val.description,
 						val.uom,
 						val.type
