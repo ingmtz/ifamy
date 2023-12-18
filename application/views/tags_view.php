@@ -270,43 +270,47 @@
 		        });
 				return;
 			}
-			$.post('<?php echo base_url(); ?>tags/checktags', {data: $('#frmnewtag').serialize()}, function(data) {
-				if(data.includes('Next')){
-					new PNotify({
-			            title: 'Problem',
-			            text: data,
-			            addclass: 'bg-danger'
-			        });
-					return;
-				}
-				if(data=='nulls'){
-					if(confirm('Some tags in range are asignated, do you want to reassign?')){
-						$.post('<?php echo base_url(); ?>tags/reasignatetags', {data: $('#frmnewtag').serialize()}, function(data) {
-							new PNotify({
-					            title: 'Success',
-					            text: 'Tags reasignated',
-					            addclass: 'bg-success'
-					        });
-					        datatable.ajax.reload();
+			let limitWarning = 1000;
+			if(((Number($('#finaltag').val()) - Number($('#starttag').val())) <= limitWarning) || confirm('More than '+limitWarning+' tags will be added, are you sure to continue?')){
+				$.post('<?php echo base_url(); ?>tags/checktags', {data: $('#frmnewtag').serialize()}, function(data) {
+					if(data.includes('Next')){
+						new PNotify({
+							title: 'Problem',
+							text: data,
+							addclass: 'bg-danger'
+						});
+						return;
+					}
+					if(data=='nulls'){
+						if(confirm('Some tags in range are asignated, do you want to reassign?')){
+							$.post('<?php echo base_url(); ?>tags/reasignatetags', {data: $('#frmnewtag').serialize()}, function(data) {
+								new PNotify({
+									title: 'Success',
+									text: 'Tags reasignated',
+									addclass: 'bg-success'
+								});
+								datatable.ajax.reload();
+							});
+						}
+						return;
+					}
+					if(data=='ok'){
+						new PNotify({
+									title: 'Success',
+									text: 'Tags created',
+									addclass: 'bg-success'
+								});
+						datatable.ajax.reload();
+					}else{
+						new PNotify({
+							title: 'Problem',
+							text: 'Tags ocupated',
+							addclass: 'bg-danger'
 						});
 					}
-					return;
-				}
-				if(data=='ok'){
-					new PNotify({
-					            title: 'Success',
-					            text: 'Tags created',
-					            addclass: 'bg-success'
-					        });
-					datatable.ajax.reload();
-				}else{
-					new PNotify({
-			            title: 'Problem',
-			            text: 'Tags ocupated',
-			            addclass: 'bg-danger'
-			        });
-				}
-			});
+				});
+			}
+			
 		});
 		$('#capture').click(function(event) {
 			if(isNaN($('#starttagc').val()) || isNaN($('#finaltagc').val()) || $('#finaltagc').val()=='' || $('#starttagc').val()==''){
