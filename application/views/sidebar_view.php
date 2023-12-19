@@ -47,7 +47,11 @@
 								<!--<li><a href="<?php echo base_url(); ?>reports/auditreport"><i class="glyphicon glyphicon-list-alt"></i> <span>Audit report</span></a></li>-->
 
 								<li><a href="<?php echo base_url(); ?>reports/variation"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Variation report by item'); ?></span></a></li>
+								
+								<!-- Intentionally commented
 								<li><a href="<?php echo base_url(); ?>reports/variationarea"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Variation report by area'); ?></span></a></li>
+								-->
+
 								<!--<li><a href="<?php echo base_url(); ?>reports/variationbywarehouse"><i class="glyphicon glyphicon-th-list"></i> <span>Variation report by warehouse</span></a></li>-->
 								<li><a href="<?php echo base_url(); ?>reports/locationreport"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Locations report'); ?></span></a></li>
 								
