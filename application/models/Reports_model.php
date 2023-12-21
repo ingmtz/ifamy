@@ -84,6 +84,52 @@ class Reports_model extends CI_Model {
         $query=$this->db->query($querystr);
         return $query->result();
     }
+
+    public function getprogressdetail($type, $params){
+        $where="and a.area= '".$params['area']."' ";
+        if($params['plant']!='0'){
+            $where="and a.plant='".$params['plant']."'";
+        }
+        if($type=='capture'){
+            $querystr="select a.tag, a.plant, a.area, a.warehouse, a.status, case when a.auditcounter=0 then 'Pending to audit' else 'Audited' end auditstatus
+                        from tags a
+                        where 1=1 ".$where;
+        }else{
+            $querystr="select a.tag, a.plant, a.area, a.warehouse, a.status, case when a.auditcounter=0 then 'Pending to audit' else 'Audited' end auditstatus
+            from tags a 
+            left join masterdata b on a.itemcode=b.itemcode
+            left join users d on a.iduser=d.Id
+            left join perpetuo f on f.itemcode=a.itemcode
+
+            left join (
+              select a.itemcode, ((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end) * case when a.cost_price is null then 0 else a.cost_price end) as total
+              from masterdata a
+              left join perpetuo b on a.itemcode=b.itemcode
+              left join (
+                select a.itemcode, sum(qty) as total
+                from tags a
+                where not a.itemcode is null
+                group by a.itemcode
+              ) as temp on temp.itemcode=a.itemcode
+                
+                where ((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)
+                *case when a.cost_price is null then 0 else a.cost_price end)<".$params['lessthan']."
+                or ((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)
+                *case when a.cost_price is null then 0 else a.cost_price end)>=".$params['greaterthan']."
+            ) tmp2 on a.itemcode = tmp2.itemcode
+
+            where a.status = 'Used' and (not tmp2.itemcode is null ";
+            if($params['openbox']==1){
+                $querystr.=" or (a.openbox='Ok' or a.openbox='1') ";
+            }
+            $querystr.=') '.$where;
+        }
+        //echo $querystr;exit(0);
+        $query=$this->db->query($querystr);
+        return $query->result();
+    }
+
+
     function getauditprogressdata($plant){
         $where='';
         if($plant!='0'){

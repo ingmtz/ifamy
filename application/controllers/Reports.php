@@ -365,6 +365,12 @@ class Reports extends MY_Controller {
 		$result=$this->reports_model->getprogressdata($type, $_POST);
 		echo json_encode($result);
 	}
+
+	public function getprogressdetail($type){
+		$result=$this->reports_model->getprogressdetail($type, $_POST);
+		echo json_encode($result);
+	}
+
 	//Audit progress report
 	function auditprogress(){
 		$config=$this->reports_model->getConfig();

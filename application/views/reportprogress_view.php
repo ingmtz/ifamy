@@ -28,11 +28,14 @@
 	<!-- /core JS files -->
 
 	<!-- Theme JS files -->
-	<!--<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/plugins/tables/datatables/datatables.min.js"></script>-->
-	<link href="<?php echo base_url(); ?>assets/datatable/css/bootstrap.datatable.min.css" rel="stylesheet">
-    <link href="<?php echo base_url(); ?>assets/datatable/css/dataTables.tableTools.min.css" rel="stylesheet">
-    <script src="<?php echo base_url(); ?>assets/datatable/js/jquery.dataTables.js"></script>
-	<script src="<?php echo base_url(); ?>assets/datatable/js/dataTables.tableTools.js"></script>
+	<!-- Datatables -->
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/dataTables.buttons.min.js"></script>
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/jszip.min.js"></script>
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/pdfmake.min.js"></script>
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/vfs_fonts.js"></script>
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/buttons.html5.min.js"></script>
+	<script type="text/javascript" language="javascript" src="<?php echo base_url(); ?>assets/datatables2/buttons.print.min.js"></script>
 
 	<script src="<?php echo base_url(); ?>assets/highcharts/highcharts.js"></script>
 	<script src="<?php echo base_url(); ?>assets/highcharts/exporting.js"></script>
@@ -273,6 +276,21 @@
 	</div>
 	<!-- /modal change schedule -->
 
+	<!-- modal details -->
+	<div id="modaldetails" class="modal fade">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h5 class="modal-title">Details</h5>
+				</div>
+
+				<div class="modal-body"></div>
+			</div>
+		</div>
+	</div>
+	<!-- /modal details -->
+
 </body>
 <script type="text/javascript">
 	$(document).ready(function($) {
@@ -337,6 +355,78 @@
 			event.preventDefault();
 			$.post('<?php echo base_url(); ?>reports/setSchedule', {data: $('#frmschedule').serialize()}, function(){
 				window.location.href='<?php echo base_url(); ?>reports/progress';
+			});
+		});
+
+		$('#report tbody').delegate('.progress-detail', 'click', function(event) {
+			event.preventDefault();
+			var area=$(this).closest('tr').find('.area').html();
+			$.post('<?php echo base_url(); ?>reports/getprogressdetail/<?php echo $type; ?>', {plant:$('#plant').val(), area:area<?php if($type=='audit'){ ?>, openbox:localStorage.progressopenbox, greaterthan:localStorage.progressgreaterthan, lessthan:localStorage.progresslessthan<?php } ?>}, function(data) {
+				var obj=JSON.parse(data);
+				$('#modaldetails').modal('show');
+				$('#modaldetails .modal-title').html(area);
+				$('#table-details tbody').html('');
+
+				let html = `<table class="table datatable-show-all" id="table-details">
+								<thead>
+									<tr>
+										<th>Tag</th>
+										<th>Plant</th>
+										<th>Area</th>
+										<th>Warehouse</th>
+										<th>Status</th>
+										<th>Audit Status</th>
+									</tr>
+								</thead>
+								<tbody>`;
+				$.each(obj, function(index, val) {
+					html += `<tr>
+									<td>${val.tag}</td>
+									<td>${val.plant}</td>
+									<td>${val.area}</td>
+									<td>${val.warehouse}</td>
+									<td>${val.status==null ? '' : val.status }</td>
+									<td>${val.auditstatus}</td>
+								</tr>`;
+				});
+				html += `</tbody>
+						</table>`;
+				$('#modaldetails .modal-body').html(html);
+
+				$('#table-details').DataTable({
+					"bDestroy": true,
+					"aaSorting": [[ 5, "desc" ]],
+					"language": {
+						"url": "<?php echo base_url(); ?>assets/datatables2/<?php echo $this->session->userdata('site_lang'); ?>.json",
+						buttons: {
+							pageLength: {
+								_: "<?php echo $this->lang->line('Showing'); ?> %d <?php echo $this->lang->line('rows'); ?>",
+								'-1': "<?php echo $this->lang->line('Showing all'); ?>"
+							}
+						}
+					},
+					responsive: true,
+					"processing": true,
+					dom: 'Bfrtip',
+					lengthMenu: [
+						[ 10, 25, 50, -1 ],
+						[ '10 <?php echo $this->lang->line('rows'); ?>', '25 <?php echo $this->lang->line('rows'); ?>', '50 <?php echo $this->lang->line('rows'); ?>', '<?php echo $this->lang->line('Show all'); ?>' ]
+					],
+					buttons: [
+						/*'copyHtml5',*/
+						'excelHtml5',
+						/*'csvHtml5',*/
+						//'print',
+						{
+							extend: 'print',
+							text: '<?php echo $this->lang->line('Print'); ?>'
+						},
+						'pageLength'
+					]
+				});
+			}).fail(function(err) {
+				console.error(err);
+				alert('There was an error, please try again later.')
 			});
 		});
 	});
@@ -437,7 +527,9 @@
 					$title='Tags audited / Total tags';
 				} ?>
 				var html='<tr>';//+val.orden+' - '
-				html+='	<td class="area">'+val.area+'</td><td title="<?php echo $title; ?>">'+counted+'/'+val.total+'</td>';
+				html+='	<td class="area">'+val.area+'</td><td title="<?php echo $title; ?>">';
+				html+=' <a class="progress-detail" href="#">'+counted+'/'+val.total+'</a>';
+				html+='</td>'
 				html+='	<td colspan="<?php echo sizeof($range)-1; ?>" style="padding: 12px 0px;   position:relative;">';//display:block;
 				html+='		<div class="bar" style="width:'+percent+'%">'+Number(percent).formatMoney()+'%</div>';
 				html+='	</td>';
