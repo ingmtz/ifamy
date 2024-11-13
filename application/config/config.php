@@ -1,11 +1,11 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 //Client config =============>
-//$config['client']='AtlanticPrime';
-//$config['title']='APICS';
+$config['client']='AtlanticPrime';
+$config['title']='APICS';
 
-$config['client']='CVG';
-$config['title']='IFA';
+// $config['client']='CVG';
+// $config['title']='IFA';
 
 /*$config['client']='EasyInventory';
 $config['title']='Easy Inventory';*/
