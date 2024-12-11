@@ -1,8 +1,8 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 //Client config =============>
-$config['client']='AtlanticPrime';
-$config['title']='APICS';
+$config['client']='Weidmann';
+$config['title']='PIP';
 
 // $config['client']='CVG';
 // $config['title']='IFA';

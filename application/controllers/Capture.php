@@ -6,6 +6,11 @@ class Capture extends MY_Controller {
 		$this->load->model('capture_model');
 		$this->load->library(array('datatable','excel'));
 	}
+
+	public function mobile(){
+		$this->load->view('capture_mobile_view');
+	}
+
 	public function index(){
 		$data['mode']='1';//capture or report
 		$data['locations']=$this->capture_model->getalllocations();
