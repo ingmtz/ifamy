@@ -11,6 +11,34 @@ class Capture extends MY_Controller {
 		$this->load->view('capture_mobile_view');
 	}
 
+	public function checklocation(){
+		$result=$this->db->where('location', $_POST['location'])->get('locations')->row();
+		if($result){
+			echo json_encode(array('status'=>true));
+		}else{
+			echo json_encode(array('status'=>false, 'message'=>'Location not found'));
+		}
+	}
+
+	public function checkhu(){
+		$result=$this->db->where('tag', $_POST['tag'])->get('tags')->row();
+		if($result){
+			if($result->status == 'Used'){
+				echo json_encode(array('status'=>false, 'message'=>'HU already used'));
+				return;
+			}
+
+			// Update the tag
+			$this->db->where('tag', $_POST['tag'])->update('tags', 
+				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid')));
+
+			echo json_encode(array('status'=>true));
+		}else{
+			echo json_encode(array('status'=>false, 'message'=>'HU not found'));
+		}
+	}
+
+
 	public function index(){
 		$data['mode']='1';//capture or report
 		$data['locations']=$this->capture_model->getalllocations();

@@ -76,7 +76,7 @@
 									<i class="icon-lock2 text-muted"></i>
 								</div>
 							</div>
-							<div class="form-group has-feedback has-feedback-left">
+							<!-- <div class="form-group has-feedback has-feedback-left">
 								<select class="form-control" name="area" id="area">
 									<option value="0">Select an area</option>
 									<?php foreach ($areas as $key => $value) { ?>
@@ -86,7 +86,7 @@
 								<div class="form-control-feedback">
 									<i class="icon-stack text-muted"></i>
 								</div>
-							</div>
+							</div> -->
 
 							<div class="row">
 								<div class="col-sm-8">
@@ -120,14 +120,14 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$('#frmlogin').submit(function(event) {
-			if($('#area').val()=='0' && $('#area').children('option').length>1){
-				new PNotify({
-		            title: 'Problem',
-		            text: "Select an area.",
-		            addclass: 'bg-danger'
-		        });
-		        event.preventDefault();
-			}
+			// if($('#area').val()=='0' && $('#area').children('option').length>1){
+			// 	new PNotify({
+		    //         title: 'Problem',
+		    //         text: "Select an area.",
+		    //         addclass: 'bg-danger'
+		    //     });
+		    //     event.preventDefault();
+			// }
 		});
 	});
 </script>

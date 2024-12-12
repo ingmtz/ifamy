@@ -159,21 +159,32 @@ class Reports_model extends CI_Model {
     public function truncatemasterdata(){
         $this->db->query('TRUNCATE TABLE masterdata');
     }
+
+    public function truncaterawdata(){
+        $this->db->query('TRUNCATE TABLE rawdata');
+    }
     function truncatelocations(){
         $this->db->query('TRUNCATE TABLE locations');
     }
 
+    function truncatetags(){
+        $this->db->query('TRUNCATE TABLE tags');
+    }
+
     function saveimportdata($data){
         $this->db->insert_batch('perpetuo', $data);
-        //$this->db->insert('perpetuo', $data);
+    }
+    function saveimportrawdata($data){
+        $this->db->insert_batch('rawdata', $data);
     }
     function saveimportdatamasterdata($data){
         $this->db->insert_batch('masterdata', $data);
-        //$this->db->insert('masterdata', $data);
     }
     function insertLocation($data){
         $this->db->insert_batch('locations', $data);
-        //$this->db->insert('locations', $data);
+    }
+    function saveimporttags($data){
+        $this->db->insert_batch('tags', $data);
     }
     public function getdetailvariation($itemcode){
         $querystr="select a.*, b.description, b.uom, b.type, d.name, a.area as areadesc from tags a 

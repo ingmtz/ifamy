@@ -21,10 +21,10 @@ class Login extends CI_Controller
                 redirect(base_url().'reports/progress');
                 break;
             case '2'://Data capturer
-                redirect(base_url().'capture');
+                redirect(base_url().'capture/mobile');
                 break;
             default://Por defecto los usuarios se van aquí
-                redirect(base_url().'capture');
+                redirect(base_url().'capture/mobile');
                 break;
         }
     }

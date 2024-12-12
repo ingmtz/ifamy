@@ -98,7 +98,7 @@
 					<div class="panel panel-flat">
 						<div class="panel-body">
 							<h5 class="panel-title" style="margin-bottom:15px;">
-								All tags are auditable</h5>
+								All HU are auditable</h5>
 							<!--
 							<h5 class="panel-title" style="margin-bottom:15px;">Select tags for audit</h5>
 							<div class="row" style="margin-bottom:15px;">
@@ -189,7 +189,7 @@
 								<thead>
 									<tr>
 										<th class="actions"><?php echo $this->lang->line('Actions'); ?></th>
-										<th><?php echo $this->lang->line('Tag'); ?></th>
+										<th>HU</th>
 										<th><?php echo $this->lang->line('Area'); ?></th>
 										<th><?php echo $this->lang->line('Plant'); ?></th>
 										<th><?php echo $this->lang->line('Print counter'); ?></th>
@@ -210,7 +210,7 @@
 					<!-- /basic datatable -->
 					<!-- Footer -->
 					<div class="footer text-muted">
-						&copy; 2020. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
+						&copy; 2024. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
 					</div>
 					<!-- /footer -->
 

@@ -87,6 +87,9 @@
 									<h2 class="panel-title">Import excel</h2>
 								</header>-->
 								<div class="panel-body">
+										<div class="alert alert-danger" id="alert">
+											Stop! You are about to delete all data. Are you sure?
+										</div>
 										<div id="msgpanel" class="alert alert-info">
 												<strong id="msgresult">
 													<?php $instructions=$this->lang->line('instructions');
@@ -114,7 +117,7 @@
 					</div>
 					<!-- Footer -->
 					<div class="footer text-muted">
-						&copy; 2020. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
+						&copy; 2024. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
 					</div>
 					<!-- /footer -->
 

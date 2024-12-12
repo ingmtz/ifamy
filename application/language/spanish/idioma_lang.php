@@ -66,7 +66,7 @@ $lang['User'] 				= 'Usuario';
 $lang['Comments'] 			= 'Comentarios';
 
 //Import files
-$lang['importtitle'] 		= 'Importar archivos "Perpetuo", "Item Master" o "locaciones"';
+$lang['importtitle'] 		= 'Importar archivo';
 $lang['instructions'] 		= '<span>[A] -> "Item", [E] -> "Description", [I] -> "Unit", [H] -> "Standard", [J] -> "Type" Estas columas son esperadas en el archivo "MasterData" en una hoja llamada "data" (Sin comillas). Datos previos serán eliminados.</span>
 													<br/>ó<br/>
 													<span>[A] -> "Item Code", [B] -> "On Hand" Estas columas son esperadas en el archivo "Perpetuo" en una hoja llamada "data" (sin comillas). Datos previos serán eliminados</span>

@@ -32,9 +32,13 @@
 							<ul class="navigation navigation-main navigation-accordion">
 								<li class="navigation-header"><span><?php echo $this->lang->line('Menu'); ?></span> <i class="icon-menu" title="<?php echo $this->lang->line('Menu'); ?>"></i></li>
 								<li><a href="<?php echo base_url(); ?>capture/mobile"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> mobile</span></a></li>
-								<li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li>
+								
+								<!-- <li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li> -->
+
 								<?php if($this->session->userdata('ifatrimidprofile')=='1' || $this->session->userdata('ifatrimidprofile')=='3'){ ?>
-								<li><a href="<?php echo base_url(); ?>itemcodes"><i class="icon-stack"></i> <span><?php echo $this->lang->line('Item codes'); ?></span></a></li>
+
+								<!-- <li><a href="<?php echo base_url(); ?>itemcodes"><i class="icon-stack"></i> <span><?php echo $this->lang->line('Item codes'); ?></span></a></li> -->
+
 								<li><a href="<?php echo base_url(); ?>reports/totalcapture"><i class="glyphicon glyphicon-th"></i> <span><?php echo $this->lang->line('Total capture report'); ?></span></a></li>
 								<li><a href="<?php echo base_url(); ?>reports/progress/capture"><i class="glyphicon glyphicon-align-left"></i> <span><?php echo $this->lang->line('Progress report'); ?></span></a></li>
 
@@ -73,13 +77,13 @@
 								<?php } ?>
 
 
-								<li><a href="<?php echo base_url(); ?>reports/info"><i class="glyphicon glyphicon-question-sign"></i> <span><?php echo $this->lang->line('how does it work?'); ?></span></a></li>
+								<!-- <li><a href="<?php echo base_url(); ?>reports/info"><i class="glyphicon glyphicon-question-sign"></i> <span><?php echo $this->lang->line('how does it work?'); ?></span></a></li> -->
 								<?php } ?>
 
-								<li><a href="<?php echo base_url(); ?>clients/<?php echo $this->config->item('client'); ?>/<?php echo $this->config->item('title'); ?>.apk"><i class="glyphicon glyphicon-download-alt"></i> <span>Android application</span></a></li>
+								<!-- <li><a href="<?php echo base_url(); ?>clients/<?php echo $this->config->item('client'); ?>/<?php echo $this->config->item('title'); ?>.apk"><i class="glyphicon glyphicon-download-alt"></i> <span>Android application</span></a></li> -->
 
 								<?php if($this->config->item('client')!='CVG'){ ?>
-								<li><a href="<?php echo base_url(); ?>tags/labels"><i class="glyphicon glyphicon-barcode"></i> <span>Print labels</span></a></li>
+								<!-- <li><a href="<?php echo base_url(); ?>tags/labels"><i class="glyphicon glyphicon-barcode"></i> <span>Print labels</span></a></li> -->
 								<?php } ?>
 
 
@@ -88,14 +92,23 @@
 									<a href="#"><i class="icon-puzzle2"></i> <span><?php echo $this->lang->line('Configuration'); ?></span></a>
 									<ul>
 										<li><a href="<?php echo base_url(); ?>tags/audit"><?php echo $this->lang->line('Audit'); ?></a></li>
-										<li><a href="<?php echo base_url(); ?>tags"><?php echo $this->lang->line('Tags'); ?></a></li>
+										<li><a href="<?php echo base_url(); ?>tags">Handling Units</a></li>
 										<!--<li><a href="<?php echo base_url(); ?>areas"><?php echo $this->lang->line('Areas'); ?></a></li>-->
-										<li><a href="<?php echo base_url(); ?>tags/locations"><?php echo $this->lang->line('Locations'); ?></a></li>
+
+										<!-- <li><a href="<?php echo base_url(); ?>tags/locations"><?php echo $this->lang->line('Locations'); ?></a></li> -->
+										
 										<!-- <li><a href="<?php echo base_url(); ?>providers"><?php echo $this->lang->line('Providers'); ?></a></li> -->
-										<li><a href="<?php echo base_url(); ?>settings"><?php echo $this->lang->line('Settings'); ?></a></li>
+
+										<!-- <li><a href="<?php echo base_url(); ?>settings"><?php echo $this->lang->line('Settings'); ?></a></li> -->
+
+
 										<li><a href="<?php echo base_url(); ?>users"><?php echo $this->lang->line('Users'); ?></a></li>
 										<!--<li><a href="<?php echo base_url(); ?>users/specialusers">Special Users</a></li>-->
-										<li><a href="<?php echo base_url(); ?>scannermanagement/scanners"><?php echo $this->lang->line('Scanners'); ?></a></li>
+
+
+										<!-- <li><a href="<?php echo base_url(); ?>scannermanagement/scanners"><?php echo $this->lang->line('Scanners'); ?></a></li> -->
+
+
 										<?php if($this->config->item('client')=='CVG'){
 														if($this->session->userdata('inventorytype')==$this->config->item('title').' SEATS'){ ?>
 										<li><a href="<?php echo base_url(); ?>exportfile">Export AX file</a></li>

@@ -65,13 +65,21 @@
 
 				<!-- Content area -->
 				<div class="content">
-					
-					TODO: Capture mobile view
+
+					<div class="alert alert-info alert-styled-left alert-arrow-left alert-component">
+						<h6 class="alert-heading" id="alert-title">Scan location</h6>
+						<span class="text-semibold" id="alert-body">Scan the location code to start the process.</span>
+						<br/>
+						<span class="text-semibold" id="last-scanned"></span>
+					</div>
+
+					<!-- <input type="text" id="scanner" class="form-control" placeholder="Test">
+					 -->
 					<div id="reader" width="50%"></div>
 
 					<!-- Footer -->
 					<div class="footer text-muted">
-						&copy; 2020. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
+						&copy; 2024. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
 					</div>
 					<!-- /footer -->
 
@@ -132,12 +140,28 @@
 	</div>
 
 	<audio id="correct" src="<?= base_url(); ?>assets/beep.mp3" autostart="false" ></audio>
+	<audio id="wrong" src="<?= base_url(); ?>assets/wrong.mp3" autostart="false" ></audio>
 
 </body>
 <script src="<?= base_url(); ?>assets/html5-qrcode.min.js" type="text/javascript"></script>
 <script type="text/javascript">
 	$(document).ready(function($) {
 		var correct = document.getElementById("correct");
+		var wrong = document.getElementById("wrong");
+		var location;
+
+		function checkScanStatus(){
+			location = localStorage.getItem('location');
+			if(location){
+				$('#alert-title').html('Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change location</button>');
+				$('#alert-body').html('Scan the hu code');
+			}else{
+				$('#alert-title').html('Scan location');
+				$('#alert-body').html('Scan the location code to start the process.');
+			}
+		}
+		checkScanStatus();
+
 
 		var lastScanned = '';
 		function onScanSuccess(decodedText, decodedResult) {
@@ -145,14 +169,128 @@
 				return;
 			}
 			lastScanned = decodedText;
-			console.log(`Code matched = ${decodedText}`, decodedResult);
-			new PNotify({
-				title: 'Success',
-				text: `Code matched = ${decodedText}`,
-				type: 'success'
-			});
-			correct.play();
+			// console.log(`Code matched = ${decodedText}`, decodedResult);
+			// new PNotify({
+			// 	title: 'Success',
+			// 	text: `Code matched = ${decodedText}`,
+			// 	type: 'success'
+			// });
+			$('#last-scanned').html('Last scanned: '+decodedText);
+			
+			if(location == null){
+				checkLocation(decodedText);
+			}else{
+				checkHu(decodedText);
+			}
 		}
+
+		$('#scanner').on('keypress', function(e) {
+			if(e.which == 13) {
+				var decodedText = $(this).val();
+				$(this).val('');
+				if(location == null){
+					checkLocation(decodedText);
+				}else{
+					checkHu(decodedText);
+				}
+			}
+		});
+
+
+		function checkLocation(decodedText){
+			$('.alert-component').removeClass('alert-danger')
+					.removeClass('alert-info').removeClass('alert-success');
+			$.ajax({
+				url: '<?= base_url(); ?>capture/checklocation',
+				type: 'POST',
+				dataType: 'json',
+				data: {location: decodedText},
+			})
+			.done(function(data) {
+				try{
+					if(data.status){
+						localStorage.setItem('location', decodedText);
+						correct.play();
+						$('.alert-component').addClass('alert-success');
+						checkScanStatus();
+					}else{
+						wrong.play();
+						$('.alert-component').addClass('alert-danger');
+						$('#last-scanned').html(data.message);
+						// new PNotify({
+						// 	title: 'Error',
+						// 	text: data.message,
+						// 	type: 'error'
+						// });
+					}
+				}catch(e){
+					wrong.play();
+					$('.alert-component').addClass('alert-danger');
+					$('#last-scanned').html('There was an error');
+				}
+			})
+			.fail(function() {
+				new PNotify({
+					title: 'Error',
+					text: 'An error occurred',
+					type: 'error'
+				});
+			});
+		}
+
+		function checkHu(decodedText){
+			$('.alert-component').removeClass('alert-danger')
+					.removeClass('alert-info').removeClass('alert-success');
+
+			const arrHu = decodedText.split('|');
+			if(arrHu.length == 4){
+				decodedText = arrHu[2];
+				// Just preserve numbers
+				decodedText = decodedText.replace(/[^0-9]/g, '');
+			}else{
+				wrong.play();
+				$('.alert-component').addClass('alert-danger');
+				$('#last-scanned').html('Invalid HU');
+				return;
+			}
+
+
+			$.ajax({
+				url: '<?= base_url(); ?>capture/checkhu',
+				type: 'POST',
+				dataType: 'json',
+				data: {tag: decodedText},
+			})
+			.done(function(data) {
+				try{
+					if(data.status){
+						correct.play();
+						$('.alert-component').addClass('alert-success');
+						$('#last-scanned').html('Last scanned: '+decodedText);
+					}else{
+						wrong.play();
+						$('.alert-component').addClass('alert-danger');
+						$('#last-scanned').html(data.message);
+					}
+				}catch(e){
+					wrong.play();
+					$('.alert-component').addClass('alert-danger');
+					$('#last-scanned').html('There was an error');
+				}
+			})
+			.fail(function() {
+				$('.alert-component').addClass('alert-danger');
+				new PNotify({
+					title: 'Error',
+					text: 'An error occurred',
+					type: 'error'
+				});
+			});
+		}
+
+
+
+
 
 		function onScanFailure(error) {
 			// handle scan failure, usually better to ignore and keep scanning.

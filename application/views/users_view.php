@@ -12,6 +12,7 @@
 	<!-- Global stylesheets -->
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="<?php echo base_url(); ?>assets/css/icons/fontawesome/styles.min.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/bootstrap.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/core.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/components.css" rel="stylesheet" type="text/css">
@@ -127,7 +128,7 @@
 					<!-- /basic datatable -->
 					<!-- Footer -->
 					<div class="footer text-muted">
-						&copy; 2020. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
+						&copy; 2024. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
 					</div>
 					<!-- /footer -->
 

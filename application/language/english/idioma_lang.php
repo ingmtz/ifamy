@@ -66,7 +66,7 @@ $lang['User'] 				= 'User';
 $lang['Comments'] 			= 'Comments';
 
 //Import files
-$lang['importtitle'] 		= 'Import "Perpetuo", Item Master or locations';
+$lang['importtitle'] 		= 'Import file';
 $lang['instructions'] 		= '<span>[A] -> "Item", [E] -> "Description", [I] -> "Unit", [H] -> "Standard", [J] -> "Type" columns are expected for MasterData file in sheet named "data" (without quotes). Previous data will be truncated.</span>
 													<br/>or<br/>
 													<span>[A] -> "Item Code", [B] -> "On Hand" columns are expected for Perpetuo file in sheet named "data" (without quotes). Previous data will be truncated</span>

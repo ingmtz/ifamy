@@ -119,7 +119,7 @@
 					<!-- /vertical form options -->
 					<!-- Footer -->
 					<div class="footer text-muted">
-						&copy; 2020. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
+						&copy; 2024. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
 					</div>
 					<!-- /footer -->
 

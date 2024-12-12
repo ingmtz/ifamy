@@ -12,6 +12,7 @@
 	<!-- Global stylesheets -->
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="<?php echo base_url(); ?>assets/css/icons/fontawesome/styles.min.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/bootstrap.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/core.css" rel="stylesheet" type="text/css">
 	<link href="<?php echo base_url(); ?>assets/css/components.css" rel="stylesheet" type="text/css">
@@ -71,7 +72,7 @@
 				<div class="page-header page-header-default">
 					<div class="page-header-content">
 						<div class="page-title">
-							<h4><i class="icon-arrow-left52 position-left"></i> <span class="text-semibold"></span><?php echo $this->lang->line('Tags'); ?></h4>
+							<h4><i class="icon-arrow-left52 position-left"></i> <span class="text-semibold"></span>Handling Units</h4>
 						</div>
 
 					</div>
@@ -86,7 +87,7 @@
 					<!-- Basic datatable -->
 					<div class="panel panel-flat">
 						<div class="panel-body">
-							<h5 class="panel-title" style="margin-bottom:15px;"><?php echo $this->lang->line('New tag assignation'); ?></a></h5>
+							<!-- <h5 class="panel-title" style="margin-bottom:15px;"><?php echo $this->lang->line('New tag assignation'); ?></a></h5>
 							<div class="row" style="margin-bottom:15px;">
 									<span><b><?php echo $this->lang->line('Capture the follow information to create new tags or reassign them'); ?>:</b></span>
 							</div>
@@ -106,8 +107,8 @@
 								<div class="col-md-2 form-inline">
 									<b><?php echo $this->lang->line('Plant'); ?></b>
 								</div>
-							</div>
-							<div class="row" style="margin-bottom:35px;">
+							</div> -->
+							<!-- <div class="row" style="margin-bottom:35px;">
 							<form id="frmnewtag">
 								<div class="col-md-2 form-inline">
 									<input type="text" class="form-control" id="starttag" name="starttag" placeholder="<?php echo $this->lang->line('Start tag number'); ?>"/>
@@ -134,9 +135,8 @@
 									<button type="button" id="create" class="btn btn-primary"><?php echo $this->lang->line('Create'); ?> <i class="icon-arrow-right14 position-right"></i></button>
 								</div>
 							</form>
-							</div>
-							<div class="row"><hr /></div>
-							<!-- -->
+							</div> -->
+							<!-- <div class="row"><hr /></div>
 							<h5 class="panel-title" style="margin-bottom:15px;"><?php echo $this->lang->line('Print tags'); ?></a></h5>
 							<div class="row" style="margin-bottom:15px;">
 									<span><b><?php echo $this->lang->line('Capture the follow information to print tags'); ?>:</b></span>
@@ -172,11 +172,11 @@
 								</div>
 							</form>
 							</div>
-							<div class="row"><hr /></div>
-							<!-- -->
+							<div class="row"><hr /></div> -->
+							
+							
 
-
-							<h5 class="panel-title" style="margin-bottom:15px;"><?php echo $this->lang->line('Capture tags by range'); ?></a></h5>
+							<!-- <h5 class="panel-title" style="margin-bottom:15px;"><?php echo $this->lang->line('Capture tags by range'); ?></a></h5>
 							<div class="row" style="margin-bottom:15px;">
 									<span><b><?php echo $this->lang->line('Capture the follow information to capture status tags'); ?>:</b></span>
 							</div>
@@ -210,11 +210,13 @@
 								</div>
 							</form>
 							</div>
-							<div class="row"><hr /></div>
+							<div class="row"><hr /></div> -->
+
+
 							<table class="table" id="tagstable">
 								<thead>
 									<tr>
-										<th><?php echo $this->lang->line('Tag'); ?></th>
+										<th>HU</th>
 										<th><?php echo $this->lang->line('Plant'); ?></th>
 										<th><?php echo $this->lang->line('Area'); ?></th>
 										<th><?php echo $this->config->item('client')=='CVG' ? 'WH': $this->lang->line('Rack'); ?></th>
@@ -230,7 +232,7 @@
 					<!-- /basic datatable -->
 					<!-- Footer -->
 					<div class="footer text-muted">
-						&copy; 2020. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
+						&copy; 2024. <a href="http://novarumsystems.com" target="_blank">NovarumSystems.com</a>
 					</div>
 					<!-- /footer -->
 
