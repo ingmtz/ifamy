@@ -73,8 +73,8 @@
 						<span class="text-semibold" id="last-scanned"></span>
 					</div>
 
-					<input type="text" id="scanner" class="form-control" placeholder="Test">
-					 
+					<!-- <input type="text" id="scanner" class="form-control" placeholder="Test">
+					 -->
 					<div id="reader" width="50%"></div>
 
 					<!-- Footer -->
