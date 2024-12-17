@@ -23,7 +23,7 @@ class Login_model extends CI_Model {
         }
     }
     public function getareas(){
-        $query = $this->db->query('select distinct plant, area from locations');
+        $query = $this->db->query('select distinct wh from locations');
         return $query->result();
     }
     function getConfig(){

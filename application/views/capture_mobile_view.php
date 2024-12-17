@@ -73,8 +73,8 @@
 						<span class="text-semibold" id="last-scanned"></span>
 					</div>
 
-					<!-- <input type="text" id="scanner" class="form-control" placeholder="Test">
-					 -->
+					<input type="text" id="scanner" class="form-control" placeholder="Test">
+					 
 					<div id="reader" width="50%"></div>
 
 					<!-- Footer -->
@@ -149,14 +149,14 @@
 		var correct = document.getElementById("correct");
 		var wrong = document.getElementById("wrong");
 		var location;
+		var wh = '<?= $wh; ?>';
 
 		function checkScanStatus(){
-			location = localStorage.getItem('location');
 			if(location){
-				$('#alert-title').html('Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change location</button>');
+				$('#alert-title').html('Current storage bin: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
 				$('#alert-body').html('Scan the hu code');
 			}else{
-				$('#alert-title').html('Scan location');
+				$('#alert-title').html('Current storage bin: '+wh + '<br/>Scan location');
 				$('#alert-body').html('Scan the location code to start the process.');
 			}
 		}
@@ -204,12 +204,12 @@
 				url: '<?= base_url(); ?>capture/checklocation',
 				type: 'POST',
 				dataType: 'json',
-				data: {location: decodedText},
+				data: {location: decodedText, wh: wh},
 			})
 			.done(function(data) {
 				try{
 					if(data.status){
-						localStorage.setItem('location', decodedText);
+						location = decodedText;
 						correct.play();
 						$('.alert-component').addClass('alert-success');
 						checkScanStatus();
@@ -259,7 +259,7 @@
 				url: '<?= base_url(); ?>capture/checkhu',
 				type: 'POST',
 				dataType: 'json',
-				data: {tag: decodedText},
+				data: {tag: decodedText, location: location},
 			})
 			.done(function(data) {
 				try{
@@ -267,6 +267,8 @@
 						correct.play();
 						$('.alert-component').addClass('alert-success');
 						$('#last-scanned').html('Last scanned: '+decodedText);
+						location = null;
+						checkScanStatus();
 					}else{
 						wrong.play();
 						$('.alert-component').addClass('alert-danger');

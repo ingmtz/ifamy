@@ -8,11 +8,12 @@ class Capture extends MY_Controller {
 	}
 
 	public function mobile(){
-		$this->load->view('capture_mobile_view');
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_mobile_view', $data);
 	}
 
 	public function checklocation(){
-		$result=$this->db->where('location', $_POST['location'])->get('locations')->row();
+		$result=$this->db->where('location', $_POST['location'])->where('wh', $_POST['wh'])->get('locations')->row();
 		if($result){
 			echo json_encode(array('status'=>true));
 		}else{
@@ -30,7 +31,7 @@ class Capture extends MY_Controller {
 
 			// Update the tag
 			$this->db->where('tag', $_POST['tag'])->update('tags', 
-				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid')));
+				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location']));
 
 			echo json_encode(array('status'=>true));
 		}else{

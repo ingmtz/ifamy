@@ -822,7 +822,8 @@ class Reports extends MY_Controller {
 							'material_description' => trim($this->issetor($row[4])),
 							'qty' => trim($this->issetor($row[6])),
 							'um' => trim($this->issetor($row[7])),
-							'location' => trim($this->issetor($row[8])),
+							'location' => trim($this->issetor($row[17])),
+							'wh' => trim($this->issetor($row[16])),
 							'cost_price' => trim($this->issetor($row[19])),
 							);
 	                }
@@ -841,14 +842,14 @@ class Reports extends MY_Controller {
 
 		// LLenar las tablas:
 		// 1. locations
-		$locations = $this->db->query("SELECT DISTINCT location FROM rawdata")->result();
+		$locations = $this->db->query("SELECT DISTINCT wh, location FROM rawdata")->result();
 		$this->reports_model->truncatelocations();
 		$locationsfile=array();
 		foreach ($locations as $key => $location) {
 			$locationsfile[]= array(
 				'plant' => 'Unknown',
 				'area' => 'Unknown',
-				'wh' => 'Unknown',
+				'wh' => $location->wh,
 				'location' => $location->location,
 				'plataforma' => 'Unknown',
 			);
