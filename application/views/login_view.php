@@ -78,7 +78,7 @@
 							</div>
 							 <div class="form-group has-feedback has-feedback-left">
 								<select class="form-control" name="area" id="area">
-									<option value="0">Select a storage Bin</option>
+									<option value="0">Select a storage location</option>
 									<?php foreach ($areas as $key => $value) { ?>
 									<option value="<?php echo $value->wh; ?>"><?php echo $value->wh; ?></option>
 									<?php } ?>
@@ -123,7 +123,7 @@
 			if($('#area').val()=='0' && $('#area').children('option').length>1){
 				new PNotify({
 		            title: 'Problem',
-		            text: "Select a storage bin.",
+		            text: "Select a storage location.",
 		            addclass: 'bg-danger'
 		        });
 		        event.preventDefault();

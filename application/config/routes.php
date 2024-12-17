@@ -38,7 +38,7 @@
 |
 */
 
-$route['default_controller'] = "capture";
+$route['default_controller'] = "capture/mobile";
 $route['404_override'] = '';
 
 
