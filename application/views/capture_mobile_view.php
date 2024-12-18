@@ -73,8 +73,8 @@
 						<span class="text-semibold" id="last-scanned"></span>
 					</div>
 
-					<!-- <input type="text" id="scanner" class="form-control" placeholder="Test">
-					 -->
+					<input type="text" id="scanner" class="form-control" placeholder="Test">
+					
 					<div id="reader" width="50%"></div>
 
 					<!-- Footer -->
@@ -241,7 +241,8 @@
 
 		function checkHu(decodedText){
 			$('.alert-component').removeClass('alert-danger')
-					.removeClass('alert-info').removeClass('alert-success');
+					.removeClass('alert-info').removeClass('alert-success')
+					.removeClass('alert-warning');
 
 			const arrHu = decodedText.split('|');
 			if(arrHu.length == 4){
@@ -271,8 +272,13 @@
 						$('#last-scanned').html('Last scanned: '+decodedText);
 					}else{
 						wrong.play();
-						$('.alert-component').addClass('alert-danger');
 						$('#last-scanned').html(data.message);
+						if(data.message == 'HU already scanned'){
+							$('.alert-component').addClass('alert-danger');
+						}else{
+							$('.alert-component').addClass('alert-warning');
+						}
+						
 					}
 				}catch(e){
 					wrong.play();

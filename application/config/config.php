@@ -2,7 +2,7 @@
 
 //Client config =============>
 $config['client']='Weidmann';
-$config['title']='PIP';
+$config['title']='PITS';
 
 // $config['client']='CVG';
 // $config['title']='IFA';

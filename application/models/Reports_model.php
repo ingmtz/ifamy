@@ -30,18 +30,18 @@ class Reports_model extends CI_Model {
     public function getprogressdata($type, $params){
         $where='';
         if($params['plant']!='0'){
-            $where="and a.plant='".$params['plant']."'";
+            $where="and a.warehouse='".$params['plant']."'";
         }
         if($type=='capture'){
-            $querystr="select a.area, count(*) as total, sum(case when status='Used' then 1 else 0 end) as used,
+            $querystr="select a.warehouse as area, count(*) as total, sum(case when status='Used' then 1 else 0 end) as used,
                         sum(case when status='Voided' then 1 else 0 end) as voided,
                         sum(case when status='Blank' then 1 else 0 end) as blank
                         from tags a
                         where 1=1 ".$where."
-                        group by a.area
+                        group by a.warehouse
                         order by ";
         }else{
-            $querystr="select a.area, sum(case when a.auditcounter=0 then 0 else 1 end) as audit, count(*) as total
+            $querystr="select a.warehouse as area, sum(case when a.auditcounter=0 then 0 else 1 end) as audit, count(*) as total
             ,case when tmp2.total < ".$params['lessthan']." then 'Less than ".$params['lessthan']."'
             when tmp2.total >=".$params['greaterthan']." then 'Greater than ".$params['greaterthan']."'
             else 'Open box' end as routine
@@ -72,7 +72,7 @@ class Reports_model extends CI_Model {
                 $querystr.=" or (a.openbox='Ok' or a.openbox='1') ";
             }
             $querystr.=') '.$where." 
-            group by a.area
+            group by a.warehouse
             order by ";
         }
         if($this->config->item('client')=='AtlanticPrime'){
@@ -149,7 +149,7 @@ class Reports_model extends CI_Model {
         return $query->row()->total;
     }
     public function getplants(){
-        $querystr="select distinct(plant) as plant from tags order by plant";
+        $querystr="select distinct(warehouse) as plant from tags where not warehouse is null order by warehouse";
         $query=$this->db->query($querystr);
         return $query->result();
     }

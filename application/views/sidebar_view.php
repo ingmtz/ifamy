@@ -35,12 +35,20 @@
 								
 								<!-- <li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li> -->
 
+								<li><a href="<?php echo base_url(); ?>reports/progress/capture"><i class="glyphicon glyphicon-align-left"></i> <span><?php echo $this->lang->line('Progress report'); ?></span></a></li>
+
+								<li><a href="<?php echo base_url(); ?>reports/variation"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Variation report by item'); ?></span></a></li>
+
+								<li><a href="<?php echo base_url(); ?>reports/totalcapture"><i class="glyphicon glyphicon-th"></i> <span><?php echo $this->lang->line('Total capture report'); ?></span></a></li>
+
+
+
 								<?php if($this->session->userdata('ifatrimidprofile')=='1' || $this->session->userdata('ifatrimidprofile')=='3'){ ?>
 
 								<!-- <li><a href="<?php echo base_url(); ?>itemcodes"><i class="icon-stack"></i> <span><?php echo $this->lang->line('Item codes'); ?></span></a></li> -->
 
-								<li><a href="<?php echo base_url(); ?>reports/totalcapture"><i class="glyphicon glyphicon-th"></i> <span><?php echo $this->lang->line('Total capture report'); ?></span></a></li>
-								<li><a href="<?php echo base_url(); ?>reports/progress/capture"><i class="glyphicon glyphicon-align-left"></i> <span><?php echo $this->lang->line('Progress report'); ?></span></a></li>
+								
+								
 
 								<?php if($this->config->item('client')=='CVG'){ ?>
 								<li><a href="<?php echo base_url(); ?>reports/progress/audit"><i class="glyphicon glyphicon-align-left"></i> <span><?php echo $this->lang->line('Audit progress report'); ?></span></a></li>
@@ -51,7 +59,7 @@
 								
 								<!--<li><a href="<?php echo base_url(); ?>reports/auditreport"><i class="glyphicon glyphicon-list-alt"></i> <span>Audit report</span></a></li>-->
 
-								<li><a href="<?php echo base_url(); ?>reports/variation"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Variation report by item'); ?></span></a></li>
+								
 								
 								<!-- Intentionally commented
 								<li><a href="<?php echo base_url(); ?>reports/variationarea"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Variation report by area'); ?></span></a></li>
@@ -70,7 +78,13 @@
 								<!--<li><a href="<?php echo base_url(); ?>reports/devices"><i class="glyphicon glyphicon-barcode"></i> <span>Devices</span></a></li>-->
 
 								<!--<li><a href="<?php echo base_url(); ?>reports/validations"><i class="glyphicon glyphicon-check"></i> <span>Validations</span></a></li>-->
-								<li><a href="<?php echo base_url(); ?>reports/importfiles"><i class="glyphicon glyphicon-import"></i> <span><?php echo $this->lang->line('Import files'); ?></span></a></li>
+
+
+								<!-- COMMENTED TO AVOID LOSING DATA
+								<li><a href="<?php echo base_url(); ?>reports/importfiles"><i class="glyphicon glyphicon-import"></i> <span><?php echo $this->lang->line('Import files'); ?></span></a></li> -->
+
+
+
 
 								<?php if($this->session->userdata('ifatrimidprofile')=='3'){ ?>
 								<li><a href="<?php echo base_url(); ?>databaseconfig"><i class="glyphicon glyphicon-hdd"></i> <span><?php echo $this->lang->line('Database config'); ?></span></a></li>

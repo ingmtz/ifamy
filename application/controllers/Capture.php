@@ -25,13 +25,13 @@ class Capture extends MY_Controller {
 		$result=$this->db->where('tag', $_POST['tag'])->get('tags')->row();
 		if($result){
 			if($result->status == 'Used'){
-				echo json_encode(array('status'=>false, 'message'=>'HU already used'));
+				echo json_encode(array('status'=>false, 'message'=>'HU already scanned'));
 				return;
 			}
 
 			// Update the tag
 			$this->db->where('tag', $_POST['tag'])->update('tags', 
-				array('qty' => 1, 'status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
 
 			echo json_encode(array('status'=>true));
 		}else{

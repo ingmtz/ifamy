@@ -515,13 +515,12 @@ class Reports extends MY_Controller {
 				)
 			);
 		}else if($this->config->item('client')=='Weidmann'){
-			$query="select c.tag, c.warehouse, c.location, a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
-				a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
-				case when c.status is null then 0 else 1 end as counted,
-				(case when c.status is null then 0 else 1 end * a.cost_price) as extcounted,
-				((case when c.status is null then 0 else 1 end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
+			$query="select c.tag, c.warehouse, c.location, a.itemcode, a.description, c.qty as onhand, 
+				a.cost_price, (c.qty * a.cost_price) as extonhand, 
+				case when c.status is null then 0 else c.qty end as counted,
+				(case when c.status is null then 0 else c.qty end * a.cost_price) as extcounted,
+				((case when c.status is null then 0 else c.qty end - c.qty)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
 				from masterdata a
-				left join perpetuo b on a.itemcode=b.itemcode
 				left join tags c on c.itemcode=a.itemcode";
 
 			$primaryKey = 'itemcode';//'Id';
@@ -530,69 +529,68 @@ class Reports extends MY_Controller {
 				array( 'db' => 'tag', 'dt' => 0 ),
 				array( 'db' => 'location', 'dt' => 1 ),
 				array( 'db' => 'itemcode', 'dt' => 2 ),
-				array( 'db' => 'type', 'dt' => 3 ),
-				array( 'db' => 'description',  'dt' => 4 ),
+				array( 'db' => 'description',  'dt' => 3 ),
 				array(
 					'db'        => 'onhand',
-					'dt'        => 5,
+					'dt'        => 4,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return number_format($d, $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'cost_price',
-					'dt'        => 6,
+					'dt'        => 5,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return $moneysign.number_format($d, $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'extonhand',
-					'dt'        => 7,
+					'dt'        => 6,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return $moneysign.number_format($d, $decimals, '.', ',');
 					}
 				),
 				
-				array( 'db' => 'warehouse', 'dt' => 8 ),
+				array( 'db' => 'warehouse', 'dt' => 7 ),
 				array(
 					'db'        => 'counted',
-					'dt'        => 9,
+					'dt'        => 8,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return number_format($d, $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'cost_price',
-					'dt'        => 10,
+					'dt'        => 9,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return $moneysign.number_format($d, $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'extcounted',
-					'dt'        => 11,
+					'dt'        => 10,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return $moneysign.number_format($d, $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'counted',
-					'dt'        => 12,
+					'dt'        => 11,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return number_format($d-$row['onhand'], $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'cost_price',
-					'dt'        => 13,
+					'dt'        => 12,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return $moneysign.number_format($d, $decimals, '.', ',');
 					}
 				),
 				array(
 					'db'        => 'extvariation',
-					'dt'        => 14,
+					'dt'        => 13,
 					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
 						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
 						//return $moneysign.number_format($d, $decimals, '.', ',');
@@ -968,12 +966,14 @@ class Reports extends MY_Controller {
 		$this->reports_model->saveimportdata($perpetuofile);
 
 		//4.- tags
-		$tags = $this->db->query("select hu, material from rawdata")->result();
+		$tags = $this->db->query("select hu, material, wh, qty from rawdata")->result();
 		$this->reports_model->truncatetags();
 		$tagsfile=array();
 		foreach ($tags as $key => $value) {
 			$tagsfile[]= array(
 				'tag' => $value->hu,
+				'warehouse' => $value->wh,
+				'qty' => $value->qty,
 				'plant' => 'Unknown',
 				'area' => 'Unknown',
 				'printcounter' => 0,
