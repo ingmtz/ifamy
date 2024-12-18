@@ -152,8 +152,9 @@
 		var wh = '<?= $wh; ?>';
 
 		function checkScanStatus(){
+			location = localStorage.getItem('location');
 			if(location){
-				$('#alert-title').html('Current storage bin: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+				$('#alert-title').html('Current storage bin: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change location</button>');
 				$('#alert-body').html('Scan the hu code');
 			}else{
 				$('#alert-title').html('Current storage bin: '+wh + '<br/>Scan location');
@@ -209,7 +210,7 @@
 			.done(function(data) {
 				try{
 					if(data.status){
-						location = decodedText;
+						localStorage.setItem('location', decodedText);
 						correct.play();
 						$('.alert-component').addClass('alert-success');
 						checkScanStatus();
@@ -254,12 +255,13 @@
 				return;
 			}
 
+			var openbox = confirm("Is openbox?") ? 1 : 0;
 
 			$.ajax({
 				url: '<?= base_url(); ?>capture/checkhu',
 				type: 'POST',
 				dataType: 'json',
-				data: {tag: decodedText, location: location},
+				data: {tag: decodedText, location: location, openbox: openbox},
 			})
 			.done(function(data) {
 				try{
@@ -267,8 +269,6 @@
 						correct.play();
 						$('.alert-component').addClass('alert-success');
 						$('#last-scanned').html('Last scanned: '+decodedText);
-						location = null;
-						checkScanStatus();
 					}else{
 						wrong.play();
 						$('.alert-component').addClass('alert-danger');

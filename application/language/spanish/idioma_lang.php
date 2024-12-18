@@ -187,3 +187,7 @@ $lang['Branch'] 						= 'Sucursal';
 $lang['Barcode Structure']			= 'Estructura del código de barras';
 $lang['New Provider'] 				= 'Nuevo Proveedor';
 $lang['Edit Provider'] 				= 'Editar Proveedor';
+
+$lang['HU'] 						= 'HU';
+$lang['Storage bin'] 				= 'Contenedor de almacenamiento';
+$lang['Storage location'] 			= 'Ubicación de almacenamiento';

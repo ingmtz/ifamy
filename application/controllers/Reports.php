@@ -514,6 +514,91 @@ class Reports extends MY_Controller {
 					}
 				)
 			);
+		}else if($this->config->item('client')=='Weidmann'){
+			$query="select c.tag, c.warehouse, c.location, a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
+				a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
+				case when c.status is null then 0 else 1 end as counted,
+				(case when c.status is null then 0 else 1 end * a.cost_price) as extcounted,
+				((case when c.status is null then 0 else 1 end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
+				from masterdata a
+				left join perpetuo b on a.itemcode=b.itemcode
+				left join tags c on c.itemcode=a.itemcode";
+
+			$primaryKey = 'itemcode';//'Id';
+
+			$columns = array(
+				array( 'db' => 'tag', 'dt' => 0 ),
+				array( 'db' => 'location', 'dt' => 1 ),
+				array( 'db' => 'itemcode', 'dt' => 2 ),
+				array( 'db' => 'type', 'dt' => 3 ),
+				array( 'db' => 'description',  'dt' => 4 ),
+				array(
+					'db'        => 'onhand',
+					'dt'        => 5,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return number_format($d, $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'cost_price',
+					'dt'        => 6,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return $moneysign.number_format($d, $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'extonhand',
+					'dt'        => 7,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return $moneysign.number_format($d, $decimals, '.', ',');
+					}
+				),
+				
+				array( 'db' => 'warehouse', 'dt' => 8 ),
+				array(
+					'db'        => 'counted',
+					'dt'        => 9,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return number_format($d, $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'cost_price',
+					'dt'        => 10,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return $moneysign.number_format($d, $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'extcounted',
+					'dt'        => 11,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return $moneysign.number_format($d, $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'counted',
+					'dt'        => 12,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return number_format($d-$row['onhand'], $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'cost_price',
+					'dt'        => 13,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return $moneysign.number_format($d, $decimals, '.', ',');
+					}
+				),
+				array(
+					'db'        => 'extvariation',
+					'dt'        => 14,
+					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
+						//return $moneysign.number_format($d, $decimals, '.', ',');
+					}
+				)
+			);
 		}else{
 			$query="select a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
 				a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
@@ -883,7 +968,7 @@ class Reports extends MY_Controller {
 		$this->reports_model->saveimportdata($perpetuofile);
 
 		//4.- tags
-		$tags = $this->db->query("select hu from rawdata")->result();
+		$tags = $this->db->query("select hu, material from rawdata")->result();
 		$this->reports_model->truncatetags();
 		$tagsfile=array();
 		foreach ($tags as $key => $value) {
@@ -891,9 +976,9 @@ class Reports extends MY_Controller {
 				'tag' => $value->hu,
 				'plant' => 'Unknown',
 				'area' => 'Unknown',
-				'warehouse' => 'Unknown',
 				'printcounter' => 0,
-				'auditcounter' => 0
+				'auditcounter' => 0,
+				'itemcode' => $value->material,
 			);
 		}
 		//print_r($tagsfile);

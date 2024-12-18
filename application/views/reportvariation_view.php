@@ -109,7 +109,7 @@
 							<table id="variationtable" class="table">
 								<thead>
 									<tr>
-										<th colspan="2" style="font-size: 20px; font-weight:bold;">
+										<th colspan="<?php if ($this->config->item('client') == 'Weidmann') { ?>4<?php } else { ?>2<?php } ?>" style="font-size: 20px; font-weight:bold;">
 											<?php $extonhand = 1;
 											if($totals->extonhand>0){
 												$extonhand = $totals->extonhand;
@@ -123,6 +123,7 @@
 										</th> 
 										<th colspan="3" style="background-color:rgba(59, 27, 103, 0.13);"><?php echo $this->lang->line('On hand'); ?></th>
 										<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
+										<th></th>
 										<th colspan="2" style="background-color:beige;"><?php echo $this->lang->line('Counted'); ?></th>
 										<th style="text-align:right;background-color:beige;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
 										<th colspan="2" style="background-color:aliceblue;"><?php echo $this->lang->line('Variation'); ?></th>
@@ -130,12 +131,19 @@
 									</b></th>
 									</tr>
 									<tr>
+										<?php if ($this->config->item('client') == 'Weidmann') { ?>
+											<th><?php echo $this->lang->line('HU'); ?></th>
+											<th><?php echo $this->lang->line('Storage bin'); ?></th>
+										<?php } ?>
 										<th><?php echo $this->lang->line('Item code'); ?></th>
 										<th><?php echo $this->lang->line('Type'); ?></th>
 										<th><?php echo $this->lang->line('Description'); ?></th>
 										<th><?php echo $this->lang->line('Quantity'); ?></th>
 										<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
 										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
+										<?php if ($this->config->item('client') == 'Weidmann') { ?>
+											<th><?php echo $this->lang->line('Storage location'); ?></th>
+										<?php } ?>
 										<th><?php echo $this->lang->line('Quantity'); ?></th>
 										<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
 										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
@@ -147,10 +155,11 @@
 								<tbody></tbody>
 								<tfoot>
 									<tr>
-										<th colspan="3"><?php echo $this->lang->line('Totals'); ?></th>
+										<th colspan="<?php if ($this->config->item('client') == 'Weidmann') { ?>5<?php } else { ?>3<?php } ?>"><?php echo $this->lang->line('Totals'); ?></th>
 										<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->onhand, $decimals, '.', ','); ?></b></th>
 										<th></th>
 										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
+										<th></th>
 										<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->counted, $decimals, '.', ','); ?></b></th>
 										<th></th>
 										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>

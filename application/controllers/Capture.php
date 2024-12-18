@@ -31,7 +31,7 @@ class Capture extends MY_Controller {
 
 			// Update the tag
 			$this->db->where('tag', $_POST['tag'])->update('tags', 
-				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location']));
+				array('qty' => 1, 'status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
 
 			echo json_encode(array('status'=>true));
 		}else{

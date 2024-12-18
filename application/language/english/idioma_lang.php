@@ -185,3 +185,8 @@ $lang['Branch'] 						= 'Branch';
 $lang['Barcode Structure']			= 'Barcode Structure';
 $lang['New Provider'] 				= 'New Provider';
 $lang['Edit Provider'] 				= 'Edit Provider';
+
+
+$lang['HU'] 						= 'HU';
+$lang['Storage bin'] 				= 'Storage bin';
+$lang['Storage location'] 			= 'Storage location';
