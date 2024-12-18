@@ -67,8 +67,8 @@
 				<div class="content">
 
 					<div class="alert alert-info alert-styled-left alert-arrow-left alert-component">
-						<h6 class="alert-heading" id="alert-title">Scan location</h6>
-						<span class="text-semibold" id="alert-body">Scan the location code to start the process.</span>
+						<h6 class="alert-heading" id="alert-title">Scan storage bin</h6>
+						<span class="text-semibold" id="alert-body">Scan the storage bin code to start the process.</span>
 						<br/>
 						<span class="text-semibold" id="last-scanned"></span>
 					</div>
@@ -154,11 +154,11 @@
 		function checkScanStatus(){
 			location = localStorage.getItem('location');
 			if(location){
-				$('#alert-title').html('Current storage bin: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change location</button>');
+				$('#alert-title').html('Current storage location: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change location</button>');
 				$('#alert-body').html('Scan the hu code');
 			}else{
-				$('#alert-title').html('Current storage bin: '+wh + '<br/>Scan location');
-				$('#alert-body').html('Scan the location code to start the process.');
+				$('#alert-title').html('Current storage location: '+wh + '<br/>Scan storage bin');
+				$('#alert-body').html('Scan the storage bin code to start the process.');
 			}
 		}
 		checkScanStatus();
