@@ -44,6 +44,15 @@
 
 	<link href="<?php echo base_url(); ?>assets/datatables2/responsive.bootstrap.min.css" rel="stylesheet">
 	<script src="<?php echo base_url(); ?>assets/datatables2/dataTables.responsive.min.js"></script>
+
+
+	<!-- <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+	<script src="https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.js"></script>
+	<script src="https://cdn.datatables.net/fixedheader/4.0.1/js/fixedHeader.dataTables.js"></script>
+
+	<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" rel="stylesheet">
+	<link href="https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.css" rel="stylesheet"> -->
+
 	<!-- Fin de datatables -->
 	<script src="<?php echo base_url(); ?>assets/jquery.redirect.js"></script>
 	<style>
@@ -91,7 +100,7 @@
 				<!-- Content area -->
 				<div class="content">
 					<?php
-					$moneysign = '$';
+					$moneysign = ''; // $
 					$decimals = 2;
 					if ($this->config->item('client') == 'AtlanticPrime') {
 						$moneysign = '';
@@ -105,117 +114,68 @@
 								<strong>Existen <?= $nimd; ?> items sin considerar por no encontrarse en MasterData. <a href="<?= base_url(); ?>reports/noInMasterData" target="_blank">Ver</a></strong>
 							</div>
 						<?php } ?>
-						<?php if ($this->config->item('client') != 'AtlanticPrime') { ?>
-							<table id="variationtable" class="table">
-								<thead>
-									<tr>
-										<th colspan="4" style="font-size: 20px; font-weight:bold;">
-											<?php $extonhand = 1;
-											if($totals->extonhand>0){
-												$extonhand = $totals->extonhand;
-											}
-											$percent = ($totals->extcounted / $extonhand) * 100;
-											if($percent > 100){
-												$percent = 100;
-											}
-											echo 'Progress: ' . number_format($percent, $decimals, '.', ',').'%';
-											?>
-										</th> 
-										<th colspan="2" style="background-color:rgba(59, 27, 103, 0.13);"><?php echo $this->lang->line('On hand'); ?></th>
-										<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
-										<th></th>
-										<th colspan="2" style="background-color:beige;"><?php echo $this->lang->line('Counted'); ?></th>
-										<th style="text-align:right;background-color:beige;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
-										<th colspan="2" style="background-color:aliceblue;"><?php echo $this->lang->line('Variation'); ?></th>
-										<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>;color:<?php if ($totals->extvariation < 0) { ?>white<?php } else { ?>black;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?>
-									</b></th>
-									</tr>
-									<tr>
-										<?php if ($this->config->item('client') == 'Weidmann') { ?>
-											<th><?php echo $this->lang->line('HU'); ?></th>
-											<th><?php echo $this->lang->line('Storage bin'); ?></th>
-										<?php } ?>
-										<th><?php echo $this->lang->line('Item code'); ?></th>
-										<th><?php echo $this->lang->line('Description'); ?></th>
-										<th><?php echo $this->lang->line('Quantity'); ?></th>
-										<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<?php if ($this->config->item('client') == 'Weidmann') { ?>
-											<th><?php echo $this->lang->line('Storage location'); ?></th>
-										<?php } ?>
-										<th><?php echo $this->lang->line('Quantity'); ?></th>
-										<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Quantity'); ?></th>
-										<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-									</tr>
-								</thead>
-								<tbody></tbody>
-								<tfoot>
-									<tr>
-										<th colspan="<?php if ($this->config->item('client') == 'Weidmann') { ?>4<?php } else { ?>3<?php } ?>"><?php echo $this->lang->line('Totals'); ?></th>
-										<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->onhand, $decimals, '.', ','); ?></b></th>
-										<th></th>
-										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
-										<th></th>
-										<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->counted, $decimals, '.', ','); ?></b></th>
-										<th></th>
-										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
-										<th></th>
-										<th></th>
-										<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>;color:<?php if ($totals->extvariation < 0) { ?>white<?php } else { ?>black;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?></b></th>
-									</tr>
-								</tfoot>
-							</table>
-						<?php } else { ?>
-							<table id="variationtable" class="table">
-								<thead>
-									<tr>
-										<th></th>
-										<th></th>
-										<th></th>
-										<th style="background-color:rgba(59, 27, 103, 0.13);"><?php echo $this->lang->line('On hand'); ?></th>
-										<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
-										<th style="background-color:beige;"><?php echo $this->lang->line('Counted'); ?></th>
-										<th style="text-align:right;background-color:beige;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;"><?php echo $this->lang->line('Variation'); ?></th>
-										<th style="background-color: <?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>#EAFF5F;<?php } ?>;text-align:right;"><b><?php echo (($totals->extvariation) < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;"><b><?php echo number_format($totals->variationqtyabs, $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;"><b><?php echo number_format($totals->extvariationabs, $decimals, '.', ','); ?></b></th>
-									</tr>
-									<tr>
-										<th><?php echo $this->lang->line('Item code'); ?></th>
-										<th><?php echo $this->lang->line('Description'); ?></th>
-										<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Quantity'); ?></th>
-										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Quantity'); ?></th>
-										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th><?php echo $this->lang->line('Quantity'); ?></th>
-										<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
-										<th>ABS Qty</th>
-										<th>ABS Extended</th>
-									</tr>
-								</thead>
-								<tbody></tbody>
-								<tfoot>
-									<tr>
-										<th colspan="3"><?php echo $this->lang->line('Totals'); ?></th>
-										<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->onhand, 2, '.', ','); ?></b></th>
-										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->counted, 2, '.', ','); ?></b></th>
-										<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;text-align:right;">
-											<b><?php echo ($totals->variationqty < 0 ? '-' : '') . $moneysign . number_format(abs($totals->variationqty), 2, '.', ','); ?></b>
-										</th>
-										<th style="background-color: <?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>#EAFF5F;<?php } ?>;text-align:right;"><b><?php echo (($totals->extvariation) < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;"><b><?php echo number_format($totals->variationqtyabs, $decimals, '.', ','); ?></b></th>
-										<th style="background-color:aliceblue;"><b><?php echo number_format($totals->extvariationabs, $decimals, '.', ','); ?></b></th>
-									</tr>
-								</tfoot>
-							</table>
-						<?php } ?>
+						
+						<table id="variationtable" class="table">
+							<thead>
+								<tr>
+									<th colspan="6" style="font-size: 20px; font-weight:bold;">
+										<?php $extonhand = 1;
+										if($totals->extonhand>0){
+											$extonhand = $totals->extonhand;
+										}
+										$percent = ($totals->extcounted / $extonhand) * 100;
+										if($percent > 100){
+											$percent = 100;
+										}
+										//echo 'Progress: ' . number_format($percent, $decimals, '.', ',').'%';
+										?>
+									</th> 
+									<th style="background-color:rgba(59, 27, 103, 0.13);"><?php echo $this->lang->line('On hand'); ?></th>
+									<th style="text-align:right;background-color:rgba(59, 27, 103, 0.13);"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
+									<th style="background-color:beige;"><?php echo $this->lang->line('Counted'); ?></th>
+									<th style="text-align:right;background-color:beige;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
+									<th style="background-color:aliceblue;"><?php echo $this->lang->line('Variation'); ?></th>
+									<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>;color:<?php if ($totals->extvariation < 0) { ?>white<?php } else { ?>black;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . $moneysign . number_format(abs($totals->extvariation), $decimals, '.', ','); ?>
+									<th style="background-color:aliceblue;">
+										<!-- <b><?php echo number_format($totals->variationqtyabs, $decimals, '.', ','); ?></b> -->
+									</th>
+									<th style="background-color:aliceblue;"><b><?php echo number_format($totals->extvariationabs, $decimals, '.', ','); ?></b></th>
+								</b></th>
+								</tr>
+								<tr>
+									<th><?php echo $this->lang->line('Storage location'); ?></th>
+									<th><?php echo $this->lang->line('HU'); ?></th>
+									<th><?php echo $this->lang->line('Storage bin'); ?></th>
+									<th><?php echo $this->lang->line('Item code'); ?></th>
+									<th><?php echo $this->lang->line('Description'); ?></th>
+									<th><?php echo $this->lang->line('Unit price'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
+									<th><?php echo $this->lang->line('Quantity'); ?></th>
+									<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
+									<th><?php echo $this->lang->line('Quantity'); ?></th>
+									<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
+									<th><?php echo $this->lang->line('Quantity'); ?></th>
+									<th><?php echo $this->lang->line('Extended'); ?> <?php if ($this->config->item('client') == 'CVG') { ?>USD<?php } else { ?>MXN<?php } ?></th>
+									<th>ABS Qty</th>
+									<th>ABS Extended</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+							<tfoot>
+								<tr>
+									<th colspan="6"><?php echo $this->lang->line('Totals'); ?></th>
+									<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->onhand, $decimals, '.', ','); ?></b></th>
+									<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extonhand, $decimals, '.', ','); ?></b></th>
+									<th style="background-color:aliceblue;text-align:right;"><b><?php echo number_format($totals->counted, $decimals, '.', ','); ?></b></th>
+									<th style="background-color: #EAFF5F;text-align:right;"><b><?php echo $moneysign; ?><?php echo number_format($totals->extcounted, $decimals, '.', ','); ?></b></th>
+									<th></th>
+									<th style="text-align:right;background-color:<?php if ($totals->extvariation < 0) { ?>red<?php } else { ?>aliceblue;<?php } ?>;color:<?php if ($totals->extvariation < 0) { ?>white<?php } else { ?>black;<?php } ?>"><b><?php echo ($totals->extvariation < 0 ? '-' : '') . number_format(abs($totals->extvariation), $decimals, '.', ','); ?></b></th>
+									<th style="background-color:aliceblue;">
+										<!-- <b><?php echo number_format($totals->variationqtyabs, $decimals, '.', ','); ?></b> -->
+									</th>
+									<th style="background-color:aliceblue;"><b><?php echo number_format($totals->extvariationabs, $decimals, '.', ','); ?></b></th>
+								</tr>
+							</tfoot>
+						</table>
 					</div>
 					<div>
 						<div id="paneldetail" class="panel panel-flat" style="display:none;">
@@ -269,6 +229,7 @@
 	var datatable, detailtable;
 	$(document).ready(function() {
 		datatable = $('#variationtable').DataTable({
+			//fixedHeader: true,
 			"language": {
 				"url": "<?php echo base_url(); ?>assets/datatables2/<?php echo $this->session->userdata('site_lang'); ?>.json",
 				buttons: {

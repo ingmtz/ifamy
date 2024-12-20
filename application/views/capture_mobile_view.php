@@ -249,6 +249,9 @@
 				decodedText = arrHu[2];
 				// Just preserve numbers
 				decodedText = decodedText.replace(/[^0-9]/g, '');
+			}else if(arrHu.length == 1){
+				// Just preserve numbers
+				decodedText = decodedText.replace(/[^0-9]/g, '');
 			}else{
 				wrong.play();
 				$('.alert-component').addClass('alert-danger');

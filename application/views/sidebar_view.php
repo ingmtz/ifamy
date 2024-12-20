@@ -66,11 +66,12 @@
 								-->
 
 								<!--<li><a href="<?php echo base_url(); ?>reports/variationbywarehouse"><i class="glyphicon glyphicon-th-list"></i> <span>Variation report by warehouse</span></a></li>-->
-								<li><a href="<?php echo base_url(); ?>reports/locationreport"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Locations report'); ?></span></a></li>
 								
-								<li><a href="<?php echo base_url(); ?>reports/scannedbyuser"><i class="glyphicon glyphicon-user"></i> <span>Scanned by user</span></a></li>
+								<!-- <li><a href="<?php echo base_url(); ?>reports/locationreport"><i class="glyphicon glyphicon-th-list"></i> <span><?php echo $this->lang->line('Locations report'); ?></span></a></li> -->
+								
+								<!-- <li><a href="<?php echo base_url(); ?>reports/scannedbyuser"><i class="glyphicon glyphicon-user"></i> <span>Scanned by user</span></a></li> -->
 
-								<li><a href="<?php echo base_url(); ?>reports/auditbyuser"><i class="glyphicon glyphicon-user"></i> <span>Audit by user</span></a></li>
+								<!-- <li><a href="<?php echo base_url(); ?>reports/auditbyuser"><i class="glyphicon glyphicon-user"></i> <span>Audit by user</span></a></li> -->
 
 								<!--<li><a href="<?php echo base_url(); ?>reports/unknownitems"><i class="glyphicon glyphicon-align-justify"></i> <span>Unknown items report</span></a></li>-->
 								<!--<li><a href="<?php echo base_url(); ?>reports/importfiles"><i class="glyphicon glyphicon-cloud-upload"></i> <span>"Perpetuo" & "Item Master"</span></a></li>-->
@@ -105,7 +106,7 @@
 								<li class="active">
 									<a href="#"><i class="icon-puzzle2"></i> <span><?php echo $this->lang->line('Configuration'); ?></span></a>
 									<ul>
-										<li><a href="<?php echo base_url(); ?>tags/audit"><?php echo $this->lang->line('Audit'); ?></a></li>
+										<!-- <li><a href="<?php echo base_url(); ?>tags/audit"><?php echo $this->lang->line('Audit'); ?></a></li> -->
 										<li><a href="<?php echo base_url(); ?>tags">Handling Units</a></li>
 										<!--<li><a href="<?php echo base_url(); ?>areas"><?php echo $this->lang->line('Areas'); ?></a></li>-->
 

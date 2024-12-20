@@ -402,7 +402,7 @@ class Reports extends MY_Controller {
 		$this->load->view('reportvariation_view',$data);
 	}
 	public function loadvariationdata(){
-		$moneysign='$';
+		$moneysign=''; //'$';
 		$decimals=2;
 		$plant = "";
 		$area = "";
@@ -414,276 +414,93 @@ class Reports extends MY_Controller {
 			$area = $_GET['area'];
 		}
 
-		if($this->config->item('client')=='AtlanticPrime'){
-			$moneysign='';
-			$decimals=2;
-			$query="select a.itemcode, a.description,
-					case when b.onhand is null then 0 else b.onhand end as onhand,
-					a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand,
-					case when temp.total is null then 0 else temp.total end as counted,
-					(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
-					(case when temp.total is null then 0 else temp.total end-case when b.onhand is null then 0 else b.onhand end) as variationqty,
-					abs(case when temp.total is null then 0 else temp.total end-case when b.onhand is null then 0 else b.onhand end) as variationqtyabs,
-					((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation,
-					abs((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariationabs
-					
-					from masterdata a
-					left join perpetuo b on a.itemcode=b.itemcode
-					left join (
-						select a.itemcode, sum(qty) as total, plant, area
-						from tags a
-						where not a.itemcode is null
-						group by a.itemcode
-						) as temp on temp.itemcode=a.itemcode";
-
-			if($plant == 'null' && $area == 'null'){
-				$querystr.=" where temp.plant is null and temp.area is null";
-
-			}else if($plant != '' && $area != ''){
-				$querystr.=" where temp.plant = '".$plant."' and temp.area = '".$area."'";
-			}
-			$primaryKey = 'itemcode';//'Id';
-
-			$columns = array(
-				array( 'db' => 'itemcode', 'dt' => 0 ),
-				array( 'db' => 'description', 'dt' => 1 ),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 2,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'onhand',
-					'dt'        => 3,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extonhand',
-					'dt'        => 4,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						//$d = floor($d * 100) / 100;
-						return $moneysign.number_format($d, 0, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 5,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return '<a href="#" class="detail" data-item="'.$row['itemcode'].'">'.number_format($d, $decimals, '.', ',').'</a>';
-					}
-				),
-				array(
-					'db'        => 'extcounted',
-					'dt'        => 6,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, 0, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'variationqty',
-					'dt'        => 7,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariation',
-					'dt'        => 8,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), 0, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'variationqtyabs',
-					'dt'        => 9,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariationabs',
-					'dt'        => 10,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				)
-			);
-		}else if($this->config->item('client')=='Weidmann'){
-			$query="select c.tag, c.warehouse, c.location, a.itemcode, a.description, c.qty as onhand, 
+		$query="select c.tag, c.warehouse, c.location, a.itemcode, a.description, c.qty as onhand, 
 				a.cost_price, (c.qty * a.cost_price) as extonhand, 
 				case when c.status is null then 0 else c.qty end as counted,
 				(case when c.status is null then 0 else c.qty end * a.cost_price) as extcounted,
-				((case when c.status is null then 0 else c.qty end - c.qty)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
+				((case when c.status is null then 0 else c.qty end - c.qty)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation,
+				(case when c.status is null then 0 else c.qty end - c.qty) as variationqty,
+				abs((case when c.status is null then 0 else c.qty end - c.qty)) as variationqtyabs,
+				abs(((case when c.status is null then 0 else c.qty end - c.qty)*case when a.cost_price is null then 0 else a.cost_price end)) as extvariationabs
 				from masterdata a
 				left join tags c on c.itemcode=a.itemcode";
 
-			$primaryKey = 'itemcode';//'Id';
+		$primaryKey = 'itemcode';//'Id';
 
-			$columns = array(
-				array( 'db' => 'tag', 'dt' => 0 ),
-				array( 'db' => 'location', 'dt' => 1 ),
-				array( 'db' => 'itemcode', 'dt' => 2 ),
-				array( 'db' => 'description',  'dt' => 3 ),
-				array(
-					'db'        => 'onhand',
-					'dt'        => 4,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 5,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extonhand',
-					'dt'        => 6,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				
-				array( 'db' => 'warehouse', 'dt' => 7 ),
-				array(
-					'db'        => 'counted',
-					'dt'        => 8,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 9,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extcounted',
-					'dt'        => 10,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 11,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d-$row['onhand'], $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 12,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariation',
-					'dt'        => 13,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				)
-			);
-		}else{
-			$query="select a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
-				a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
-				case when temp.total is null then 0 else temp.total end as counted,
-				(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
-				((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
-				from masterdata a
-				left join perpetuo b on a.itemcode=b.itemcode
-				left join (
-										select a.itemcode, sum(qty) as total
-										from tags a
-										where not a.itemcode is null
-										group by a.itemcode
-										) as temp on temp.itemcode=a.itemcode";
+		$columns = array(
+			array( 'db' => 'warehouse', 'dt' => 0 ),
+			array( 'db' => 'tag', 'dt' => 1 ),
+			array( 'db' => 'location', 'dt' => 2 ),
+			array( 'db' => 'itemcode', 'dt' => 3 ),
+			array( 'db' => 'description',  'dt' => 4 ),
+			array(
+				'db'        => 'cost_price',
+				'dt'        => 5,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'onhand',
+				'dt'        => 6,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extonhand',
+				'dt'        => 7,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'counted',
+				'dt'        => 8,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extcounted',
+				'dt'        => 9,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'counted',
+				'dt'        => 10,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return number_format($d-$row['onhand'], $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extvariation',
+				'dt'        => 11,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return ($d<0 ? '-' : '').number_format(abs($d), $decimals, '.', ',');
+					//return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
+					//return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'variationqtyabs',
+				'dt'        => 12,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extvariationabs',
+				'dt'        => 13,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+					//return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			)
+		);
 
-			$primaryKey = 'itemcode';//'Id';
-
-			$columns = array(
-				array( 'db' => 'itemcode', 'dt' => 0 ),
-				array( 'db' => 'type', 'dt' => 1 ),
-				array( 'db' => 'description',  'dt' => 2 ),
-				array(
-					'db'        => 'onhand',
-					'dt'        => 3,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 4,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extonhand',
-					'dt'        => 5,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 6,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return '<a href="#" class="detail" data-item="'.$row['itemcode'].'">'.number_format($d, $decimals, '.', ',').'</a>';
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 7,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extcounted',
-					'dt'        => 8,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 9,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d-$row['onhand'], $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 10,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariation',
-					'dt'        => 11,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				)
-			);
-		}
 		
 		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
 		//print_r($data);

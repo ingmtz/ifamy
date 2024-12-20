@@ -13,7 +13,7 @@ class Capture extends MY_Controller {
 	}
 
 	public function checklocation(){
-		$result=$this->db->where('location', $_POST['location'])->where('wh', $_POST['wh'])->get('locations')->row();
+		$result=$this->db->where('location', $_POST['location'])->get('locations')->row(); //->where('wh', $_POST['wh'])
 		if($result){
 			echo json_encode(array('status'=>true));
 		}else{

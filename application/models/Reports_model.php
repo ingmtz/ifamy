@@ -195,39 +195,22 @@ class Reports_model extends CI_Model {
         return $query->result();
     }
     public function getvariationreporttotals($plant = '', $area = ''){
-        $querystr="select           
-                    sum(case when b.onhand is null then 0 else b.onhand end) as onhand, 
+        $querystr="select sum(t.qty) as onhand, sum(t.qty*m.cost_price) as extonhand,
+        sum(case when t.status = 'Used' then t.qty else 0 end) as counted,
+        sum(case when t.status = 'Used' then t.qty else 0 end *m.cost_price) as extcounted,
+        sum(case when t.status = 'Used' then t.qty else 0 end - t.qty) as variationqty,
+        sum(abs(case when t.status = 'Used' then t.qty else 0 end - t.qty)) as variationqtyabs,
+        sum((case when t.status = 'Used' then t.qty else 0 end - t.qty) *m.cost_price) as extvariation,
+        sum(abs(case when t.status = 'Used' then t.qty else 0 end - t.qty) *m.cost_price) as extvariationabs
+        from tags t 
+        left join masterdata m on t.itemcode = m.itemcode ";
 
-                    sum(case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
+        // if($plant == 'null' && $area == 'null'){
+        //     $querystr.=" where temp.plant is null and temp.area is null";
 
-                    sum(case when temp.total is null then 0 else temp.total end) as counted,
-                    
-                    sum(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
-                    
-
-                    sum(case when temp.total is null then 0 else temp.total end-case when b.onhand is null then 0 else b.onhand end) as variationqty,
-
-                    sum(abs(case when temp.total is null then 0 else temp.total end-case when b.onhand is null then 0 else b.onhand end)) as variationqtyabs,
-                    
-                    sum((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation,
-                    
-                    sum(abs((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end)) as extvariationabs
-                    
-                    from masterdata a
-                    left join perpetuo b on a.itemcode=b.itemcode
-                    left join (
-                                            select a.itemcode, sum(qty) as total, area, plant
-                                            from tags a
-                                            where not a.itemcode is null
-                                            group by a.itemcode
-                                            ) as temp on temp.itemcode=a.itemcode";
-
-        if($plant == 'null' && $area == 'null'){
-            $querystr.=" where temp.plant is null and temp.area is null";
-
-        }else if($plant != '' && $area != ''){
-            $querystr.=" where temp.plant = '".$plant."' and temp.area = '".$area."'";
-        }
+        // }else if($plant != '' && $area != ''){
+        //     $querystr.=" where temp.plant = '".$plant."' and temp.area = '".$area."'";
+        // }
         $query=$this->db->query($querystr);
         return $query->row();
     }
