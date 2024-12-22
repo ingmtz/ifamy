@@ -258,7 +258,12 @@
 			],
 			buttons: [
 				/*'copyHtml5',*/
-				'excelHtml5',
+				{
+                    text: 'Excel',
+                    action: function (e, dt, node, config) {
+						window.open("<?php echo base_url(); ?>reports/exportvariationdata", '_blank');
+                    }
+                },
 				/*'csvHtml5',*/
 				//'print',
 				{
