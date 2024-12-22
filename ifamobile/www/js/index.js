@@ -290,6 +290,7 @@ function downloaddb() {
         function (entry) {
             $('#btndownload').prop('disabled', false).val('Download database');
             $('#btnreplacedb').prop('disabled', false).val('Replace database');
+            $('#btnresetdb').prop('disabled', false).val('Reset database');
             window.localStorage.apiurl = $('#serverurl').val();
             //alert("download complete: " + entry.toURL());
             //listDir(cordova.file.applicationStorageDirectory+'databases/');
@@ -299,6 +300,7 @@ function downloaddb() {
         function (error) {
             $('#btndownload').prop('disabled', false).val('Download database');
             $('#btnreplacedb').prop('disabled', false).val('Replace database');
+            $('#btnresetdb').prop('disabled', false).val('Reset database');
             //alert('Error: Unable to access api url.');
             alert(JSON.stringify(error));
         },
@@ -309,6 +311,34 @@ function downloaddb() {
             }
         }
     );
+}
+
+function onConfirmResetDB() {
+    
+    $('#btndownload').prop('disabled', true).val('Wait...');
+    $('#btnreplacedb').prop('disabled', true).val('Wait...');
+    $('#btnresetdb').prop('disabled', true).val('Wait...');
+
+    var fileTransfer = new FileTransfer();
+    var fileURL = cordova.file.applicationStorageDirectory + 'databases/';
+
+    window.resolveLocalFileSystemURL(fileURL, function (dir) {
+        dir.getFile("db4.db", {create: false}, function (fileEntry) {
+            fileEntry.remove(function () {
+                alert("DB deleted successfully");
+                $('#btndownload').prop('disabled', false).val('Download database');
+                $('#btnreplacedb').prop('disabled', false).val('Replace database');
+                $('#btnresetdb').prop('disabled', false).val('Reset database');
+            }, function (error) {
+                alert("error occurred: " + error.code);
+            });
+        }, function () {
+            alert("There is no DB");
+            $('#btndownload').prop('disabled', false).val('Download database');
+            $('#btnreplacedb').prop('disabled', false).val('Replace database');
+            $('#btnresetdb').prop('disabled', false).val('Reset database');
+        });
+    });
 }
 
 function guardarlog(query){

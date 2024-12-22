@@ -81,6 +81,13 @@
                             <input type="button" class="btn btn-info" value="Replace database" id="btnreplacedb">
                         </div>
                     </div>
+                    
+
+                    <div class="row form-group">
+                        <div class="col-xs-6">
+                            <input type="button" class="btn btn-danger" value="Reset database" id="btnresetdb">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -119,6 +126,7 @@
                     window.localStorage.apiurl=$('#serverurl').val();
                     $('#btndownload').prop('disabled', true).val('Wait...');
                     $('#btnreplacedb').prop('disabled', true).val('Wait...');
+                    $('#btnresetdb').prop('disabled', true).val('Wait...');
                     syncdb(true);
                     
                 });
@@ -127,7 +135,17 @@
                     window.localStorage.apiurl=$('#serverurl').val();
                     $('#btndownload').prop('disabled', true).val('Wait...');
                     $('#btnreplacedb').prop('disabled', true).val('Wait...');
+                    $('#btnresetdb').prop('disabled', true).val('Wait...');
                     downloaddb();
+                });
+
+                $('#btnresetdb').click(function(){
+                    navigator.notification.confirm(
+                            'Are you sure of reset the DB?',
+                             onConfirmResetDB,
+                            'Reset DB',
+                            ['Yes','No']
+                        );
                 });
 
                 $('#btnlog').click(function(event) {
