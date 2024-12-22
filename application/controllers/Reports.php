@@ -678,7 +678,7 @@ class Reports extends MY_Controller {
 	        $sheet->setCellValueExplicit("H$contador", $value->cost_price,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
 	        $sheet->setCellValueExplicit("I$contador", $value->extcounted,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
 
-	        $sheet->setCellValueExplicit("J$contador", $value->counted,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("J$contador", $value->counted-$value->onhand,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
 	        $sheet->setCellValueExplicit("K$contador", $value->cost_price,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
 
 	        $sheet->setCellValueExplicit("L$contador", $value->extvariation,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
