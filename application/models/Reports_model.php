@@ -312,6 +312,24 @@ class Reports_model extends CI_Model {
         $query=$this->db->query($querystr);
         return $query->result();
     }
+    
+    function getexportvariationdata(){
+        $querystr="select a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
+				a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
+				case when temp.total is null then 0 else temp.total end as counted,
+				(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
+				((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
+				from masterdata a
+				left join perpetuo b on a.itemcode=b.itemcode
+				left join (
+										select a.itemcode, sum(qty) as total
+										from tags a
+										where not a.itemcode is null
+										group by a.itemcode
+										) as temp on temp.itemcode=a.itemcode";
+        $query=$this->db->query($querystr);
+        return $query->result();
+    }
 
     function getvariationarea(){
         $querystr="select           

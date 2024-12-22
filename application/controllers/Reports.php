@@ -617,6 +617,89 @@ class Reports extends MY_Controller {
 		sleep(1);
 		echo json_encode($result);
 	}
+
+	public function exportvariationdata(){
+		set_time_limit(0);
+    	ini_set('memory_limit', '-1');
+		$data=$this->reports_model->getexportvariationdata($_POST['mode']);
+		$objPHPExcel = new PHPExcel();
+        // Set properties
+        $objPHPExcel->getProperties()->setCreator("Novarumsystems.com")
+                        ->setLastModifiedBy("Novarumsystems.com")
+                        ->setTitle('variationdata')
+                        ->setSubject('variationdata')
+                        ->setDescription('variationdata')
+                        ->setKeywords("Novarumsystems.com")
+                        ->setCategory("Novarumsystems.com");
+        $sheet = $objPHPExcel->getActiveSheet();
+        $sheet->setTitle('variationdata');
+
+        $sheet->setCellValue("A1", 'Item code');
+        $sheet->setCellValue("B1", 'Type');
+        $sheet->setCellValue("C1", 'Description');
+        $sheet->setCellValue("D1", 'Quantity');
+        $sheet->setCellValue("E1", 'Unit Price USD');
+        $sheet->setCellValue("F1", 'Extended USD');
+        $sheet->setCellValue("G1", 'Quantity');
+        $sheet->setCellValue("H1", 'Unit Price USD');
+        $sheet->setCellValue("I1", 'Extended USD');
+        $sheet->setCellValue("J1", 'Quantity');
+        $sheet->setCellValue("K1", 'Unit Price USD');
+        $sheet->setCellValue("L1", 'Extended USD');
+
+        for ($i=1; $i < 12; $i++) {
+        	$colString = PHPExcel_Cell::stringFromColumnIndex($i);
+        	$sheet->getColumnDimension($colString)->setAutoSize(true);
+        }
+
+        $objPHPExcel->getActiveSheet()->getStyle('A1:L1')->getFill()
+        ->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+        ->getStartColor()->setRGB('99CCFF');
+
+		$styleArray = array(
+		    'font' => array(
+		        'bold' => true
+		    )
+		);
+		$sheet->getStyle('A1:L1')->applyFromArray($styleArray);
+
+		// Datos============>
+		$contador=1;
+		foreach ($data as $key => $value) {
+            $contador++;
+            //$sheet->setCellValue("A$contador", '');
+            $sheet->setCellValueExplicit("A$contador", $value->itemcode,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("B$contador", $value->type,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("C$contador", $value->description,  PHPExcel_Cell_DataType::TYPE_STRING);
+	        $sheet->setCellValueExplicit("D$contador", $value->onhand,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("E$contador", $value->cost_price,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("F$contador", $value->extonhand,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("G$contador", $value->counted,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("H$contador", $value->cost_price,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("I$contador", $value->extcounted,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+
+	        $sheet->setCellValueExplicit("J$contador", $value->counted,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+	        $sheet->setCellValueExplicit("K$contador", $value->cost_price,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+
+	        $sheet->setCellValueExplicit("L$contador", $value->extvariation,  PHPExcel_Cell_DataType::TYPE_NUMERIC);
+        }
+
+		
+        //-----------------------------------> Color
+		// Save Excel 2007 file
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="'.'variationdata'.'.xlsx"');
+		header('Cache-Control: max-age=0');
+
+		/*header('Content-Type: application/vnd.ms-excel');
+		header('Content-Disposition: attachment;filename="totalcapture.xls"');
+		header('Cache-Control: max-age=0');*/
+
+		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');//Excel5	Excel2007
+		//$objWriter->setIncludeCharts(TRUE);
+		$objWriter->save('php://output');
+		exit;
+	}
 	//------>
 	public function variationarea(){
 		$this->load->view('reportvariationarea_view');
