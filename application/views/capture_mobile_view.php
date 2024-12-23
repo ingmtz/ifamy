@@ -73,7 +73,7 @@
 						<span class="text-semibold" id="last-scanned"></span>
 					</div>
 
-					<input type="text" id="scanner" class="form-control" placeholder="Test">
+					<input type="text" id="scanner" class="form-control" placeholder="Capture code here" autofocus>
 					
 					<div id="reader" width="50%"></div>
 
@@ -154,7 +154,7 @@
 		function checkScanStatus(){
 			location = localStorage.getItem('location');
 			if(location){
-				$('#alert-title').html('Current storage location: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change location</button>');
+				$('#alert-title').html('Current storage location: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change storage bin</button>');
 				$('#alert-body').html('Scan the hu code');
 			}else{
 				$('#alert-title').html('Current storage location: '+wh + '<br/>Scan storage bin');

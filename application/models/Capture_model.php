@@ -98,19 +98,16 @@ class Capture_model extends CI_Model {
 
     public function saveAudit($data){
         $this->db->set('datetimeaudit', 'now()', FALSE);
-
         $this->db->insert('audits',$data);
-
-
 
         $this->db->where('tag', $data['tag']);
         unset($data['tag']);
         unset($data['reasontoedit']);
         unset($data['resultaudit']);
         unset($data['qty']);
+        unset($data['itemcode']); // We are saving missing transaction in this field
         
-        $this->db->set('datetimeaudit', 'now()', FALSE);
-        
+        $this->db->set('datetimeaudit', 'now()', FALSE);        
         $this->db->set('datetimecaptured', 'now()', FALSE);
 
         $this->db->update('tags',$data);

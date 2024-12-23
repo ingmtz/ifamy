@@ -78,25 +78,25 @@
 					</div>
 					<div class="row border-bottom-3" id="verify-scanned" style="display: none">
 						<br/>
-						<div class="col-md-12 text-center">
+						<div class="col-md-12 text-center form-group">
 							Is the above information correct?
 						</div>
-						<div class="col-md-6 text-center">
+						<div class="col-md-6 text-center form-group">
 							<button class="btn btn-xs btn-success" id="auditCorrectData">Correct</button>
 						</div>
-						<div class="col-md-6 text-center">
+						<div class="col-md-6 text-center form-group">
 							<button class="btn btn-xs btn-danger" id="auditIncorrectData">Incorrect</button>
 						</div>
 					</div>
 					<div class="row border-bottom-3" id="fix-scanned" style="display: none">
 						<br/>
 						<div class="col-md-6">
-							Select a reaon
+							Select a reason
 							<select id="incorrectDataReason" class="form-control chosen-select">
-								<option value="1">Part Number Error</option>
-								<option value="2">Quantity Error</option>
-								<option value="3">Unit Mesure Discrepancy</option>
-								<option value="4">Wrong Location</option>
+								<option value="1">Quantity Error</option>
+								<option value="2">Missing transaction</option>
+								<option value="3">Wrong Location</option>
+								<option value="4">Others</option>
 							</select>
 						</div>
 						<div class="col-md-6">
@@ -114,7 +114,7 @@
 
 					<div id="scann-area">
 
-						<input type="text" id="scanner" class="form-control" placeholder="Test">
+						<input type="text" id="scanner" class="form-control" placeholder="Capture code here" autofocus>
 						
 						<div id="reader" width="50%"></div>
 					</div>
@@ -246,21 +246,19 @@
 
 			}
 
-			if($('#incorrectDataReason').val() == 2 && isNaN($("#fixedData").val())){
+			if($('#incorrectDataReason').val() == 1 && isNaN($("#fixedData").val())){
 				wrong.play();
 				$('.alert-component').addClass('alert-danger');
 				$('#info-scanned').html("Invalid quantity");
 			}
 
-			if($('#incorrectDataReason').val() == 1){
-				checkItemCode($("#fixedData").val());
-			}else{
-				saveAudit(false);
-			}
-
-		});
-
-		
+			saveAudit(false);
+			// if($('#incorrectDataReason').val() == 1){
+			// 	checkItemCode($("#fixedData").val());
+			// }else{
+			// 	saveAudit(false);
+			// }
+		});		
 
 		
 		$(document).delegate('#auditIncorrectData', 'click', function(){
@@ -269,7 +267,7 @@
 		});
 
 		$('#incorrectDataReason').click(function(){
-			if($(this).val() == 4){
+			if($(this).val() == 3){
 				$("#fixedData").val("");
 				$("#fixedData").prop("disabled",true);
 				$("#fixedData").prop("placeholder","Scan the right location");
@@ -363,7 +361,7 @@
 						htmlinfo += '<div class="col-md-6">HU: '+hu.tag+'</div>';
 						htmlinfo += '<div class="col-md-6">Item: '+hu.itemcode+'</div>';
 						htmlinfo += '<div class="col-md-6">Description: '+hu.description+'</div>';
-						htmlinfo += '<div class="col-md-6">OM: '+hu.uom+'</div>';
+						//htmlinfo += '<div class="col-md-6">OM: '+hu.uom+'</div>';
 						htmlinfo += '<div class="col-md-6">Qty: '+hu.qty+'</div>';
 						htmlinfo += '<div class="col-md-6">Open box: '+(hu.openbox == "1" ? "Yes" : "No")+'</div>';
 						$('#detail-scanned').html(htmlinfo);
@@ -443,23 +441,17 @@
 				let reason = $('#incorrectDataReason').val();
 				switch(Number(reason)){
 					case 1:
-						hu.itemcode = $("#fixedData").val();
-						break;
-
-						
-					case 2:
 						hu.qty = $("#fixedData").val();
 						break;
-
-						
+					case 2: // Missing transaction
+						hu.itemcode = $("#fixedData").val();
+						break;
 					case 3:
-						hu.uom = $("#fixedData").val();
-						break;
-
-						
+							hu.location = $("#fixedData").val();
+							break;
 					case 4:
-						hu.location = $("#fixedData").val();
-						break;
+						hu.uom = $("#fixedData").val();
+						break;						
 				}
 			}
 			

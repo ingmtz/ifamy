@@ -28,6 +28,11 @@ class Capture extends MY_Controller {
 				echo json_encode(array('status'=>false, 'message'=>'HU already scanned'));
 				return;
 			}
+			// Check if the wh (storage location) is correct
+			if($result->warehouse != $this->session->userdata('ifatrimplant')){
+				echo json_encode(array('status'=>false, 'message'=>'HU not in this storage location'));
+				return;
+			}
 
 			// Update the tag
 			$this->db->where('tag', $_POST['tag'])->update('tags', 
