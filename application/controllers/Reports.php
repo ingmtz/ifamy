@@ -870,7 +870,7 @@ class Reports extends MY_Controller {
 		$this->reports_model->saveimportdata($perpetuofile);
 
 		//4.- tags
-		$tags = $this->db->query("select hu, material, wh, qty from rawdata")->result();
+		$tags = $this->db->query("select hu, material, wh, qty, um from rawdata")->result();
 		$this->reports_model->truncatetags();
 		$tagsfile=array();
 		foreach ($tags as $key => $value) {
@@ -883,6 +883,7 @@ class Reports extends MY_Controller {
 				'printcounter' => 0,
 				'auditcounter' => 0,
 				'itemcode' => $value->material,
+				'uom' => $value->um
 			);
 		}
 		//print_r($tagsfile);

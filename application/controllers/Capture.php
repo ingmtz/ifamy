@@ -22,7 +22,7 @@ class Capture extends MY_Controller {
 	}
 
 	public function checkhu(){
-		$result=$this->db->where('tag', $_POST['tag'])->get('tags')->row();
+		$result=$this->capture_model->checkTag($_POST['tag']);
 		if($result){
 			if($result->status == 'Used'){
 				echo json_encode(array('status'=>false, 'message'=>'HU already scanned'));
@@ -145,4 +145,49 @@ class Capture extends MY_Controller {
 		$data=$this->utf8_encode_deep($data);
 		echo json_encode($data);
 	}*/
+
+	public function audit(){
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_audit_view', $data);
+	}
+
+	public function checkhuaudit(){
+		$result=$this->capture_model->checkTag($_POST['tag']);
+		if($result){
+			if($result->status != 'Used'){
+				echo json_encode(array('status'=>false, 'message'=>'HU has not been scanned yet'));
+				return;
+			}
+			echo json_encode(array('status'=>true, 'data'=> $result));
+		}else{
+			echo json_encode(array('status'=>false, 'message'=>'HU not found'));
+		}
+	}
+
+	public function checkitemcode(){
+		$result=$this->capture_model->checkItemCode($_POST['itemcode']);
+		if($result){
+			echo json_encode(array('status'=>true));
+		}else{
+			echo json_encode(array('status'=>false, 'message'=>'Itemcode not found'));
+		}
+	}
+
+	public function saveAudit(){
+		$dataAudited = array(
+			"tag" => $_POST['hu']['tag'],
+			"itemcode" => $_POST['hu']['itemcode'],
+			"qty" => $_POST['hu']['qty'],
+			"location" => $_POST['hu']['location'],
+			"uom" => $_POST['hu']['uom'],
+			"reasontoedit" => $_POST['correct'] == "true" ? "" : $_POST['reason'],
+			"resultaudit" => $_POST['correct'] == "true" ? "Correct" : "Incorrect",
+			"openbox" => $_POST['hu']['openbox'],
+			"iduseraudit" => $this->session->userdata('ifatrimuserid'),
+			"auditcounter" => $_POST['hu']['auditcounter'] + 1
+		);
+		$this->capture_model->saveAudit($dataAudited);
+		echo json_encode(array('status'=>true));
+	}
+
 }
