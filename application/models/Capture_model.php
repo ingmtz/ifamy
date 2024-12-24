@@ -104,7 +104,6 @@ class Capture_model extends CI_Model {
         unset($data['tag']);
         unset($data['reasontoedit']);
         unset($data['resultaudit']);
-        unset($data['qty']);
         unset($data['itemcode']); // We are saving missing transaction in this field
         
         $this->db->set('datetimeaudit', 'now()', FALSE);        

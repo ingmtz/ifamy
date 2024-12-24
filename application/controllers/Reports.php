@@ -414,16 +414,17 @@ class Reports extends MY_Controller {
 			$area = $_GET['area'];
 		}
 
-		$query="select c.tag, c.warehouse, c.location, a.itemcode, a.description, c.qty as onhand, 
-				a.cost_price, (c.qty * a.cost_price) as extonhand, 
+		$query="select c.tag, c.warehouse, c.location, a.itemcode, a.description, p.onhand, 
+				a.cost_price, (p.onhand * a.cost_price) as extonhand, 
 				case when c.status is null then 0 else c.qty end as counted,
 				(case when c.status is null then 0 else c.qty end * a.cost_price) as extcounted,
-				((case when c.status is null then 0 else c.qty end - c.qty)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation,
-				(case when c.status is null then 0 else c.qty end - c.qty) as variationqty,
-				abs((case when c.status is null then 0 else c.qty end - c.qty)) as variationqtyabs,
-				abs(((case when c.status is null then 0 else c.qty end - c.qty)*case when a.cost_price is null then 0 else a.cost_price end)) as extvariationabs
-				from masterdata a
-				left join tags c on c.itemcode=a.itemcode";
+				((case when c.status is null then 0 else c.qty end - p.onhand)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation,
+				(case when c.status is null then 0 else c.qty end - p.onhand) as variationqty,
+				abs((case when c.status is null then 0 else c.qty end - p.onhand)) as variationqtyabs,
+				abs(((case when c.status is null then 0 else c.qty end - p.onhand)*case when a.cost_price is null then 0 else a.cost_price end)) as extvariationabs
+				from tags c
+				left join masterdata a  on c.itemcode=a.itemcode
+				left join perpetuo p on c.tag =p.itemcode";
 
 		$primaryKey = 'itemcode';//'Id';
 
@@ -858,12 +859,12 @@ class Reports extends MY_Controller {
 		$this->reports_model->saveimportdatamasterdata($masterdatafile);
 
 		//3.- perpetuo
-		$perpetuo = $this->db->query("select material, sum(qty) as qty from rawdata r group by material ")->result();
+		$perpetuo = $this->db->query("select hu, qty from rawdata")->result();
 		$this->reports_model->truncateperpetuo();
 		$perpetuofile=array();
 		foreach ($perpetuo as $key => $value) {
 			$perpetuofile[]= array(
-				'itemcode' => $value->material,
+				'itemcode' => $value->hu,
 				'onhand' => $value->qty
 			);
 		}
