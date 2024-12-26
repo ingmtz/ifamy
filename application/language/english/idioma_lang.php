@@ -34,11 +34,11 @@ $lang['Showing all'] 			= 'Showing all';
 //====>
 $lang['Capture the follow information'] = 'Capture the follow information';
 $lang['Status'] 			= 'Status';
-$lang['Tag number'] 		= 'Tag number';
+$lang['Tag number'] 		= 'HU Number';
 $lang['Item code'] 			= 'Item code';
 $lang['Quantity'] 			= 'Quantity';
-$lang['Rack'] 				= 'Rack';
-$lang['Location'] 			= 'Location';
+$lang['Rack'] 				= 'St. Location';
+$lang['Location'] 			= 'St. Bin';
 $lang['Select'] 			= 'Select';
 $lang['Save'] 				= 'Save';
 $lang['Description'] 		= 'Description';
@@ -56,7 +56,7 @@ $lang['Reason for modification'] = 'Reason for modification';
 $lang['Min tag'] 			= 'Min tag';
 $lang['Max tag'] 			= 'Max tag';
 $lang['Actions'] 			= 'Actions';
-$lang['Tag'] 				= 'Tag';
+$lang['Tag'] 				= 'HU Number';
 $lang['Unit price'] 		= 'Unit price';
 $lang['Unit extended'] 		= 'Unit extended';
 

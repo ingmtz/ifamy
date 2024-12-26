@@ -69,6 +69,9 @@
 			-moz-box-shadow: 1px 2px 5px 0px rgba(0,0,0,2);
 			box-shadow: 1px 2px 5px 0px rgba(0,0,0,2);
 		}
+		.table>tbody>tr>td, .table>tfoot>tr>td, .table>tfoot>tr>th{
+			padding: 0px 20px;
+		}
 	</style>
 
 </head>
@@ -312,9 +315,9 @@
 			});
 		<?php } ?>
 		updatedata();
-		setInterval(function(){
-			updatedata();
-		}, 60000);
+		// setInterval(function(){
+		// 	updatedata();
+		// }, 60000);
 		gettime();
 		$('#plant').change(function(event) {
 			updatedata();
@@ -370,10 +373,10 @@
 				let html = `<table class="table datatable-show-all" id="table-details">
 								<thead>
 									<tr>
-										<th>Tag</th>
+										<th>HU</th>
 										<th>Plant</th>
 										<th>Area</th>
-										<th>Warehouse</th>
+										<th>St. Location</th>
 										<th>Status</th>
 										<th>Audit Status</th>
 									</tr>
@@ -467,7 +470,7 @@
 		//Red marker now on bartime
 		//12 del padding+27 del height del timebar
 		var heightb=12+27+$('#report tbody').height()+$('#thportion').height()*2;
-		heightb-=18;
+		//heightb-=2;
 		$('.redlinetop').height(heightb).css('left', percent+'%');
 		setTimeout("gettime()",1000); 
 	}
@@ -530,7 +533,7 @@
 				html+='	<td class="area">'+val.area+'</td><td title="<?php echo $title; ?>">';
 				html+=' <a class="progress-detail" href="#">'+counted+'/'+val.total+'</a>';
 				html+='</td>'
-				html+='	<td colspan="<?php echo sizeof($range)-1; ?>" style="padding: 12px 0px;   position:relative;">';//display:block;
+				html+='	<td colspan="<?php echo sizeof($range)-1; ?>" style="padding: 5px 0px;   position:relative;">';//display:block;
 				html+='		<div class="bar" style="width:'+percent+'%">'+Number(percent).formatMoney()+'%</div>';
 				html+='	</td>';
 				html+='</tr>';
@@ -545,7 +548,9 @@
 			//position+=1;
 			var redlinetop=position*tdheight;
 			//maxpositions+=1;
-			var redlineheight=maxpositions*tdheight;
+			var redlineheight=(maxpositions*tdheight) + 10;
+			console.log(redlineheight);
+			
 			// Cycle to add red marker
 			$('#report tbody tr').each(function(index, el) {
 				//if($(this).find('.area').html().replace('&nbsp;', ' ')==maxarea){

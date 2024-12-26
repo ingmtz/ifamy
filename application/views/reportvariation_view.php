@@ -110,9 +110,9 @@
 					<!-- Basic datatable -->
 					<div class="panel panel-flat">
 						<?php if ($nimd > 0) { ?>
-							<div id="msgpanel" class="alert alert-danger">
+							<!-- <div id="msgpanel" class="alert alert-danger">
 								<strong>Existen <?= $nimd; ?> items sin considerar por no encontrarse en MasterData. <a href="<?= base_url(); ?>reports/noInMasterData" target="_blank">Ver</a></strong>
-							</div>
+							</div> -->
 						<?php } ?>
 						
 						<table id="variationtable" class="table">

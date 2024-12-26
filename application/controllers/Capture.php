@@ -40,6 +40,9 @@ class Capture extends MY_Controller {
 
 			echo json_encode(array('status'=>true));
 		}else{
+			// Save hu not found
+			$this->db->insert('hu_not_found', array('hu'=> $_POST['tag'], 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+
 			echo json_encode(array('status'=>false, 'message'=>'HU not found'));
 		}
 	}

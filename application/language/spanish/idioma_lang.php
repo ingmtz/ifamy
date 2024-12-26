@@ -34,11 +34,11 @@ $lang['Showing all'] 			= 'Mostrando todos';
 //====>
 $lang['Capture the follow information'] = 'Captura la siguiente información';
 $lang['Status'] 			= 'Estado';
-$lang['Tag number'] 		= 'Marbete';
+$lang['Tag number'] 		= 'HU Number';
 $lang['Item code'] 			= 'Número de parte';
 $lang['Quantity'] 			= 'Cantidad';
-$lang['Rack'] 				= 'Estante';
-$lang['Location'] 			= 'Ubicación';
+$lang['Rack'] 				= 'St. Location';
+$lang['Location'] 			= 'St. Bin';
 $lang['Select'] 			= 'Selecciona';
 $lang['Save'] 				= 'Guardar';
 $lang['Description'] 		= 'Descripción';
@@ -56,7 +56,7 @@ $lang['Reason for modification'] = 'Motivo de modificación';
 $lang['Min tag'] 			= 'Min marbete';
 $lang['Max tag'] 			= 'Max marbete';
 $lang['Actions'] 			= 'Acciones';
-$lang['Tag'] 				= 'Marbete';
+$lang['Tag'] 				= 'HU Number';
 $lang['Unit price'] 		= 'Precio unitario';
 $lang['Unit extended'] 		= 'Precio total';
 

@@ -119,11 +119,7 @@
 									<b><?php echo $this->lang->line('Quantity'); ?></b>
 								</div>
 								<div class="col-md-2 form-inline">
-									<?php if($this->config->item('client')=='AtlanticPrime'){ ?>
-									<b><?php echo $this->lang->line('Rack'); ?></b>
-									<?php }else{ ?>
-									<b>WH</b>
-									<?php } ?>
+									<b>St. Location</b>
 								</div>
 								<div class="col-md-2 form-inline">
 									<b><?php echo $this->lang->line('Location'); ?></b>

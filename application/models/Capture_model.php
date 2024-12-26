@@ -102,7 +102,6 @@ class Capture_model extends CI_Model {
 
         $this->db->where('tag', $data['tag']);
         unset($data['tag']);
-        unset($data['reasontoedit']);
         unset($data['resultaudit']);
         unset($data['itemcode']); // We are saving missing transaction in this field
         

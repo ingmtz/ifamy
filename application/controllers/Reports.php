@@ -96,11 +96,11 @@ class Reports extends MY_Controller {
         $sheet = $objPHPExcel->getActiveSheet();
         $sheet->setTitle('totalcapture');
 
-        $sheet->setCellValue("A1", 'Tag');
+        $sheet->setCellValue("A1", 'HU');
         $sheet->setCellValue("B1", 'Plant');
         $sheet->setCellValue("C1", 'Area');
-        $sheet->setCellValue("D1", 'Rack');
-        $sheet->setCellValue("E1", 'Location');
+        $sheet->setCellValue("D1", 'St. Location');
+        $sheet->setCellValue("E1", 'St. Bin');
         $sheet->setCellValue("F1", 'Item code');
         $sheet->setCellValue("G1", 'Type');
         $sheet->setCellValue("H1", 'Status');
@@ -1079,6 +1079,28 @@ class Reports extends MY_Controller {
 		//$data=$this->utf8_encode_deep($data);
 		echo json_encode($data);
 	}
+
+	function hunotfound(){
+		$this->load->view('hunotfound_view');
+	}
+
+	function loadhunotfound(){
+		$query="select Id, hu, warehouse, location from hu_not_found hnf ";
+		$primaryKey = 'Id';
+
+		$columns = array(
+		    array( 'db' => 'hu', 'dt' => 0 ),
+		    array( 'db' => 'warehouse', 'dt' => 1 ),
+		    array( 'db' => 'location',  'dt' => 2 ),
+		);
+		
+		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
+		//$data=$this->utf8_encode_deep($data);
+		echo json_encode($data);
+	}
+
+
+
 	function auditreport(){
 		$this->load->view('reportaudit_view');
 	}

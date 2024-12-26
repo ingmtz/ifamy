@@ -90,11 +90,7 @@
 							<thead>
 								<tr>
 									<th>
-										<?php if($this->config->item('client')=='AtlanticPrime'){ ?>
-										<b><?php echo $this->lang->line('Rack'); ?></b>
-										<?php }else{ ?>
-										<b>WH</b>
-										<?php } ?>
+										<b>St. Location</b>
 									</th>
 									<th><?php echo $this->lang->line('Location'); ?></th>
 									<th><?php echo $this->lang->line('Item code'); ?></th>
