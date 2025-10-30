@@ -237,4 +237,9 @@ class Tags_model extends CI_Model {
         $query=$this->db->get('masterdata');
         return $query->result();
     }
+    function getalllocations(){
+        $query=$this->db->query('select area, location
+        from locations order by area, location');
+        return $query->result();
+    }
 }

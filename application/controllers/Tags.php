@@ -247,6 +247,29 @@ class Tags extends MY_Controller {
 	        fclose($archivo);
 	    }
 	}
+	function printalllocations(){
+		$config=$this->tags_model->getconfig();
+		$locations=$this->tags_model->getalllocations();
+		
+		$cadena='%BTW% /AF="'.$config->btwlocationfile.'"  /PRN="'.$_POST['printer'].'" /P /D="<Trigger File Name>" /C=1 /R=3'.chr(13).chr(10);
+        $cadena.='%END%'.chr(13).chr(10);
+
+        foreach ($locations as $location) {
+        	$cadena.=$location->location.chr(13).chr(10);
+        }
+
+		$nombre_archivo = $config->locationfilesprintpath.'_IFA_location.dd';
+		//$nombre_archivo = "C:\\www\\ifamy\\_IFA_location.dd";
+
+		if($archivo = fopen($nombre_archivo, "a")){
+	        if(fwrite($archivo, $cadena)){
+	            echo 'ok';
+	        }else{
+	            echo "Ocurrió un problema al crear el archivo";
+	        }
+	        fclose($archivo);
+	    }
+	}
 	public function createlocations(){
 		$data=array();
 		parse_str($_POST['data'], $data);

@@ -84,6 +84,13 @@
 					<!-- Basic datatable -->
 					<div class="panel panel-flat">
 						<div class="panel-body">
+							<div class="row" style="margin-bottom:15px;">
+								<div class="col-md-3">
+									<button type="button" id="printalllocations" class="btn btn-primary">
+										<i class="icon-printer position-left"></i> Print All Locations
+									</button>
+								</div>
+							</div>
 							<!--
 							<h5 class="panel-title" style="margin-bottom:15px;">Create locations</a></h5>
 							<div class="row" style="margin-bottom:15px;">
@@ -218,7 +225,17 @@
 </body>
 <script type="text/javascript">
 	var lbllocation=0;
+	var printallmode=false;
 	$(document).ready(function() {
+		$('#printalllocations').click(function(event) {
+			event.preventDefault();
+			printallmode=true;
+			$('#modalprinter').modal('show');
+			$('#fprinter').val("MEXSAINTPD4255");
+			setTimeout(function(){
+				$('#fprinter').focus();
+			},1500);
+		});
 		$('#create').click(function(event) {
 			if($('#wh').val()=='' || $('#prefixlocation').val()=='' || $('#startlocation').val()=='' || $('#endlocation').val()=='' || $('#platform').val()=='' || $('#area').val()=='0'){
 				new PNotify({
@@ -304,6 +321,7 @@
         });
         $(document).delegate('.print', 'click', function(event) {
         	event.preventDefault();
+        	printallmode=false;
         	lbllocation=$(this).data('lbllocation');
         	$('#modalprinter').modal('show');
         	$('#fprinter').val("MEXSAINTPD4255");
@@ -313,22 +331,43 @@
         });
         $('#btnprint').click(function(event) {
         	$('#modalprinter').modal('hide');
-        	$.post('<?php echo base_url();?>tags/printlocations', {printer: $('#fprinter').val(),lbllocation: lbllocation}, function(data) {
-        		if(data=='ok'){
-					new PNotify({
-					            title: 'Success',
-					            text: 'Tags printed',
-					            addclass: 'bg-success'
-					        });
-					//datatable.ajax.reload();
-				}else{
-					new PNotify({
-			            title: 'Problem',
-			            text: data,
-			            addclass: 'bg-danger'
-			        });
-				}
-    		});
+        	
+        	if(printallmode){
+        		// Print all locations
+        		$.post('<?php echo base_url();?>tags/printalllocations', {printer: $('#fprinter').val()}, function(data) {
+	        		if(data=='ok'){
+						new PNotify({
+						            title: 'Success',
+						            text: 'All locations printed',
+						            addclass: 'bg-success'
+						        });
+					}else{
+						new PNotify({
+				            title: 'Problem',
+				            text: data,
+				            addclass: 'bg-danger'
+				        });
+					}
+					printallmode=false;
+	    		});
+        	}else{
+        		// Print single location
+        		$.post('<?php echo base_url();?>tags/printlocations', {printer: $('#fprinter').val(),lbllocation: lbllocation}, function(data) {
+	        		if(data=='ok'){
+						new PNotify({
+						            title: 'Success',
+						            text: 'Tags printed',
+						            addclass: 'bg-success'
+						        });
+					}else{
+						new PNotify({
+				            title: 'Problem',
+				            text: data,
+				            addclass: 'bg-danger'
+				        });
+					}
+	    		});
+        	}
         });
 	});
 </script>
