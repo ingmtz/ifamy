@@ -4,8 +4,8 @@
 // $config['client']='AtlanticPrime';
 // $config['title']='APICS';
 
-$config['client']='CVG';
-$config['title']='IFA';
+$config['client']='Weidmann';
+$config['title']='PITS';
 
 /*$config['client']='EasyInventory';
 $config['title']='Easy Inventory';*/
