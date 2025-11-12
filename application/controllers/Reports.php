@@ -424,7 +424,9 @@ class Reports extends MY_Controller {
 				abs(((case when c.status is null then 0 else c.qty end - p.onhand)*case when a.cost_price is null then 0 else a.cost_price end)) as extvariationabs
 				from tags c
 				left join masterdata a  on c.itemcode=a.itemcode
-				left join perpetuo p on c.tag =p.itemcode";
+				left join perpetuo p on c.tag =p.itemcode
+				where c.status is null or c.status <> 'Voided'
+				";
 
 		$primaryKey = 'itemcode';//'Id';
 
@@ -825,70 +827,70 @@ class Reports extends MY_Controller {
         $result = '<span>';
 
         //Truncar e insertar los datos===========>
-		$this->reports_model->truncaterawdata();
+		//$this->reports_model->truncaterawdata();
 		$this->reports_model->saveimportrawdata($datatoinsert);
 
-		// LLenar las tablas:
-		// 1. locations
-		$locations = $this->db->query("SELECT DISTINCT wh, location FROM rawdata")->result();
-		$this->reports_model->truncatelocations();
-		$locationsfile=array();
-		foreach ($locations as $key => $location) {
-			$locationsfile[]= array(
-				'plant' => 'Unknown',
-				'area' => 'Unknown',
-				'wh' => $location->wh,
-				'location' => $location->location,
-				'plataforma' => 'Unknown',
-			);
-		}
-		$this->reports_model->insertLocation($locationsfile);
+		// // LLenar las tablas:
+		// // 1. locations
+		// $locations = $this->db->query("SELECT DISTINCT wh, location FROM rawdata")->result();
+		// //$this->reports_model->truncatelocations();
+		// $locationsfile=array();
+		// foreach ($locations as $key => $location) {
+		// 	$locationsfile[]= array(
+		// 		'plant' => 'Unknown',
+		// 		'area' => 'Unknown',
+		// 		'wh' => $location->wh,
+		// 		'location' => $location->location,
+		// 		'plataforma' => 'Unknown',
+		// 	);
+		// }
+		// $this->reports_model->insertLocation($locationsfile);
 		
-		//2.- masterdata
-		$masterdata = $this->db->query("SELECT DISTINCT material, material_description, um, cost_price FROM rawdata")->result();
-		$this->reports_model->truncatemasterdata();
-		$masterdatafile=array();
-		foreach ($masterdata as $key => $value) {
-			$masterdatafile[]= array(
-				'itemcode' => $value->material,
-				'description' => $value->material_description,
-				'cost_price' => $value->cost_price,
-				'uom' => $value->um
-			);
-		}
-		$this->reports_model->saveimportdatamasterdata($masterdatafile);
+		// //2.- masterdata
+		// $masterdata = $this->db->query("SELECT DISTINCT material, material_description, um, cost_price FROM rawdata")->result();
+		// $this->reports_model->truncatemasterdata();
+		// $masterdatafile=array();
+		// foreach ($masterdata as $key => $value) {
+		// 	$masterdatafile[]= array(
+		// 		'itemcode' => $value->material,
+		// 		'description' => $value->material_description,
+		// 		'cost_price' => $value->cost_price,
+		// 		'uom' => $value->um
+		// 	);
+		// }
+		// $this->reports_model->saveimportdatamasterdata($masterdatafile);
 
-		//3.- perpetuo
-		$perpetuo = $this->db->query("select hu, qty from rawdata")->result();
-		$this->reports_model->truncateperpetuo();
-		$perpetuofile=array();
-		foreach ($perpetuo as $key => $value) {
-			$perpetuofile[]= array(
-				'itemcode' => $value->hu,
-				'onhand' => $value->qty
-			);
-		}
-		$this->reports_model->saveimportdata($perpetuofile);
+		// //3.- perpetuo
+		// $perpetuo = $this->db->query("select hu, qty from rawdata")->result();
+		// $this->reports_model->truncateperpetuo();
+		// $perpetuofile=array();
+		// foreach ($perpetuo as $key => $value) {
+		// 	$perpetuofile[]= array(
+		// 		'itemcode' => $value->hu,
+		// 		'onhand' => $value->qty
+		// 	);
+		// }
+		// $this->reports_model->saveimportdata($perpetuofile);
 
-		//4.- tags
-		$tags = $this->db->query("select hu, material, wh, qty, um from rawdata")->result();
-		$this->reports_model->truncatetags();
-		$tagsfile=array();
-		foreach ($tags as $key => $value) {
-			$tagsfile[]= array(
-				'tag' => $value->hu,
-				'warehouse' => $value->wh,
-				'qty' => $value->qty,
-				'plant' => 'Unknown',
-				'area' => 'Unknown',
-				'printcounter' => 0,
-				'auditcounter' => 0,
-				'itemcode' => $value->material,
-				'uom' => $value->um
-			);
-		}
-		//print_r($tagsfile);
-		$this->reports_model->saveimporttags($tagsfile);
+		// //4.- tags
+		// $tags = $this->db->query("select hu, material, wh, qty, um from rawdata")->result();
+		// $this->reports_model->truncatetags();
+		// $tagsfile=array();
+		// foreach ($tags as $key => $value) {
+		// 	$tagsfile[]= array(
+		// 		'tag' => $value->hu,
+		// 		'warehouse' => $value->wh,
+		// 		'qty' => $value->qty,
+		// 		'plant' => 'Unknown',
+		// 		'area' => 'Unknown',
+		// 		'printcounter' => 0,
+		// 		'auditcounter' => 0,
+		// 		'itemcode' => $value->material,
+		// 		'uom' => $value->um
+		// 	);
+		// }
+		// //print_r($tagsfile);
+		// $this->reports_model->saveimporttags($tagsfile);
 
         //======================================>
 		if($fileName == ''){

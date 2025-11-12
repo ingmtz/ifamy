@@ -94,7 +94,7 @@ $lang['Are you sure?'] 				= 'Seguro?';
 //Progress report
 $lang['Change schedule'] 			= 'Cambiar horario';
 $lang['Current time'] 				= 'Hora actual';
-$lang['All racks'] 					= 'Todos los racks';
+$lang['All racks'] 					= 'All St. Locations';
 $lang['Totals'] 					= 'Totales';
 $lang['Start'] 						= 'Inicio';
 $lang['End'] 						= 'Fin';

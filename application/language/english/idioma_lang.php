@@ -94,7 +94,7 @@ $lang['Are you sure?'] 				= 'Are you sure?';
 //Progress report
 $lang['Change schedule'] 			= 'Change schedule';
 $lang['Current time'] 				= 'Current time';
-$lang['All racks'] 					= 'All racks';
+$lang['All racks'] 					= 'All St. Locations';
 $lang['Totals'] 					= 'Totals';
 $lang['Start'] 						= 'Start';
 $lang['End'] 						= 'End';
