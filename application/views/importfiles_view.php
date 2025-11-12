@@ -87,6 +87,9 @@
 									<h2 class="panel-title">Import excel</h2>
 								</header>-->
 								<div class="panel-body">
+										<div class="alert alert-danger" id="alert">
+											Stop! You are about to delete all data. Are you sure?
+										</div>
 										<div id="msgpanel" class="alert alert-info">
 												<strong id="msgresult">
 													<?php $instructions=$this->lang->line('instructions');
