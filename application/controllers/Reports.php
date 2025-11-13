@@ -860,168 +860,21 @@ class Reports extends MY_Controller {
 		$reader = ReaderFactory::create(Type::XLSX); // for XLSX files
         $reader->open($file);
 
-		$validations[] = array(
-				'name' => 'Perpetuo',
-				0 => 'Item Code',
-				1 => 'On Hand');
-
-		$validations[] = array(
-				'name' => 'masterdata',
-				0 => 'Item',
-				4 => 'Description',
-				7 => 'Standard',
-				8 => 'Unit',
-				9 => 'Type');
-
-			$locationsfile=array(
-					'name' => 'Locations',
-					0 => 'PLANT',
-					1 => 'AREA',
-					2 => 'WAREHOUSE',
-					3 => 'LOCATION'
-				);
-		//===================================================>
-		$config='';
-		if($this->config->item('client')=='CVG'){
-			$config=$this->reports_model->getConfig();
-			if($config->inventorytype=='SEATS'){
-				$locationsfile=array(
-					'name' => 'Locations',
-					0 => 'PLANT',
-					1 => 'AREA',
-					2 => 'WAREHOUSE',
-					3 => 'LOCATION',
-					4 => 'DIMM'
-				);
-			}
-		}else{
-			$locationsfile=array(
-				'name' => 'Locations',
-				0 => 'PLANT',
-				1 => 'AREA',
-				2 => 'WAREHOUSE',
-				3 => 'LOCATION',
-				4 => 'AbsEntry'
-			);
-		}
-		//===================================================>
-		$validations[] = $locationsfile;
-
-    	$valid = true;
-    	$fileName = "";
-    	$ommitedrows=false;
     	$datatoinsert=array();
         foreach ($reader->getSheetIterator() as $sheet) {
         	if ($sheet->isActive()) {
 	            foreach ($sheet->getRowIterator() as $key => $row) {
-	                if (!$valid) {
-	                	break;
-	                }
-
-	                //Identificar cual de los 3 tipos de excel es el que ha sido subido==================>
-	                if($key==1){
-	                	foreach ($validations as $position => $title) {
-	                		$valid = true;
-
-	                		foreach ($title as $key => $value) {if(is_numeric($key)){
-	                			if (isset($row[$key])) {
-		                    		if ($row[$key] != $value) {
-			                       		$valid = false;
-			                       		break;
-			                        }
-		                    	}else{
-		                    		$valid = false;
-			                       	break;
-		                    	}
-	                		}}
-	                		
-	                		/*foreach ($row as $column => $cellvalue) {
-		                    	if (isset($title[$column])) {
-		                    		if ($cellvalue != $title[$column]) {
-			                       		$valid = false;
-			                       		break;
-			                        }
-		                    	}
-		                    }*/
-		                    if ($valid) {
-			                    $fileName = $title['name'];
-			                    break;
-		                    }
-		                }
-	                //Identificar cual de los 3 tipos de excel es
-                	}else if($key >= 2){
-                		switch ($fileName) {
-                			case 'Perpetuo':
-                				$datatoinsert[] = array(
-									'itemcode' => trim(strtoupper($this->issetor($row[0]))),
-									'onhand' => trim($this->issetor($row[1]))
-									);
-                				break;
-                			case 'masterdata':
-                				//&& $this->issetor($row[4])!='' Permitir las descripciones en blanco
-                				if($this->issetor($row[0])!='' && $this->issetor($row[7])!=='' && $this->issetor($row[8])!=''){
-
-									$cost_price= (float) $this->issetor($row[7]);
-									$datatoinsert[] = array(
-										'itemcode' => trim(strtoupper($this->issetor($row[0]))),
-										'description' => trim($this->issetor($row[4])),
-										'uom' => trim(strtoupper($this->issetor($row[8]))),
-										'cost_price' => trim($cost_price),
-										'type' => strtoupper($this->issetor($row[9]))
-										);
-								}else{
-									$ommitedrows=true;
-								}
-                				break;
-                			case 'Locations':
-                				//===================================================>
-								if($this->config->item('client')=='CVG'){
-									if($config->inventorytype=='SEATS'){
-										if($this->issetor($row[0])!='' && $this->issetor($row[1])!='' && $this->issetor($row[2])!='' && $this->issetor($row[3])!='' && $this->issetor($row[4])!=''){
-
-											$datatoinsert[] = array(
-												'plant' => trim($this->issetor($row[0])),
-												'area' => trim($this->issetor($row[1])),
-												'wh' 	=> trim($this->issetor($row[2])),
-												'location'=> trim($this->issetor($row[3])),
-												'plataforma'=> trim($this->issetor($row[4]))
-												);
-										}else{
-											$ommitedrows=true;
-										}
-		                				break;
-									}else{
-										if($this->issetor($row[0])!='' && $this->issetor($row[1])!='' && $this->issetor($row[2])!='' && $this->issetor($row[3])!=''){
-
-											$datatoinsert[] = array(
-												'plant' => trim($this->issetor($row[0])),
-												'area' => trim($this->issetor($row[1])),
-												'wh' 	=> trim($this->issetor($row[2])),
-												'location'=> trim($this->issetor($row[3])),
-												'plataforma'=> trim($this->issetor($row[4]))
-												);
-										}else{
-											$ommitedrows=true;
-										}
-		                				break;
-									}
-								}else{
-								//===================================================>
-	                				if($this->issetor($row[0])!='' && $this->issetor($row[1])!='' && $this->issetor($row[2])!='' && $this->issetor($row[3])!='' && $this->issetor($row[4])!=''){
-
-										$datatoinsert[] = array(
-											'plant' => trim($this->issetor($row[0])),
-											'area' => trim($this->issetor($row[1])),
-											'wh' 	=> trim($this->issetor($row[2])),
-											'location'=> trim($this->issetor($row[3])),
-											'plataforma'=> trim($this->issetor($row[4]))
-											);
-									}else{
-										$ommitedrows=true;
-									}
-	                				break;
-	                			}
-                		}
+	                if($key >= 2){
+						$datatoinsert[] = array(
+							'hu' => trim($this->issetor($row[2])),
+							'material' => trim($this->issetor($row[3])),
+							'material_description' => trim($this->issetor($row[4])),
+							'qty' => trim($this->issetor($row[6])),
+							'um' => trim($this->issetor($row[7])),
+							'location' => trim($this->issetor($row[17])),
+							'wh' => trim($this->issetor($row[16])),
+							'cost_price' => trim($this->issetor($row[19])),
+							);
 	                }
                 }
             }
@@ -1033,54 +886,79 @@ class Reports extends MY_Controller {
         $result = '<span>';
 
         //Truncar e insertar los datos===========>
-        if ($fileName == 'Perpetuo') {
-        	$this->reports_model->truncateperpetuo();
-        	$this->reports_model->saveimportdata($datatoinsert);
-        }else if($fileName == 'masterdata'){
-        	$this->reports_model->truncatemasterdata();
-        	$this->reports_model->saveimportdatamasterdata($datatoinsert);
-        }else if($fileName == 'Locations'){
-        	if(!$ommitedrows){
-	        	$this->reports_model->truncatelocations();
-	        	$this->reports_model->insertLocation($datatoinsert);
-	        }
-        }
+		$this->reports_model->truncaterawdata();
+		$this->reports_model->saveimportrawdata($datatoinsert);
+
+		// // LLenar las tablas:
+		// // 1. locations
+		$locations = $this->db->query("SELECT DISTINCT wh, location FROM rawdata")->result();
+		$this->reports_model->truncatelocations();
+		$locationsfile=array();
+		foreach ($locations as $key => $location) {
+			$locationsfile[]= array(
+				'plant' => 'Unknown',
+				'area' => 'Unknown',
+				'wh' => $location->wh,
+				'location' => $location->location,
+				'plataforma' => 'Unknown',
+			);
+		}
+		$this->reports_model->insertLocation($locationsfile);
+		
+		// //2.- masterdata
+		$masterdata = $this->db->query("SELECT DISTINCT material, material_description, um, cost_price FROM rawdata")->result();
+		$this->reports_model->truncatemasterdata();
+		$masterdatafile=array();
+		foreach ($masterdata as $key => $value) {
+			$masterdatafile[]= array(
+				'itemcode' => $value->material,
+				'description' => $value->material_description,
+				'cost_price' => $value->cost_price,
+				'uom' => $value->um
+			);
+		}
+		$this->reports_model->saveimportdatamasterdata($masterdatafile);
+
+		// //3.- perpetuo
+		$perpetuo = $this->db->query("select hu, qty from rawdata")->result();
+		$this->reports_model->truncateperpetuo();
+		$perpetuofile=array();
+		foreach ($perpetuo as $key => $value) {
+			$perpetuofile[]= array(
+				'itemcode' => $value->hu,
+				'onhand' => $value->qty
+			);
+		}
+		$this->reports_model->saveimportdata($perpetuofile);
+
+		// //4.- tags
+		$tags = $this->db->query("select hu, material, wh, qty, um from rawdata where trim(hu)<>''")->result();
+		$this->reports_model->truncatetags();
+		$this->reports_model->truncatehus();
+		$tagsfile=array();
+		foreach ($tags as $key => $value) {
+			$tagsfile[]= array(
+				'tag' => $value->hu,
+				'warehouse' => $value->wh,
+				'qty' => $value->qty,
+				'plant' => 'Unknown',
+				'area' => 'Unknown',
+				'printcounter' => 0,
+				'auditcounter' => 0,
+				'itemcode' => $value->material,
+				'uom' => $value->um
+			);
+		}
+		//print_r($tagsfile);
+		$this->reports_model->saveimporthus($tagsfile);
+
         //======================================>
-		if($fileName == ''){
-			$result.='Unknown file. Check ALL required field names.';
-			/*if($filetype=='masterdata'){
-				$result.='[A] -> "Item", [E] -> "Description", [I] -> "Unit", [H] -> "Standard", [F] -> "Group", [J] -> "Type" columns are expected for masterdata file in sheet named "data" (without quotes).';
-			}elseif($filetype=='Perpetuo'){
-				$result.='[A] -> "Item Code", [B] -> "Description", [D] -> "Type", [G] -> "On Hand" columns are expected for Perpetuo file in sheet named "data" (without quotes).';
-			}else{
-				$result.='[A] -> "WH", [B] -> "Planta", [C] -> "Area", [D] -> "Location" columns are expected for locations file in sheet named "data" (without quotes).';
-			}*/
-		}else{
-			if($fileName=='masterdata'){
-				/*if($zerocost>0){
-					$result.='File imported '.$fileName.' but there are <a href="'.base_url().'reports/validationzeroprice">items with price "zero".</a>';
-				}else{*/
-					$result.='File imported '.$fileName.'.';
-				//}
-			}elseif($fileName=='Perpetuo'){
-				$total=$this->reports_model->checkPerpetuoVSMaster()->total;
-				if($total>0){
-					$result.='File imported '.$fileName.' but Item Master <a href="'.base_url().'reports/validationnoinperpetuo">has items that do not exist in Perpetuo.</a>';
-				}
-			}elseif($fileName=='Locations'){
-				if(!$ommitedrows){
-					$result.='File imported '.$fileName.'.';
-				}else{
-					$result.='File not imported due to records in blank..';
-				}
-			}
-		}
-		if($ommitedrows && ($fileName=='masterdata' or $fileName=='Perpetuo')){
-			$result.=' Some records were not imported BUT some fields are in blank. Please check your import file.';
-		}
+		$result.='File imported '.count($datatoinsert).' records successfully.';
 		$result.='</span>';
 		echo $result;
     }
+
+
 	//Validation functions=============>
 	public function validations(){
 		$data['validationstep']=$this->reports_model->getStep();

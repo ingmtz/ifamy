@@ -151,11 +151,16 @@
 		var location;
 		var wh = '<?= $wh; ?>';
 
+		var tag_or_hu = '';
+		var last_tag = '';
+		var partnumber = '';
+		var qty = '';
+
 		function checkScanStatus(){
 			location = localStorage.getItem('location');
 			if(location){
 				$('#alert-title').html('Current storage location: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change storage bin</button>');
-				$('#alert-body').html('Scan the hu code');
+				$('#alert-body').html('Scan the hu code or tag.');
 			}else{
 				$('#alert-title').html('Current storage location: '+wh + '<br/>Scan storage bin');
 				$('#alert-body').html('Scan the storage bin code to start the process.');
@@ -163,19 +168,18 @@
 		}
 		checkScanStatus();
 
-
 		var lastScanned = '';
 		function onScanSuccess(decodedText, decodedResult) {
 			if (decodedText === lastScanned) {
 				return;
 			}
 			lastScanned = decodedText;
-			// console.log(`Code matched = ${decodedText}`, decodedResult);
-			// new PNotify({
-			// 	title: 'Success',
-			// 	text: `Code matched = ${decodedText}`,
-			// 	type: 'success'
-			// });
+			console.log(`Code matched = ${decodedText}`, decodedResult);
+			new PNotify({
+				title: 'Success',
+				text: `Code matched = ${decodedText}`,
+				type: 'success'
+			});
 			$('#last-scanned').html('Last scanned: '+decodedText);
 			
 			if(location == null){
@@ -240,6 +244,9 @@
 		}
 
 		function checkHu(decodedText){
+			if(decodedText == ''){
+				return;
+			}
 			$('.alert-component').removeClass('alert-danger')
 					.removeClass('alert-info').removeClass('alert-success')
 					.removeClass('alert-warning');
@@ -251,7 +258,9 @@
 				decodedText = decodedText.replace(/[^0-9]/g, '');
 			}else if(arrHu.length == 1){
 				// Just preserve numbers
-				decodedText = decodedText.replace(/[^0-9]/g, '');
+				if(last_tag == ''){ // Allow alphanumeric for partnumber
+					decodedText = decodedText.replace(/[^0-9]/g, '');
+				}
 			}else{
 				wrong.play();
 				$('.alert-component').addClass('alert-danger');
@@ -259,13 +268,26 @@
 				return;
 			}
 
-			var openbox = confirm("Is openbox?") ? 1 : 0;
+			let current_tag = decodedText;
+
+			console.log('tag_or_hu', tag_or_hu);
+			if(tag_or_hu == 'tag' && partnumber == ''){
+				console.log('Setting partnumber to', decodedText);
+				partnumber = decodedText;
+				current_tag = last_tag;
+			}else if(tag_or_hu == 'tag' && partnumber != '' && qty == ''){
+				console.log('Setting quantity to', decodedText);
+				qty = decodedText;
+				current_tag = last_tag;
+			}
+
+			var openbox = false; //confirm("Is openbox?") ? 1 : 0;
 
 			$.ajax({
 				url: '<?= base_url(); ?>capture/checkhu',
 				type: 'POST',
 				dataType: 'json',
-				data: {tag: decodedText, location: location, openbox: openbox},
+				data: {tag: current_tag, location: location, openbox: openbox, partnumber: partnumber, quantity: qty},
 			})
 			.done(function(data) {
 				try{
@@ -273,9 +295,36 @@
 						correct.play();
 						$('.alert-component').addClass('alert-success');
 						$('#last-scanned').html('Last scanned: '+decodedText);
+						
+						if(data.isTag && data.message == 'TAG found, capture part number'){
+							tag_or_hu = 'tag';
+							last_tag = decodedText;
+						}else if(data.isTag && data.message == 'Part number correct, capture quantity'){
+							tag_or_hu = 'tag';
+						}else{
+							last_tag = '';
+							tag_or_hu = 'hu';
+							partnumber = '';
+							qty = '';
+							$('#alert-body').html('Scan the hu code or tag.');
+						}
+						$('#alert-body').html(data.message);
 					}else{
 						wrong.play();
 						$('#last-scanned').html(data.message);
+
+						if(data.message == 'Part number not found'){
+							partnumber = '';
+						}
+
+						if(data.message == 'Part number not found'){
+							partnumber = '';
+						}
+
+						if(data.message == 'Quantity must be a positive number'){
+							qty = '';
+						}
+
 						if(data.message == 'HU already scanned'){
 							$('.alert-component').addClass('alert-danger');
 						}else{

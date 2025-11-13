@@ -92,16 +92,7 @@
 										</div>
 										<div id="msgpanel" class="alert alert-info">
 												<strong id="msgresult">
-													<?php $instructions=$this->lang->line('instructions');
-													if($this->config->item('client')=='CVG'){
-														if($config->inventorytype!='SEATS'){
-															$instructions=str_replace(', [E] -&gt; "DIMM"', '', $instructions);
-														}
-													}else{
-														$instructions=str_replace(', [E] -&gt; "DIMM"', ', [E] -&gt; "AbsEntry"', $instructions);
-													}
-													echo $instructions;
-													?>
+													[C] -> "HU", [D] -> "Material", [E] -> "Description", [G] -> "Qty", [H] -> "UM", [Q] -> "Storage Location", [R] -> "Location", [T] -> "Cost Price" columns are expected. Previous data will be truncated.
 												</strong>
 											</div>
 										<div class="tab-content">

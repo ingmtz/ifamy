@@ -22,28 +22,70 @@ class Capture extends MY_Controller {
 	}
 
 	public function checkhu(){
-		$result=$this->capture_model->checkTag($_POST['tag']);
+		$type='hu';
+		$result=$this->capture_model->checkHU($_POST['tag']);
+		if(!$result){
+			$type='tag';
+			$result=$this->capture_model->checkTag($_POST['tag']);
+		}
 		if($result){
-			if($result->status == 'Used'){
-				echo json_encode(array('status'=>false, 'message'=>'HU already scanned'));
+			if($type == 'hu' && $result->status == 'Used'){
+				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' already scanned'));
+				return;
+			}
+
+			if($type == 'tag' && $result->status != null){
+				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' already scanned'));
 				return;
 			}
 			// Check if the wh (storage location) is correct
+			//echo $result->warehouse. ' vs '.$this->session->userdata('ifatrimplant');exit;
 			if($result->warehouse != $this->session->userdata('ifatrimplant')){
-				echo json_encode(array('status'=>false, 'message'=>'HU not in this storage location'));
+				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' not in this storage location'));
 				return;
 			}
 
-			// Update the tag
-			$this->db->where('tag', $_POST['tag'])->update('tags', 
-				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+			if($type == 'tag'){
+				if($_POST['partnumber'] != '' && $_POST['quantity'] != ''){
+					// Check is a positive number
+					if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+						echo json_encode(array('status'=>false, 'message'=>'Quantity must be a positive number', 'isTag'=> true));
+						return;
+					}
+					// Update the tag with partnumber and quantity
+					$this->db->where('tag', $_POST['tag'])->update('tags', 
+						array('status'=> 'Used', 'itemcode'=> strtoupper($_POST['partnumber']), 'qty'=> floatval($_POST['quantity']), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'datetimecaptured'=> date('Y-m-d H:i:s'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+					echo json_encode(array('status'=>true));
+					return;
+				}
 
-			echo json_encode(array('status'=>true));
+				if($_POST['partnumber'] && $_POST['partnumber'] != ''){
+					// Check itemcode exists
+					$itemcode=$this->capture_model->getitemcode($_POST['partnumber']);
+					if(!$itemcode){
+						echo json_encode(array('status'=>false, 'message'=>'Part number not found', 'isTag'=> true));
+						return;
+					}
+					echo json_encode(array('status'=>true, 'message'=> 'Part number correct, capture quantity', 'isTag'=> true));
+					return;
+				}
+
+				echo json_encode(array('status'=>true, 'message'=> 'TAG found, capture part number', 'isTag'=> true));
+				return;
+			}
+
+			// Update the hu
+			if($type == 'hu'){
+				$this->db->where('tag', $_POST['tag'])->update('hus', 
+					array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+
+				echo json_encode(array('status'=>true));
+			}
 		}else{
 			// Save hu not found
 			$this->db->insert('hu_not_found', array('hu'=> $_POST['tag'], 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
 
-			echo json_encode(array('status'=>false, 'message'=>'HU not found'));
+			echo json_encode(array('status'=>false, 'message'=>'HU or TAG not found'));
 		}
 	}
 

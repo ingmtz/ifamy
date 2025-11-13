@@ -159,6 +159,19 @@ class Reports_model extends CI_Model {
     public function truncatemasterdata(){
         $this->db->query('TRUNCATE TABLE masterdata');
     }
+    
+    function truncatetags(){
+        $this->db->query('TRUNCATE TABLE tags');
+    }
+
+    function truncatehus(){
+        $this->db->query('TRUNCATE TABLE hus');
+    }
+
+    function saveimporthus($data){
+        $this->db->insert_batch('hus', $data);
+    }
+
     function truncatelocations(){
         $this->db->query('TRUNCATE TABLE locations');
     }
@@ -348,5 +361,13 @@ class Reports_model extends CI_Model {
            temp.plant, temp.area";
         $query=$this->db->query($querystr);
         return $query->result();
+    }
+
+    function saveimportrawdata($data){
+        $this->db->insert_batch('rawdata', $data);
+    }
+
+    public function truncaterawdata(){
+        $this->db->query('TRUNCATE TABLE rawdata');
     }
 }

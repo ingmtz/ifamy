@@ -80,4 +80,44 @@ class Capture_model extends CI_Model {
         $query=$this->db->get('config');
         return $query->row()->validationstep;
     }
+
+    
+    public function checkTag($tag){
+        $this->db->select('a.*');
+        $this->db->where('a.tag', $tag);
+        $query=$this->db->get('tags a');
+        return $query->row();
+    }
+
+    public function checkHU($tag){
+        $this->db->select('b.description, a.*');
+        $this->db->where('a.tag', $tag);
+        $this->db->join('masterdata b','b.itemcode=a.itemcode');
+        $query=$this->db->get('hus a');
+        return $query->row();
+    }
+
+    public function checkItemCode($itemcode){
+        $this->db->where('a.itemcode', $itemcode);
+        $query=$this->db->get('masterdata a');
+        return $query->row();
+    }
+
+    public function saveAudit($data){
+        $this->db->set('datetimeaudit', 'now()', FALSE);
+        $this->db->insert('audits',$data);
+
+        $this->db->where('tag', $data['tag']);
+        unset($data['tag']);
+        unset($data['resultaudit']);
+        unset($data['itemcode']); // We are saving missing transaction in this field
+        
+        $this->db->set('datetimeaudit', 'now()', FALSE);        
+        $this->db->set('datetimecaptured', 'now()', FALSE);
+
+        $this->db->update('tags',$data);
+
+
+
+    }
 }

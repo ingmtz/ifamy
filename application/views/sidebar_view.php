@@ -32,7 +32,9 @@
 							<ul class="navigation navigation-main navigation-accordion">
 								<li class="navigation-header"><span><?php echo $this->lang->line('Menu'); ?></span> <i class="icon-menu" title="<?php echo $this->lang->line('Menu'); ?>"></i></li>
 								<li><a href="<?php echo base_url(); ?>capture/mobile"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> mobile</span></a></li>
-								<li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li>
+
+								<!-- <li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li> -->
+								 
 								<?php if($this->session->userdata('ifatrimidprofile')=='1' || $this->session->userdata('ifatrimidprofile')=='3'){ ?>
 								<li><a href="<?php echo base_url(); ?>itemcodes"><i class="icon-stack"></i> <span><?php echo $this->lang->line('Item codes'); ?></span></a></li>
 								<li><a href="<?php echo base_url(); ?>reports/totalcapture"><i class="glyphicon glyphicon-th"></i> <span><?php echo $this->lang->line('Total capture report'); ?></span></a></li>

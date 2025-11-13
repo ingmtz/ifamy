@@ -76,17 +76,17 @@
 									<i class="icon-lock2 text-muted"></i>
 								</div>
 							</div>
-							<div class="form-group has-feedback has-feedback-left">
+							 <div class="form-group has-feedback has-feedback-left">
 								<select class="form-control" name="area" id="area">
-									<option value="0">Select an area</option>
+									<option value="0">Select a storage location</option>
 									<?php foreach ($areas as $key => $value) { ?>
-									<option value="<?php echo $value->plant.'|'.$value->area; ?>"><?php echo $value->plant.' - '.$value->area; ?></option>
+									<option value="<?php echo $value->wh; ?>"><?php echo $value->wh; ?></option>
 									<?php } ?>
 								</select>
 								<div class="form-control-feedback">
 									<i class="icon-stack text-muted"></i>
 								</div>
-							</div>
+							</div> 
 
 							<div class="row">
 								<div class="col-sm-8">
@@ -123,7 +123,7 @@
 			if($('#area').val()=='0' && $('#area').children('option').length>1){
 				new PNotify({
 		            title: 'Problem',
-		            text: "Select an area.",
+		            text: "Select a storage location.",
 		            addclass: 'bg-danger'
 		        });
 		        event.preventDefault();
