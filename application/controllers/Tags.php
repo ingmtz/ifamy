@@ -94,24 +94,23 @@ class Tags extends MY_Controller {
 
 		$this->load->library('Pdf_tags');
 		$this->fpdf->SetAutoPageBreak(false);
-		/*
-        $this->fpdf->SetAutoPageBreak(true, 12);
-        $this->fpdf->SetFillColor(255,255,255);
-        $this->fpdf->SetTextColor(0,0,0);   
-        $this->fpdf->SetFont('Helvetica','',8);
-        */
 
         for ($i=(int)$data['starttagprint']; $i <=(int)$data['finaltagprint']; $i++) {
         	$tag=str_pad($i, 5, "0", STR_PAD_LEFT);
+			$original_tag=$tag;
         	$tag=$config->tagprefix.$tag;
-			//$result=$this->tags_model->gettag($tag);
-			//=======================================>
-			//$this->fpdf->Cell(15,4,$tag,0,0,'',true);
-			$this->fpdf->Code128(5,15,$tag,40,10);
-			$this->fpdf->SetXY(5,25);
+			$tag_obj = $this->tags_model->gettag($original_tag);
+			
+			// $this->fpdf->Code128(5,15,$tag,40,10);
+			$this->load->library('Qrcodegenerator');
+			$qrcode = new QRcode($tag, 'H'); // error level : L, M, Q, 
+			$qrcode->displayFPDF($this->fpdf, 5, 5, 40);
 			$this->fpdf->SetFont('Helvetica','',8);
+			$this->fpdf->SetXY(5,5);
+			$this->fpdf->Write(5,'Area: '.$tag_obj->area);
+			$this->fpdf->SetXY(5,40);
 			$this->fpdf->Write(5,'Folio: '.$tag);
-			$this->fpdf->SetXY(5,38);
+			$this->fpdf->SetXY(5,46);
 			$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
 
 			if($i<(int)$data['finaltagprint']) $this->fpdf->AddPage();
@@ -247,7 +246,7 @@ class Tags extends MY_Controller {
 	        fclose($archivo);
 	    }
 	}
-	function printalllocations(){
+	function printalllocations_REMOVE(){
 		$config=$this->tags_model->getconfig();
 		$locations=$this->tags_model->getalllocations();
 		
@@ -270,6 +269,34 @@ class Tags extends MY_Controller {
 	        fclose($archivo);
 	    }
 	}
+
+	function printalllocations(){
+		$data=array();
+		parse_str($_POST['data'], $data);
+		$locations=$this->tags_model->getalllocations();
+
+		$this->load->library('Pdf_tags');
+		$this->fpdf->SetAutoPageBreak(true);
+
+        foreach ($locations as $location) {			
+			// $this->fpdf->Code128(5,15,$tag,40,10);
+			$this->load->library('Qrcodegenerator');
+			$qrcode = new QRcode($location->location, 'H'); // error level : L, M, Q, 
+			$qrcode->displayFPDF($this->fpdf, 5, 5, 40);
+			$this->fpdf->SetFont('Helvetica','',8);
+			$this->fpdf->SetXY(5,40);
+			$this->fpdf->Write(5,'Location: '.$location->location);
+			$this->fpdf->SetXY(5,46);
+			$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
+
+			$this->fpdf->AddPage();
+		}
+		$this->fpdf->SetTitle('Locations');
+        $this->fpdf->Output('Locations.pdf','I');
+	}
+
+
+
 	public function createlocations(){
 		$data=array();
 		parse_str($_POST['data'], $data);
@@ -571,42 +598,29 @@ class Tags extends MY_Controller {
 	function createlabels(){
 		$data=array();
 		parse_str($_POST['data'], $data);
-		$description=$this->tags_model->getItemDescription($data['itemcode']);
+		$item=$this->tags_model->getItem($data['itemcode']);
 		//print_r($data);
 
 		$this->load->library('Pdf_labels');
 		$this->fpdf->SetAutoPageBreak(false);
-		$this->fpdf->SetFont('Helvetica','B',10);
 
-		$this->fpdf->SetXY(15,31);
-		$this->fpdf->Write(2, 'Lote: '.$data['lot']);
-		$this->fpdf->SetXY(15,36);
-		$this->fpdf->Write(2, 'Fecha empaque');
-		$this->fpdf->SetXY(20,41);
-		$this->fpdf->SetFont('Helvetica','',10);
-		$this->fpdf->Write(2, $this->formatdate2($data['packingdate']));
+		$this->load->library('Qrcodegenerator');
+		$qrcode = new QRcode($data['itemcode'], 'H'); // error level : L, M, Q, 
+        $qrcode->displayFPDF($this->fpdf, 20, 10, 80);
 
 		$this->fpdf->SetFont('Helvetica','B',12);
-		$this->fpdf->SetXY(15,51);
-		$this->fpdf->Write(2, $data['itemcode']);
-		$this->fpdf->SetXY(15,58);
-		$this->fpdf->Write(2, $description);
+		$this->fpdf->SetXY(20,100);
+		$this->fpdf->Write(2, 'Part number: '. $data['itemcode']);
+		$this->fpdf->SetXY(20,107);
+		$this->fpdf->Write(2, 'Description: '. $item->description);
+		$this->fpdf->SetXY(20,114);
+		$this->fpdf->Write(2, 'UOM: '.$item->uom);
 
-		$this->fpdf->SetFont('Helvetica','B',16);
-		$this->fpdf->SetXY(45,85);
-		$this->fpdf->Write(2, $data['weight']);
-
-		$packingdate=strtotime($data['packingdate']);
-		$barcode='**'.$data['itemcode'].$data['unit'].'-'.$data['lot'].'|*'.date('dmy',$packingdate).'|-'.$data['weight'];
-
-		//$barcode='**{1}--{3}|*{5}|-{4}';
-		//
-		// **{10000100S}--{LOTE1}|*{200530}|-{240.2}
-		$this->fpdf->Code128(5,100,$barcode,120,10);
-		$this->fpdf->SetXY(20,110);
+		// $this->fpdf->Code128(5,100,$barcode,120,10);
+		// $this->fpdf->SetXY(20,110);
 		
-		$this->fpdf->SetFont('Helvetica','',8);
-		$this->fpdf->Write(5,$barcode);
+		// $this->fpdf->SetFont('Helvetica','',8);
+		// $this->fpdf->Write(5,$barcode);
 		
 		$this->fpdf->SetTitle('Label');
         $this->fpdf->Output('Label.pdf','I');

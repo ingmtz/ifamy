@@ -256,6 +256,10 @@
 				decodedText = arrHu[2];
 				// Just preserve numbers
 				decodedText = decodedText.replace(/[^0-9]/g, '');
+			}else if(arrHu.length == 6){
+				decodedText = arrHu[5];
+				// Just preserve numbers
+				decodedText = decodedText.replace('CHARGP', '');
 			}else if(arrHu.length == 1){
 				// Just preserve numbers
 				if(last_tag == ''){ // Allow alphanumeric for partnumber

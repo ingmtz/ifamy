@@ -229,12 +229,13 @@
 	$(document).ready(function() {
 		$('#printalllocations').click(function(event) {
 			event.preventDefault();
-			printallmode=true;
-			$('#modalprinter').modal('show');
-			$('#fprinter').val("MEXSAINTPD4255");
-			setTimeout(function(){
-				$('#fprinter').focus();
-			},1500);
+			window.open('<?php echo base_url(); ?>tags/printalllocations');
+			// printallmode=true;
+			// $('#modalprinter').modal('show');
+			// $('#fprinter').val("MEXSAINTPD4255");
+			// setTimeout(function(){
+			// 	$('#fprinter').focus();
+			// },1500);
 		});
 		$('#create').click(function(event) {
 			if($('#wh').val()=='' || $('#prefixlocation').val()=='' || $('#startlocation').val()=='' || $('#endlocation').val()=='' || $('#platform').val()=='' || $('#area').val()=='0'){

@@ -98,18 +98,6 @@
 								<div class="col-md-2 form-inline">
 									<b>Item code:<?php //echo $this->lang->line('Start tag number'); ?></b>
 								</div>
-								<div class="col-md-2 form-inline">
-									<b>Weight:<?php //echo $this->lang->line('Final tag number'); ?></b>
-								</div>
-								<div class="col-md-2 form-inline">
-									<b>Unit:<?php //echo $this->lang->line('Final tag number'); ?></b>
-								</div>
-								<div class="col-md-2 form-inline">
-									<b>Lot:<?php //echo $this->lang->line('Area'); ?></b>
-								</div>
-								<div class="col-md-2 form-inline">
-									<b>Packing date:<?php //echo $this->config->item('client')=='CVG' ? 'WH': $this->lang->line('Rack'); ?></b>
-								</div>
 							</div>
 							<div class="row" style="margin-bottom:35px;">
 							<form id="frmnewlabel">
@@ -119,22 +107,6 @@
 										<option value="<?php echo $value->itemcode; ?>"><?php echo $value->itemcode; ?></option>
 										<?php } ?>
 									</select>
-								</div>
-								<div class="col-md-2 form-inline">
-									<input type="text" class="form-control" id="weight" name="weight" placeholder="Weight<?php //echo $this->lang->line('Final tag number'); ?>" />
-								</div>
-								<div class="col-md-2 form-inline">
-									<select class="form-control" id="unit" name="unit">
-										<option value="K">Kilogram</option>
-										<option value="L">Pound (Libra)</option>
-										<option value="P">Piece</option>
-									</select>
-								</div>
-								<div class="col-md-2 form-inline">
-									<input type="text" class="form-control" id="lot" name="lot" placeholder="lot<?php //echo $this->lang->line('Final tag number'); ?>" />
-								</div>
-								<div class="col-md-2 form-inline">
-									<input type="date" class="form-control" id="packingdate" name="packingdate" />
 								</div>
 								<div class="col-md-1 form-inline">
 									<button type="button" id="create" class="btn btn-primary"><?php echo $this->lang->line('Create'); ?> <i class="icon-arrow-right14 position-right"></i></button>

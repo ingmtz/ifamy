@@ -226,11 +226,10 @@ class Tags_model extends CI_Model {
         return $query->result();
     }
     //=============================>
-    function getItemDescription($item){
+    function getItem($item){
         $this->db->where('itemcode', $item);
         $query=$this->db->get('masterdata');
-        $result=$query->row();
-        return isset($result->description) ? $result->description : ''; 
+        return $query->row();
     }
     function getitemcodes(){
         $this->db->select('itemcode');

@@ -773,11 +773,13 @@ class Reports extends MY_Controller {
 							'hu' => trim($this->issetor($row[2])),
 							'material' => trim($this->issetor($row[3])),
 							'material_description' => trim($this->issetor($row[4])),
+							'batch' => trim($this->issetor($row[5])),
 							'qty' => trim($this->issetor($row[6])),
 							'um' => trim($this->issetor($row[7])),
 							'location' => trim($this->issetor($row[17])),
 							'wh' => trim($this->issetor($row[16])),
 							'cost_price' => trim($this->issetor($row[19])),
+							'area' => trim($this->issetor($row[21])),
 							);
 	                }
                 }
@@ -836,13 +838,13 @@ class Reports extends MY_Controller {
 		$this->reports_model->saveimportdata($perpetuofile);
 
 		// //4.- hus
-		$hus = $this->db->query("select hu, material, wh, qty, um from rawdata where trim(hu)<>''")->result();
+		$hus = $this->db->query("select hu, material, wh, qty, um, area, batch from rawdata where trim(hu)<>''")->result();
 		//$this->reports_model->truncatetags();
 		//$this->reports_model->truncatehus();
 
 		// a) Copy hus already counted that are not in rawdata to hus_history table
-		$this->db->query("INSERT INTO hus_history (tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom)
-		SELECT tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom
+		$this->db->query("INSERT INTO hus_history (tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom, batch)
+		SELECT tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom, batch
 		FROM hus
 		WHERE not status is null AND tag NOT IN (SELECT DISTINCT hu FROM rawdata WHERE TRIM(hu)<>'' )");
 
@@ -861,11 +863,12 @@ class Reports extends MY_Controller {
 				'warehouse' => $value->wh,
 				'qty' => $value->qty,
 				'plant' => 'Unknown',
-				'area' => 'Unknown',
+				'area' => $value->area,
 				'printcounter' => 0,
 				'auditcounter' => 0,
 				'itemcode' => $value->material,
-				'uom' => $value->um
+				'uom' => $value->um,
+				'batch' => $value->batch
 			);
 		}
 		//print_r($husfile);
@@ -1156,6 +1159,65 @@ class Reports extends MY_Controller {
 		$data['users']=$this->reports_model->getAuditbyuser();
 		$this->load->view('reportauditbyuser_view', $data);
 	}
+
+	function hunotfound(){
+		$this->load->view('hunotfound_view');
+	}
+
+	function loadhunotfound(){
+		$query="select Id, hu, warehouse, location from hu_not_found hnf ";
+		$primaryKey = 'Id';
+
+		$columns = array(
+		    array( 'db' => 'hu', 'dt' => 0 ),
+		    array( 'db' => 'warehouse', 'dt' => 1 ),
+		    array( 'db' => 'location',  'dt' => 2 ),
+		);
+		
+		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
+		//$data=$this->utf8_encode_deep($data);
+		echo json_encode($data);
+	}
+
+	function loadhusremoved(){
+		$query="SELECT Id, tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom FROM hus_history ";
+		$primaryKey = 'Id';
+
+		$columns = array(
+			array( 'db' => 'tag', 'dt' => 0 ),
+			array( 'db' => 'plant', 'dt' => 1 ),
+			array( 'db' => 'area', 'dt' => 2 ),
+			array( 'db' => 'warehouse', 'dt' => 3 ),
+			array( 'db' => 'datetimecaptured', 'dt' => 4 ),
+			array( 'db' => 'itemcode', 'dt' => 5 ),
+			array( 'db' => 'status', 'dt' => 6 ),
+			array( 'db' => 'qty', 'dt' => 7 ),
+			array( 'db' => 'location', 'dt' => 8 ),
+			array( 'db' => 'iduser', 'dt' => 9 ),
+			array( 'db' => 'reasontoedit', 'dt' => 10 ),
+			array( 'db' => 'idcounter', 'dt' => 11 ),
+			array( 'db' => 'idauditor', 'dt' => 12 ),
+			array( 'db' => 'printcounter', 'dt' => 13 ),
+			array( 'db' => 'toaudit', 'dt' => 14 ),
+			array( 'db' => 'resultaudit', 'dt' => 15 ),
+			array( 'db' => 'iduseraudit', 'dt' => 16 ),
+			array( 'db' => 'datetimeaudit', 'dt' => 17 ),
+			array( 'db' => 'openbox', 'dt' => 18 ),
+			array( 'db' => 'auditcounter', 'dt' => 19 ),
+			array( 'db' => 'precounted', 'dt' => 20 ),
+			array( 'db' => 'fechaempaque', 'dt' => 21 ),
+			array( 'db' => 'fecharecibo', 'dt' => 22 ),
+			array( 'db' => 'fechacaducidad', 'dt' => 23 ),
+			array( 'db' => 'lot', 'dt' => 24 ),
+			array( 'db' => 'packingdate', 'dt' => 25 ),
+			array( 'db' => 'uom', 'dt' => 26 )
+		);
+		
+		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
+		//$data=$this->utf8_encode_deep($data);
+		echo json_encode($data);
+	}
+
 	function issetor(&$var) {
 	    return isset($var) ? $var : '';
 	}

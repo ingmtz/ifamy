@@ -38,6 +38,9 @@
 								<?php if($this->session->userdata('ifatrimidprofile')=='1' || $this->session->userdata('ifatrimidprofile')=='3'){ ?>
 								<li><a href="<?php echo base_url(); ?>itemcodes"><i class="icon-stack"></i> <span><?php echo $this->lang->line('Item codes'); ?></span></a></li>
 								<li><a href="<?php echo base_url(); ?>reports/totalcapture"><i class="glyphicon glyphicon-th"></i> <span><?php echo $this->lang->line('Total capture report'); ?></span></a></li>
+								
+								<li><a href="<?php echo base_url(); ?>reports/hunotfound"><i class="glyphicon glyphicon-th-list"></i> <span>HU not found report</span></a></li>
+
 								<li><a href="<?php echo base_url(); ?>reports/progress/capture"><i class="glyphicon glyphicon-align-left"></i> <span><?php echo $this->lang->line('Progress report'); ?></span></a></li>
 
 								<?php if($this->config->item('client')=='CVG'){ ?>
@@ -77,8 +80,6 @@
 
 								<li><a href="<?php echo base_url(); ?>reports/info"><i class="glyphicon glyphicon-question-sign"></i> <span><?php echo $this->lang->line('how does it work?'); ?></span></a></li>
 								<?php } ?>
-
-								<li><a href="<?php echo base_url(); ?>clients/<?php echo $this->config->item('client'); ?>/<?php echo $this->config->item('title'); ?>.apk"><i class="glyphicon glyphicon-download-alt"></i> <span>Android application</span></a></li>
 
 								<?php if($this->config->item('client')!='CVG'){ ?>
 								<li><a href="<?php echo base_url(); ?>tags/labels"><i class="glyphicon glyphicon-barcode"></i> <span>Print labels</span></a></li>

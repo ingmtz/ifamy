@@ -76,8 +76,11 @@ class Capture extends MY_Controller {
 
 			// Update the hu
 			if($type == 'hu'){
-				$this->db->where('tag', $_POST['tag'])->update('hus', 
-					array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+				$this->db->where('tag', $_POST['tag'])
+						 ->or_where('batch', $_POST['tag'])
+						 ->update('hus', 
+							array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+				//echo $this->db->last_query();exit;
 
 				echo json_encode(array('status'=>true));
 			}
