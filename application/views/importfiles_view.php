@@ -84,9 +84,9 @@
 									<h2 class="panel-title">Import excel</h2>
 								</header>-->
 								<div class="panel-body">
-										<div class="alert alert-danger" id="alert">
+										<!-- <div class="alert alert-danger" id="alert">
 											Stop! You are about to delete all data. Are you sure?
-										</div>
+										</div> -->
 										
 										<!-- Inventory File Section -->
 										<div class="row">

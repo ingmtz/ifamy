@@ -824,7 +824,7 @@ class Reports extends MY_Controller {
 		$this->reports_model->saveimportdatamasterdata($masterdatafile);
 
 		// //3.- perpetuo
-		$perpetuo = $this->db->query("select hu, qty from rawdata")->result();
+		$perpetuo = $this->db->query("select material, sum(qty) as qty from rawdata group by material")->result();
 		$this->reports_model->truncateperpetuo();
 		$perpetuofile=array();
 		foreach ($perpetuo as $key => $value) {
@@ -835,13 +835,28 @@ class Reports extends MY_Controller {
 		}
 		$this->reports_model->saveimportdata($perpetuofile);
 
-		// //4.- tags
-		$tags = $this->db->query("select hu, material, wh, qty, um from rawdata where trim(hu)<>''")->result();
-		$this->reports_model->truncatetags();
-		$this->reports_model->truncatehus();
-		$tagsfile=array();
-		foreach ($tags as $key => $value) {
-			$tagsfile[]= array(
+		// //4.- hus
+		$hus = $this->db->query("select hu, material, wh, qty, um from rawdata where trim(hu)<>''")->result();
+		//$this->reports_model->truncatetags();
+		//$this->reports_model->truncatehus();
+
+		// a) Copy hus already counted that are not in rawdata to hus_history table
+		$this->db->query("INSERT INTO hus_history (tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom)
+		SELECT tag, plant, area, warehouse, datetimecaptured, itemcode, status, qty, location, iduser, reasontoedit, idcounter, idauditor, printcounter, toaudit, resultaudit, iduseraudit, datetimeaudit, openbox, auditcounter, precounted, fechaempaque, fecharecibo, fechacaducidad, lot, packingdate, uom
+		FROM hus
+		WHERE not status is null AND tag NOT IN (SELECT DISTINCT hu FROM rawdata WHERE TRIM(hu)<>'' )");
+
+		// b) Delete all hus except those which have been counted and are in rawdata
+		$this->db->query("DELETE FROM hus WHERE status is null OR tag NOT IN (SELECT DISTINCT hu FROM rawdata WHERE TRIM(hu)<>'' )");
+
+		$husfile=array();
+		foreach ($hus as $key => $value) {
+			// Add only if not exists
+			$exists = $this->db->query("SELECT COUNT(*) as count FROM hus WHERE tag = ?", array($value->hu))->row()->count;
+			if($exists > 0){
+				continue;
+			}
+			$husfile[]= array(
 				'tag' => $value->hu,
 				'warehouse' => $value->wh,
 				'qty' => $value->qty,
@@ -853,8 +868,8 @@ class Reports extends MY_Controller {
 				'uom' => $value->um
 			);
 		}
-		//print_r($tagsfile);
-		$this->reports_model->saveimporthus($tagsfile);
+		//print_r($husfile);
+		$this->reports_model->saveimporthus($husfile);
 
         //======================================>
 		$result.='File imported '.count($datatoinsert).' records successfully.';
