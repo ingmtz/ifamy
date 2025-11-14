@@ -102,6 +102,7 @@
 					<!-- Page length options -->
 					<div class="panel panel-flat">
 						<div class="panel-body">
+							<!-- 
 							<div class="row" style="margin-bottom:15px;">
 								<span><b><?php echo $this->lang->line('Capture the follow information'); ?>:</b></span>
 							</div>
@@ -247,6 +248,7 @@
 								</div>
 								<?php } ?>
 							</div>
+							-->
 							<div class="row" style="margin-bottom:15px; display: none;">
 								<div class="col-md-4 form-inline">
 									<span class="badge bg-warning-400"><?php echo $this->lang->line('Reason for modification'); ?>:</span>
@@ -273,11 +275,7 @@
 									<th><?php echo $this->lang->line('Tag'); ?></th>
 									<th><?php echo $this->lang->line('Area'); ?></th>
 									<th>
-										<?php if($this->config->item('client')=='AtlanticPrime'){ ?>
-										<?php echo $this->lang->line('Rack'); ?>
-										<?php }else{ ?>
 										<b>WH</b>
-										<?php } ?>
 									</th>
 									<th><?php echo $this->lang->line('Location'); ?></th>
 									<th><?php echo $this->lang->line('Item code'); ?></th>

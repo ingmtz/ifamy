@@ -37,9 +37,6 @@
     <link href="<?php echo base_url(); ?>assets/datatable/css/dataTables.tableTools.min.css" rel="stylesheet">
     <script src="<?php echo base_url(); ?>assets/datatable/js/jquery.dataTables.js"></script>
 	<script src="<?php echo base_url(); ?>assets/datatable/js/dataTables.tableTools.js"></script>
-	<!-- Dropzone -->
-	<script src="<?php echo base_url(); ?>assets/dropzone/dropzone.js"></script>
-	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/dropzone/dropzone.css" />
 
 </head>
 
@@ -68,7 +65,7 @@
 				<div class="page-header page-header-default">
 					<div class="page-header-content">
 						<div class="page-title">
-							<h4><i class="icon-arrow-left52 position-left"></i> <span class="text-semibold"></span><?php echo $this->lang->line('importtitle'); ?></h4>
+							<h4><i class="icon-arrow-left52 position-left"></i> <span class="text-semibold">Import Files</span></h4>
 						</div>
 
 					</div>
@@ -90,15 +87,45 @@
 										<div class="alert alert-danger" id="alert">
 											Stop! You are about to delete all data. Are you sure?
 										</div>
-										<div id="msgpanel" class="alert alert-info">
-												<strong id="msgresult">
-													[C] -> "HU", [D] -> "Material", [E] -> "Description", [G] -> "Qty", [H] -> "UM", [Q] -> "Storage Location", [R] -> "Location", [T] -> "Cost Price" columns are expected. Previous data will be truncated.
-												</strong>
+										
+										<!-- Inventory File Section -->
+										<div class="row">
+											<div class="col-md-6">
+												<div class="panel panel-flat">
+													<div class="panel-heading">
+														<h5 class="panel-title">Inventory File</h5>
+													</div>
+													<div class="panel-body">
+														<div id="msgpanel-inventory" class="alert alert-info">
+															<strong id="msgresult-inventory">
+																[C] -> "HU", [D] -> "Material", [E] -> "Description", [G] -> "Qty", [H] -> "UM", [Q] -> "Storage Location", [R] -> "Location", [T] -> "Cost Price" columns are expected. Previous data will be truncated.
+															</strong>
+														</div>
+														<div class="form-group">
+															<label for="file-upload-inventory" class="control-label">Select inventory file to upload</label>
+															<input type="file" class="form-control" id="file-upload-inventory" accept=".xls,.xlsx,.csv">
+														</div>
+													</div>
+												</div>
 											</div>
-										<div class="tab-content">
-											<div id="w4-account" class="tab-pane active">
-												<div class="panel-body">
-													<form action="<?php echo base_url();?>reports/fileupload" class="dropzone dz-square" id="dropzone-file"></form>
+											
+											<!-- Locations File Section -->
+											<div class="col-md-6">
+												<div class="panel panel-flat">
+													<div class="panel-heading">
+														<h5 class="panel-title">Locations File</h5>
+													</div>
+													<div class="panel-body">
+														<div id="msgpanel-locations" class="alert alert-info">
+															<strong id="msgresult-locations">
+																[A] -> "PLANT", [B] -> "AREA", [C] -> "WAREHOUSE", [D] -> "LOCATION", [E] -> "AbsEntry" columns are expected. Previous location data will be truncated.
+															</strong>
+														</div>
+														<div class="form-group">
+															<label for="file-upload-locations" class="control-label">Select locations file to upload</label>
+															<input type="file" class="form-control" id="file-upload-locations" accept=".xls,.xlsx,.csv">
+														</div>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -126,41 +153,112 @@
 
 </body>
 <script type="text/javascript">
-	Dropzone.autoDiscover = false;
-	Dropzone.prototype.defaultOptions.dictDefaultMessage = "<?php echo $this->lang->line('dictDefaultMessage'); ?>";
-	Dropzone.prototype.defaultOptions.dictFallbackMessage = "<?php echo $this->lang->line('dictFallbackMessage'); ?>";
-	Dropzone.prototype.defaultOptions.dictFallbackText = "<?php echo $this->lang->line('dictFallbackText'); ?>";
-	Dropzone.prototype.defaultOptions.dictFileTooBig = "<?php echo $this->lang->line('dictFileTooBig'); ?>";
-	Dropzone.prototype.defaultOptions.dictInvalidFileType = "<?php echo $this->lang->line('dictInvalidFileType'); ?>";
-	Dropzone.prototype.defaultOptions.dictResponseError = "<?php echo $this->lang->line('dictResponseError'); ?>";
-	Dropzone.prototype.defaultOptions.dictCancelUpload = "<?php echo $this->lang->line('dictCancelUpload'); ?>";
-	Dropzone.prototype.defaultOptions.dictCancelUploadConfirmation = "<?php echo $this->lang->line('dictCancelUploadConfirmation'); ?>";
-	Dropzone.prototype.defaultOptions.dictRemoveFile = "<?php echo $this->lang->line('dictRemoveFile'); ?>";
-	Dropzone.prototype.defaultOptions.dictMaxFilesExceeded = "<?php echo $this->lang->line('dictMaxFilesExceeded'); ?>";
 	$(function() {
-	  var myDropzone = new Dropzone("#dropzone-file");
-	  myDropzone.on("success", function(file) {
-	  	//console.log(file.type);
-	  	process(file.name,file.type);
+	  // Inventory file upload
+	  $('#file-upload-inventory').on('change', function(e) {
+	    var file = e.target.files[0];
+	    if (file) {
+	      uploadInventoryFile(file);
+	    }
+	  });
+	  
+	  // Locations file upload
+	  $('#file-upload-locations').on('change', function(e) {
+	    var file = e.target.files[0];
+	    if (file) {
+	      uploadLocationsFile(file);
+	    }
 	  });
 	});
-	function process(filename,tipo){
+	
+	function uploadInventoryFile(file) {
+		var formData = new FormData();
+		formData.append('file', file);
+		
+		waitingDialog.show('Uploading '+file.name+'...');
+		
+		$.ajax({
+			url: '<?php echo base_url();?>reports/fileupload',
+			type: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false,
+			success: function(response) {
+				processInventory(file.name, file.type);
+			},
+			error: function(xhr, status, error) {
+				waitingDialog.hide();
+				$('#msgpanel-inventory').addClass('alert-danger').removeClass('alert-success');
+				$('#msgresult-inventory').html('Upload failed for '+file.name+'<br/>');
+			}
+		});
+	}
+	
+	function uploadLocationsFile(file) {
+		var formData = new FormData();
+		formData.append('file', file);
+		
+		waitingDialog.show('Uploading '+file.name+'...');
+		
+		$.ajax({
+			url: '<?php echo base_url();?>reports/fileuploadlocations',
+			type: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false,
+			success: function(response) {
+				processLocations(file.name, file.type);
+			},
+			error: function(xhr, status, error) {
+				waitingDialog.hide();
+				$('#msgpanel-locations').addClass('alert-danger').removeClass('alert-success');
+				$('#msgresult-locations').html('Upload failed for '+file.name+'<br/>');
+			}
+		});
+	}
+	
+	function processInventory(filename,tipo){
 		waitingDialog.show('Importing '+filename+'...');
 		$.post("<?php echo base_url(); ?>reports/import",{filename:filename,tipo:tipo},function(result){
 			waitingDialog.hide();
-			$('#msgpanel').removeClass('alert-success').removeClass('alert-danger');
+			$('#msgpanel-inventory').removeClass('alert-success').removeClass('alert-danger');
 			if(result.includes('Unknown') || result.includes('skipped') || result.includes('Please check') || result.includes('not imported')){
-				$('#msgpanel').addClass('alert-danger').removeClass('alert-success');
+				$('#msgpanel-inventory').addClass('alert-danger').removeClass('alert-success');
 			}else{
-				$('#msgpanel').addClass('alert-success').removeClass('alert-danger');
+				$('#msgpanel-inventory').addClass('alert-success').removeClass('alert-danger');
 			}
-			$('#msgpanel').show('slow', function() {
-				$('#msgresult').append('<br/>'+filename+' '+result+'<br/>');
+			$('#msgpanel-inventory').show('slow', function() {
+				$('#msgresult-inventory').html('<br/>'+filename+' '+result+'<br/>');
 			});
 		}).fail(function(){
 			waitingDialog.hide();
-			$('#msgpanel').addClass('alert-danger').removeClass('alert-success');
-			$('#msgresult').append('Problem with '+filename+'<br/>');
+			$('#msgpanel-inventory').addClass('alert-danger').removeClass('alert-success');
+			$('#msgresult-inventory').html('Problem with '+filename+'<br/>');
+			new PNotify({
+					title: '<?php echo $this->config->item('title'); ?>',
+					text: 'An error has ocurred.',
+					type: 'error'
+				});
+		});
+	}
+	
+	function processLocations(filename,tipo){
+		waitingDialog.show('Importing '+filename+'...');
+		$.post("<?php echo base_url(); ?>reports/importlocationsfile",{filename:filename,tipo:tipo},function(result){
+			waitingDialog.hide();
+			$('#msgpanel-locations').removeClass('alert-success').removeClass('alert-danger');
+			if(result.includes('Unknown') || result.includes('skipped') || result.includes('Please check') || result.includes('not imported')){
+				$('#msgpanel-locations').addClass('alert-danger').removeClass('alert-success');
+			}else{
+				$('#msgpanel-locations').addClass('alert-success').removeClass('alert-danger');
+			}
+			$('#msgpanel-locations').show('slow', function() {
+				$('#msgresult-locations').html('<br/>'+filename+' '+result+'<br/>');
+			});
+		}).fail(function(){
+			waitingDialog.hide();
+			$('#msgpanel-locations').addClass('alert-danger').removeClass('alert-success');
+			$('#msgresult-locations').html('Problem with '+filename+'<br/>');
 			new PNotify({
 					title: '<?php echo $this->config->item('title'); ?>',
 					text: 'An error has ocurred.',

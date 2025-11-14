@@ -37,9 +37,6 @@
     <link href="<?php echo base_url(); ?>assets/datatable/css/dataTables.tableTools.min.css" rel="stylesheet">
     <script src="<?php echo base_url(); ?>assets/datatable/js/jquery.dataTables.js"></script>
 	<script src="<?php echo base_url(); ?>assets/datatable/js/dataTables.tableTools.js"></script>
-	<!-- Dropzone -->
-	<script src="<?php echo base_url(); ?>assets/dropzone/dropzone.js"></script>
-	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/dropzone/dropzone.css" />
 
 </head>
 
@@ -87,15 +84,21 @@
 									<h2 class="panel-title">Import excel</h2>
 								</header>-->
 								<div class="panel-body">
+										<div class="alert alert-danger" id="alert" style="display:none;">
+											Stop! You are about to delete all location data. Are you sure?
+										</div>
 										<div id="msgpanel" class="alert alert-info">
 											<strong id="msgresult">
-												<span>[A] -&gt; "WH", [B] -&gt; "Planta", [C] -&gt; "Area", [D] -&gt; "Location" columns are expected for locations file in sheet named "data" (without quotes).</span>
+												[A] -&gt; "PLANT", [B] -&gt; "AREA", [C] -&gt; "WAREHOUSE", [D] -&gt; "LOCATION", [E] -&gt; "AbsEntry" columns are expected. Previous location data will be truncated.
 											</strong>
 										</div>
 										<div class="tab-content">
 											<div id="w4-account" class="tab-pane active">
 												<div class="panel-body">
-													<form action="<?php echo base_url();?>reports/fileupload" class="dropzone dz-square" id="dropzone-file"></form>
+													<div class="form-group">
+														<label for="file-upload-locations" class="control-label">Select locations file to upload</label>
+														<input type="file" class="form-control" id="file-upload-locations" accept=".xls,.xlsx,.csv">
+													</div>
 												</div>
 											</div>
 										</div>
@@ -123,32 +126,56 @@
 
 </body>
 <script type="text/javascript">
-	Dropzone.autoDiscover = false;
 	$(function() {
-	  var myDropzone = new Dropzone("#dropzone-file");
-	  myDropzone.on("success", function(file) {
-	  	//console.log(file.type);
-	  	process(file.name,file.type);
+	  $('#file-upload-locations').on('change', function(e) {
+	    var file = e.target.files[0];
+	    if (file) {
+	      uploadFile(file);
+	    }
 	  });
 	});
+	
+	function uploadFile(file) {
+		var formData = new FormData();
+		formData.append('file', file);
+		
+		waitingDialog.show('Uploading '+file.name+'...');
+		
+		$.ajax({
+			url: '<?php echo base_url();?>reports/fileuploadlocations',
+			type: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false,
+			success: function(response) {
+				process(file.name, file.type);
+			},
+			error: function(xhr, status, error) {
+				waitingDialog.hide();
+				$('#msgpanel').addClass('alert-danger').removeClass('alert-success');
+				$('#msgresult').html('Upload failed for '+file.name+'<br/>');
+			}
+		});
+	}
 	function process(filename,tipo){
 		waitingDialog.show('Importing '+filename+'...');
-		$.post("<?php echo base_url(); ?>reports/import/Locations",{filename:filename,tipo:'Locations'},function(result){
+		$.post("<?php echo base_url(); ?>reports/importlocationsfile",{filename:filename,tipo:tipo},function(result){
 			waitingDialog.hide();
 			$('#msgpanel').removeClass('alert-success').removeClass('alert-danger');
-			if(result.includes('columns are expected')){
-				$('#msgpanel').addClass('alert-danger');
+			if(result.includes('Unknown') || result.includes('skipped') || result.includes('Please check') || result.includes('not imported')){
+				$('#msgpanel').addClass('alert-danger').removeClass('alert-success');
 			}else{
-				$('#msgpanel').addClass('alert-success');
+				$('#msgpanel').addClass('alert-success').removeClass('alert-danger');
 			}
 			$('#msgpanel').show('slow', function() {
-				$('#msgresult').html(filename+' '+result+'<br/>');
+				$('#msgresult').html('<br/>'+filename+' '+result+'<br/>');
 			});
 		}).fail(function(){
 			waitingDialog.hide();
-			$('#msgresult').append('Problem with '+filename+'<br/>');
+			$('#msgpanel').addClass('alert-danger').removeClass('alert-success');
+			$('#msgresult').html('Problem with '+filename+'<br/>');
 			new PNotify({
-					title: 'IFA',
+					title: '<?php echo $this->config->item('title'); ?>',
 					text: 'An error has ocurred.',
 					type: 'error'
 				});

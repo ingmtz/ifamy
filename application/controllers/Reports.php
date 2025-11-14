@@ -200,7 +200,7 @@ class Reports extends MY_Controller {
     	ini_set('memory_limit', '-1');
     	//, b.uom ==> Ahora se muestra la que se captura
 		$query="select a.*, b.description, b.type, d.name, b.cost_price, e.name as counter, f.name as auditor, a.area as areadesc, case when a.toaudit=1 or a.openbox='Ok' then 'Yes' else 'No' end as toaudit2, b.uom as uom2
-					from tags a 
+					from tags_hus a 
                     left join masterdata b on a.itemcode=b.itemcode
                     left join users d on a.iduser=d.Id
                     left join users e on a.idcounter=e.Id
@@ -220,7 +220,7 @@ class Reports extends MY_Controller {
 						$str.='<i class="fa fa-2x fa-eye" style="cursor:pointer;"></i>';
 					}
 		        	if($this->session->userdata('ifatrimidprofile')==1 || $this->session->userdata('ifatrimidprofile')==3){
-		        		$str.='<i class="fa fa-2x fa-edit" style="cursor:pointer;"></i><i class="fa fa-2x fa-remove" style="cursor:pointer;"></i>';
+		        		// $str.='<i class="fa fa-2x fa-edit" style="cursor:pointer;"></i><i class="fa fa-2x fa-remove" style="cursor:pointer;"></i>';
 		        	}
 		        	return $str;
 		        }
@@ -353,14 +353,7 @@ class Reports extends MY_Controller {
 		$data['plants']=$this->reports_model->getplants();
 		$this->load->view('reportprogress_view',$data);
 	}
-	/*public function getprogressdata(){
-		$everyminutes=$_POST['every'];
-		unset($_POST['every']);
-		$result=new stdClass();
-		$result->progress=$this->reports_model->getprogressdata($_POST, $everyminutes);
-		$result->totaltags=$this->reports_model->gettotaltags();
-		echo json_encode($result);
-	}*/
+	
 	public function getprogressdata($type){
 		$result=$this->reports_model->getprogressdata($type, $_POST);
 		echo json_encode($result);
@@ -419,193 +412,91 @@ class Reports extends MY_Controller {
 			$area = $_GET['area'];
 		}
 
-		if($this->config->item('client')=='AtlanticPrime'){
-			$moneysign='';
-			$decimals=2;
-			$query="select a.itemcode, a.description,
-					case when b.onhand is null then 0 else b.onhand end as onhand,
-					a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand,
-					case when temp.total is null then 0 else temp.total end as counted,
-					(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
-					(case when temp.total is null then 0 else temp.total end-case when b.onhand is null then 0 else b.onhand end) as variationqty,
-					abs(case when temp.total is null then 0 else temp.total end-case when b.onhand is null then 0 else b.onhand end) as variationqtyabs,
-					((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation,
-					abs((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariationabs
-					
-					from masterdata a
-					left join perpetuo b on a.itemcode=b.itemcode
-					left join (
-						select a.itemcode, sum(qty) as total, plant, area
-						from tags a
-						where not a.itemcode is null
-						group by a.itemcode
-						) as temp on temp.itemcode=a.itemcode";
+		$query="select a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
+			a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
+			case when temp.total is null then 0 else temp.total end as counted,
+			(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
+			((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
+			from masterdata a
+			left join perpetuo b on a.itemcode=b.itemcode
+			left join (
+									select a.itemcode, sum(qty) as total
+									from tags_hus a
+									where not a.itemcode is null
+									group by a.itemcode
+									) as temp on temp.itemcode=a.itemcode";
 
-			if($plant == 'null' && $area == 'null'){
-				$querystr.=" where temp.plant is null and temp.area is null";
+		$primaryKey = 'itemcode';//'Id';
 
-			}else if($plant != '' && $area != ''){
-				$querystr.=" where temp.plant = '".$plant."' and temp.area = '".$area."'";
-			}
-			$primaryKey = 'itemcode';//'Id';
-
-			$columns = array(
-				array( 'db' => 'itemcode', 'dt' => 0 ),
-				array( 'db' => 'description', 'dt' => 1 ),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 2,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'onhand',
-					'dt'        => 3,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extonhand',
-					'dt'        => 4,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						//$d = floor($d * 100) / 100;
-						return $moneysign.number_format($d, 0, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 5,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return '<a href="#" class="detail" data-item="'.$row['itemcode'].'">'.number_format($d, $decimals, '.', ',').'</a>';
-					}
-				),
-				array(
-					'db'        => 'extcounted',
-					'dt'        => 6,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, 0, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'variationqty',
-					'dt'        => 7,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariation',
-					'dt'        => 8,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), 0, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'variationqtyabs',
-					'dt'        => 9,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariationabs',
-					'dt'        => 10,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				)
-			);
-		}else{
-			$query="select a.itemcode, a.type, a.description, case when b.onhand is null then 0 else b.onhand end as onhand, 
-				a.cost_price, (case when b.onhand is null then 0 else b.onhand end * a.cost_price) as extonhand, 
-				case when temp.total is null then 0 else temp.total end as counted,
-				(case when temp.total is null then 0 else temp.total end * a.cost_price) as extcounted,
-				((case when temp.total is null then 0 else temp.total end - case when b.onhand is null then 0 else b.onhand end)*case when a.cost_price is null then 0 else a.cost_price end) as extvariation
-				from masterdata a
-				left join perpetuo b on a.itemcode=b.itemcode
-				left join (
-										select a.itemcode, sum(qty) as total
-										from tags a
-										where not a.itemcode is null
-										group by a.itemcode
-										) as temp on temp.itemcode=a.itemcode";
-
-			$primaryKey = 'itemcode';//'Id';
-
-			$columns = array(
-				array( 'db' => 'itemcode', 'dt' => 0 ),
-				array( 'db' => 'type', 'dt' => 1 ),
-				array( 'db' => 'description',  'dt' => 2 ),
-				array(
-					'db'        => 'onhand',
-					'dt'        => 3,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 4,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extonhand',
-					'dt'        => 5,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 6,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return '<a href="#" class="detail" data-item="'.$row['itemcode'].'">'.number_format($d, $decimals, '.', ',').'</a>';
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 7,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extcounted',
-					'dt'        => 8,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'counted',
-					'dt'        => 9,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return number_format($d-$row['onhand'], $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'cost_price',
-					'dt'        => 10,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				),
-				array(
-					'db'        => 'extvariation',
-					'dt'        => 11,
-					'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
-						return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
-						//return $moneysign.number_format($d, $decimals, '.', ',');
-					}
-				)
-			);
-		}
+		$columns = array(
+			array( 'db' => 'itemcode', 'dt' => 0 ),
+			array( 'db' => 'type', 'dt' => 1 ),
+			array( 'db' => 'description',  'dt' => 2 ),
+			array(
+				'db'        => 'onhand',
+				'dt'        => 3,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'cost_price',
+				'dt'        => 4,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extonhand',
+				'dt'        => 5,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'counted',
+				'dt'        => 6,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return '<a href="#" class="detail" data-item="'.$row['itemcode'].'">'.number_format($d, $decimals, '.', ',').'</a>';
+				}
+			),
+			array(
+				'db'        => 'cost_price',
+				'dt'        => 7,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extcounted',
+				'dt'        => 8,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'counted',
+				'dt'        => 9,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return number_format($d-$row['onhand'], $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'cost_price',
+				'dt'        => 10,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			),
+			array(
+				'db'        => 'extvariation',
+				'dt'        => 11,
+				'formatter' => function( $d, $row ) use (&$decimals, &$moneysign){
+					return ($d<0 ? '-' : '').$moneysign.number_format(abs($d), $decimals, '.', ',');
+					//return $moneysign.number_format($d, $decimals, '.', ',');
+				}
+			)
+		);
 		
 		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
 		//print_r($data);
@@ -851,6 +742,19 @@ class Reports extends MY_Controller {
 		    move_uploaded_file($tempFile,$targetFile);
 		}
 	}
+	public function fileuploadlocations(){
+		$ds          = DIRECTORY_SEPARATOR;
+		$storeFolder = 'uploads';
+		if(!is_dir($storeFolder)){
+	  		mkdir($storeFolder);
+	    }
+		if (!empty($_FILES)) {
+		    $tempFile = $_FILES['file']['tmp_name'];
+		    $targetPath = getcwd (). $ds. $storeFolder . $ds;
+		    $targetFile =  $targetPath. $_FILES['file']['name'];
+		    move_uploaded_file($tempFile,$targetFile);
+		}
+	}
 	public function import(){//$filetype
 		set_time_limit(0);
 		ini_set('memory_limit','-1');
@@ -891,19 +795,19 @@ class Reports extends MY_Controller {
 
 		// // LLenar las tablas:
 		// // 1. locations
-		$locations = $this->db->query("SELECT DISTINCT wh, location FROM rawdata")->result();
-		$this->reports_model->truncatelocations();
-		$locationsfile=array();
-		foreach ($locations as $key => $location) {
-			$locationsfile[]= array(
-				'plant' => 'Unknown',
-				'area' => 'Unknown',
-				'wh' => $location->wh,
-				'location' => $location->location,
-				'plataforma' => 'Unknown',
-			);
-		}
-		$this->reports_model->insertLocation($locationsfile);
+		// $locations = $this->db->query("SELECT DISTINCT wh, location FROM rawdata")->result();
+		// $this->reports_model->truncatelocations();
+		// $locationsfile=array();
+		// foreach ($locations as $key => $location) {
+		// 	$locationsfile[]= array(
+		// 		'plant' => 'Unknown',
+		// 		'area' => 'Unknown',
+		// 		'wh' => $location->wh,
+		// 		'location' => $location->location,
+		// 		'plataforma' => 'Unknown',
+		// 	);
+		// }
+		// $this->reports_model->insertLocation($locationsfile);
 		
 		// //2.- masterdata
 		$masterdata = $this->db->query("SELECT DISTINCT material, material_description, um, cost_price FROM rawdata")->result();
@@ -925,7 +829,7 @@ class Reports extends MY_Controller {
 		$perpetuofile=array();
 		foreach ($perpetuo as $key => $value) {
 			$perpetuofile[]= array(
-				'itemcode' => $value->hu,
+				'itemcode' => $value->material, // $value->hu, why??
 				'onhand' => $value->qty
 			);
 		}
@@ -1124,7 +1028,7 @@ class Reports extends MY_Controller {
 	}
 	function loadlocationsreport(){
 		$query="select a.warehouse, a.location, a.itemcode, sum(a.qty) as qty
-				from tags a
+				from tags_hus a
 				group by a.warehouse, a.location, a.itemcode";
 		$primaryKey = 'warehouse';
 
@@ -1189,6 +1093,45 @@ class Reports extends MY_Controller {
 	function importlocations(){
 		$this->load->view('importlocations_view');
 	}
+	public function importlocationsfile(){
+		set_time_limit(0);
+		ini_set('memory_limit','-1');
+		$ds          = DIRECTORY_SEPARATOR;
+		$storeFolder = 'uploads';
+		$file = getcwd().$ds.$storeFolder.$ds.$_POST['filename'];
+		$reader = ReaderFactory::create(Type::XLSX);
+        $reader->open($file);
+
+    	$datatoinsert=array();
+        foreach ($reader->getSheetIterator() as $sheet) {
+        	if ($sheet->isActive()) {
+	            foreach ($sheet->getRowIterator() as $key => $row) {
+	                if($key >= 2){
+						$datatoinsert[] = array(
+							'plant' => trim($this->issetor($row[0])),
+							'area' => trim($this->issetor($row[1])),
+							'wh' => trim($this->issetor($row[2])),
+							'location' => trim($this->issetor($row[3])),
+							'plataforma' => trim($this->issetor($row[4])),
+						);
+	                }
+                }
+            }
+        }
+
+        $reader->close();
+        unlink($file);
+
+        $result = '<span>';
+
+        //Truncate and insert data
+		$this->reports_model->truncatelocations();
+		$this->reports_model->insertLocation($datatoinsert);
+
+        $result.='Locations file imported '.count($datatoinsert).' records successfully.';
+		$result.='</span>';
+		echo $result;
+    }
 	//==========================>
 	function scannedbyuser(){
 		$data['users']=$this->reports_model->getScannedbyuser();

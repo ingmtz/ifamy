@@ -1,0 +1,15 @@
+{
+  "servers": {
+    "database": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "mysql://mcp:oNcyxomhBOa)(MTw@host.docker.internal:3306/ifa?sslmode=disable"
+      ]
+    }
+  }
+}
