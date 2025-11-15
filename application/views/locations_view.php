@@ -322,13 +322,14 @@
         });
         $(document).delegate('.print', 'click', function(event) {
         	event.preventDefault();
-        	printallmode=false;
-        	lbllocation=$(this).data('lbllocation');
-        	$('#modalprinter').modal('show');
-        	$('#fprinter').val("MEXSAINTPD4255");
-        	setTimeout(function(){
-        		$('#fprinter').focus();
-        	},1500);
+			window.open('<?php echo base_url(); ?>tags/printlocations/'+$(this).data('lbllocation'));
+        	// printallmode=false;
+        	// lbllocation=$(this).data('lbllocation');
+        	// $('#modalprinter').modal('show');
+        	// $('#fprinter').val("MEXSAINTPD4255");
+        	// setTimeout(function(){
+        	// 	$('#fprinter').focus();
+        	// },1500);
         });
         $('#btnprint').click(function(event) {
         	$('#modalprinter').modal('hide');

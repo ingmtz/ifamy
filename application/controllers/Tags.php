@@ -86,43 +86,7 @@ class Tags extends MY_Controller {
 	        fclose($archivo);
 	    }
 	}
-	function pdftags(){
-		$data=array();
-		parse_str($_POST['data'], $data);
-		//print_r($data);
-		$config=$this->tags_model->getconfig();
-
-		$this->load->library('Pdf_tags');
-		$this->fpdf->SetAutoPageBreak(false);
-
-        for ($i=(int)$data['starttagprint']; $i <=(int)$data['finaltagprint']; $i++) {
-        	$tag=str_pad($i, 5, "0", STR_PAD_LEFT);
-			$original_tag=$tag;
-        	$tag=$config->tagprefix.$tag;
-			$tag_obj = $this->tags_model->gettag($original_tag);
-			
-			// $this->fpdf->Code128(5,15,$tag,40,10);
-			$this->load->library('Qrcodegenerator');
-			$qrcode = new QRcode($tag, 'H'); // error level : L, M, Q, 
-			$qrcode->displayFPDF($this->fpdf, 5, 5, 40);
-			$this->fpdf->SetFont('Helvetica','',8);
-			$this->fpdf->SetXY(5,5);
-			$this->fpdf->Write(5,'Area: '.$tag_obj->area);
-			$this->fpdf->SetXY(5,40);
-			$this->fpdf->Write(5,'Folio: '.$tag);
-			$this->fpdf->SetXY(5,46);
-			$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
-
-			if($i<(int)$data['finaltagprint']) $this->fpdf->AddPage();
-			//=======================================>
-			//if(isset($result->warehouse)){
-				//$cadena.='F'.$tag.'|'.$result->warehouse.'|'.$result->areadesc.'|'.$result->printcounter.chr(13).chr(10);
-				$this->tags_model->incrementcounter($tag);
-			//}
-		}
-		$this->fpdf->SetTitle('Folios '.$data['starttagprint'].'-'.$data['finaltagprint']);
-        $this->fpdf->Output('Folios '.$data['starttagprint'].'-'.$data['finaltagprint'].'.pdf','I');
-	}
+	
 	public function reasignatetags(){
 		//file_put_contents('reasig_'.uniqid().'.txt', print_r($_POST, true));//Revisar archivo
 		$data=array();
@@ -221,81 +185,6 @@ class Tags extends MY_Controller {
 		$data=$this->utf8_encode_deep($data);
 		echo json_encode($data);
 	}
-	function printlocations(){
-		$config=$this->tags_model->getconfig();
-		$cadena='%BTW% /AF="'.$config->btwlocationfile.'"  /PRN="'.$_POST['printer'].'" /P /D="<Trigger File Name>" /C=1 /R=3'.chr(13).chr(10);
-        $cadena.='%END%'.chr(13).chr(10);
-
-        $cadena.=$_POST['lbllocation'].chr(13).chr(10);
-
-		//echo $cadena.' - ';
-		//$nombre_archivo = '\\\\newalpwbarten03\Sites\Saltillo_Trim\barcode_labels\seriallabel_seq\_Labels\_IFA_location.dd';
-
-		$nombre_archivo = $config->locationfilesprintpath.'_IFA_location.dd';
-
-
-		//echo $nombre_archivo;
-		//echo '<br/>';
-		if($archivo = fopen($nombre_archivo, "a")){
-	        if(fwrite($archivo, $cadena)){
-	            //echo "Se ha ejecutado correctamente";
-	            echo 'ok';
-	        }else{
-	            echo "Ocurrió un problema al crear el archivo";
-	        }
-	        fclose($archivo);
-	    }
-	}
-	function printalllocations_REMOVE(){
-		$config=$this->tags_model->getconfig();
-		$locations=$this->tags_model->getalllocations();
-		
-		$cadena='%BTW% /AF="'.$config->btwlocationfile.'"  /PRN="'.$_POST['printer'].'" /P /D="<Trigger File Name>" /C=1 /R=3'.chr(13).chr(10);
-        $cadena.='%END%'.chr(13).chr(10);
-
-        foreach ($locations as $location) {
-        	$cadena.=$location->location.chr(13).chr(10);
-        }
-
-		$nombre_archivo = $config->locationfilesprintpath.'_IFA_location.dd';
-		//$nombre_archivo = "C:\\www\\ifamy\\_IFA_location.dd";
-
-		if($archivo = fopen($nombre_archivo, "a")){
-	        if(fwrite($archivo, $cadena)){
-	            echo 'ok';
-	        }else{
-	            echo "Ocurrió un problema al crear el archivo";
-	        }
-	        fclose($archivo);
-	    }
-	}
-
-	function printalllocations(){
-		$data=array();
-		parse_str($_POST['data'], $data);
-		$locations=$this->tags_model->getalllocations();
-
-		$this->load->library('Pdf_tags');
-		$this->fpdf->SetAutoPageBreak(true);
-
-        foreach ($locations as $location) {			
-			// $this->fpdf->Code128(5,15,$tag,40,10);
-			$this->load->library('Qrcodegenerator');
-			$qrcode = new QRcode($location->location, 'H'); // error level : L, M, Q, 
-			$qrcode->displayFPDF($this->fpdf, 5, 5, 40);
-			$this->fpdf->SetFont('Helvetica','',8);
-			$this->fpdf->SetXY(5,40);
-			$this->fpdf->Write(5,'Location: '.$location->location);
-			$this->fpdf->SetXY(5,46);
-			$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
-
-			$this->fpdf->AddPage();
-		}
-		$this->fpdf->SetTitle('Locations');
-        $this->fpdf->Output('Locations.pdf','I');
-	}
-
-
 
 	public function createlocations(){
 		$data=array();
@@ -595,6 +484,44 @@ class Tags extends MY_Controller {
 		$data['itemcodes']=$this->tags_model->getitemcodes();
 		$this->load->view('labels_view', $data);
 	}
+	function pdftags(){
+		$data=array();
+		parse_str($_POST['data'], $data);
+		//print_r($data);
+		$config=$this->tags_model->getconfig();
+
+		$this->load->library('Pdf_tags');
+		$this->fpdf->SetAutoPageBreak(false);
+
+        for ($i=(int)$data['starttagprint']; $i <=(int)$data['finaltagprint']; $i++) {
+        	$tag=str_pad($i, 5, "0", STR_PAD_LEFT);
+			$original_tag=$tag;
+        	$tag=$config->tagprefix.$tag;
+			$tag_obj = $this->tags_model->gettag($original_tag);
+			
+			// $this->fpdf->Code128(5,15,$tag,40,10);
+			$this->load->library('Qrcodegenerator');
+			$qrcode = new QRcode($tag, 'H'); // error level : L, M, Q, 
+			$qrcode->displayFPDF($this->fpdf, 15, 5, 70);
+			$this->fpdf->SetFont('Helvetica','',8);
+			$this->fpdf->SetXY(20,8);
+			$this->fpdf->Write(5,'Area: '.$tag_obj->area);
+			$this->fpdf->SetXY(15,80);
+			$this->fpdf->Write(5,'Folio: '.$tag);
+			$this->fpdf->SetXY(15,85);
+			$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
+
+			if($i<(int)$data['finaltagprint']) $this->fpdf->AddPage();
+			//=======================================>
+			//if(isset($result->warehouse)){
+				//$cadena.='F'.$tag.'|'.$result->warehouse.'|'.$result->areadesc.'|'.$result->printcounter.chr(13).chr(10);
+				$this->tags_model->incrementcounter($tag);
+			//}
+		}
+		$this->fpdf->SetTitle('Folios '.$data['starttagprint'].'-'.$data['finaltagprint']);
+        $this->fpdf->Output('Folios '.$data['starttagprint'].'-'.$data['finaltagprint'].'.pdf','I');
+	}
+
 	function createlabels(){
 		$data=array();
 		parse_str($_POST['data'], $data);
@@ -606,14 +533,14 @@ class Tags extends MY_Controller {
 
 		$this->load->library('Qrcodegenerator');
 		$qrcode = new QRcode($data['itemcode'], 'H'); // error level : L, M, Q, 
-        $qrcode->displayFPDF($this->fpdf, 20, 10, 80);
+        $qrcode->displayFPDF($this->fpdf, 15, 10, 70);
 
-		$this->fpdf->SetFont('Helvetica','B',12);
-		$this->fpdf->SetXY(20,100);
+		$this->fpdf->SetFont('Helvetica','B',10);
+		$this->fpdf->SetXY(8,85);
 		$this->fpdf->Write(2, 'Part number: '. $data['itemcode']);
-		$this->fpdf->SetXY(20,107);
+		$this->fpdf->SetXY(8,90);
 		$this->fpdf->Write(2, 'Description: '. $item->description);
-		$this->fpdf->SetXY(20,114);
+		$this->fpdf->SetXY(8,95);
 		$this->fpdf->Write(2, 'UOM: '.$item->uom);
 
 		// $this->fpdf->Code128(5,100,$barcode,120,10);
@@ -624,5 +551,46 @@ class Tags extends MY_Controller {
 		
 		$this->fpdf->SetTitle('Label');
         $this->fpdf->Output('Label.pdf','I');
+	}
+
+	function printalllocations(){
+		$locations=$this->tags_model->getalllocations();
+
+		$this->load->library('Pdf_tags');
+		$this->fpdf->SetAutoPageBreak(true);
+
+        foreach ($locations as $location) {			
+			// $this->fpdf->Code128(5,15,$tag,40,10);
+			$this->load->library('Qrcodegenerator');
+			$qrcode = new QRcode($location->location, 'H'); // error level : L, M, Q, 
+			$qrcode->displayFPDF($this->fpdf, 15, 10, 70);
+			$this->fpdf->SetFont('Helvetica','',8);
+			$this->fpdf->SetXY(15,80);
+			$this->fpdf->Write(5,'Location: '.$location->location);
+			$this->fpdf->SetXY(15,86);
+			$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
+
+			$this->fpdf->AddPage();
+		}
+		$this->fpdf->SetTitle('Locations');
+        $this->fpdf->Output('Locations.pdf','I');
+	}
+
+	function printlocations($location){
+		$this->load->library('Pdf_tags');
+		$this->fpdf->SetAutoPageBreak(true);
+		
+		// $this->fpdf->Code128(5,15,$tag,40,10);
+		$this->load->library('Qrcodegenerator');
+		$qrcode = new QRcode($location, 'H'); // error level : L, M, Q, 
+		$qrcode->displayFPDF($this->fpdf, 15, 10, 70);
+		$this->fpdf->SetFont('Helvetica','',8);
+		$this->fpdf->SetXY(15,80);
+		$this->fpdf->Write(5,'Location: '.$location);
+		$this->fpdf->SetXY(15,86);
+		$this->fpdf->Write(2, utf8_decode('Inventario Físico ').date('m').'-'.date('Y'));
+
+		$this->fpdf->SetTitle('Locations');
+        $this->fpdf->Output('Locations.pdf','I');
 	}
 }

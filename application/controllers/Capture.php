@@ -39,11 +39,10 @@ class Capture extends MY_Controller {
 				return;
 			}
 			// Check if the wh (storage location) is correct
-			//echo $result->warehouse. ' vs '.$this->session->userdata('ifatrimplant');exit;
-			if($result->warehouse != $this->session->userdata('ifatrimplant')){
-				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' not in this storage location'));
-				return;
-			}
+			// if($result->warehouse != $this->session->userdata('ifatrimplant')){
+			// 	echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' not in this storage location'));
+			// 	return;
+			// }
 
 			if($type == 'tag'){
 				if($_POST['partnumber'] != '' && $_POST['quantity'] != ''){
