@@ -220,7 +220,7 @@ class Reports_model extends CI_Model {
                     left join (
                                             select a.itemcode, sum(qty) as total, area, plant
                                             from tags_hus a
-                                            where not a.itemcode is null
+                                            where not a.itemcode is null and status = 'Used'
                                             group by a.itemcode
                                             ) as temp on temp.itemcode=a.itemcode";
 
