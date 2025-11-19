@@ -192,7 +192,7 @@ class Reports_model extends CI_Model {
         $querystr="select a.*, b.description, b.uom, b.type, d.name, a.area as areadesc from tags_hus a 
                     left join masterdata b on a.itemcode=b.itemcode
                     left join users d on a.iduser=d.Id
-                    where a.itemcode='$itemcode'";
+                    where a.status = 'Used' and a.itemcode='$itemcode'";
         $query=$this->db->query($querystr);
         return $query->result();
     }
