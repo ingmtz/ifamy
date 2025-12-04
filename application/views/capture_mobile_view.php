@@ -244,7 +244,7 @@
 		}
 
 		function checkHu(decodedText){
-			if(decodedText == ''){
+			if(decodedText.trim() == ''){
 				return;
 			}
 			$('.alert-component').removeClass('alert-danger')
@@ -274,7 +274,7 @@
 
 			let current_tag = decodedText;
 
-			console.log('tag_or_hu', tag_or_hu);
+			console.log('tag_or_hu', '==>' + tag_or_hu + '<==');
 			if(tag_or_hu == 'tag' && partnumber == ''){
 				console.log('Setting partnumber to', decodedText);
 				partnumber = decodedText;
