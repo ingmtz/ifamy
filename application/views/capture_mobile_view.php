@@ -151,7 +151,7 @@
 		var location;
 		var wh = '<?= $wh; ?>';
 
-		var tag_or_hu = '';
+		var tag_or_wo = '';
 		var last_tag = '';
 		var partnumber = '';
 		var qty = '';
@@ -160,7 +160,7 @@
 			location = localStorage.getItem('location');
 			if(location){
 				$('#alert-title').html('Current storage location: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change storage bin</button>');
-				$('#alert-body').html('Scan the hu code or tag.');
+				$('#alert-body').html('Scan the tag or workorder.');
 			}else{
 				$('#alert-title').html('Current storage location: '+wh + '<br/>Scan storage bin');
 				$('#alert-body').html('Scan the storage bin code to start the process.');
@@ -185,7 +185,7 @@
 			if(location == null){
 				checkLocation(decodedText);
 			}else{
-				checkHu(decodedText);
+				checkCode(decodedText);
 			}
 		}
 
@@ -196,7 +196,7 @@
 				if(location == null){
 					checkLocation(decodedText);
 				}else{
-					checkHu(decodedText);
+					checkCode(decodedText);
 				}
 			}
 		});
@@ -243,7 +243,7 @@
 			});
 		}
 
-		function checkHu(decodedText){
+		function checkCode(decodedText){
 			if(decodedText.trim() == ''){
 				return;
 			}
@@ -252,14 +252,18 @@
 					.removeClass('alert-warning');
 
 			const arrHu = decodedText.split('|');
-			if(arrHu.length == 4){
-				decodedText = arrHu[2];
-				// Just preserve numbers
-				decodedText = decodedText.replace(/[^0-9]/g, '');
-			}else if(arrHu.length == 6){
-				decodedText = arrHu[5];
-				// Just preserve numbers
-				decodedText = decodedText.replace('CHARGP', '');
+			if(arrHu.length == 6){ // Code like: WEIDMANN|PRODL|MATNRE3CSW30.0376R0830|PAQTY31.751|AUFNR4500984497-30**|CHARGP00910000
+				decodedText = arrHu[2]; // Just preserve partnumber
+				// Remove 'MATNR' prefix if exists
+				decodedText = decodedText.replace('MATNR', '');
+				qty = arrHu[3];
+				qty = qty.replace('PAQTY', '');
+				if(isNaN(qty)){
+					qty = '';
+					$('.alert-component').addClass('alert-danger');
+					$('#last-scanned').html('Invalid quantity in HU');
+					return;
+				}
 			}else if(arrHu.length == 1){
 				// Just preserve numbers
 				if(last_tag == ''){ // Allow alphanumeric for partnumber
@@ -273,13 +277,11 @@
 			}
 
 			let current_tag = decodedText;
-
-			console.log('tag_or_hu', '==>' + tag_or_hu + '<==');
-			if(tag_or_hu == 'tag' && partnumber == ''){
+			if(tag_or_wo == 'tag' && partnumber == ''){
 				console.log('Setting partnumber to', decodedText);
 				partnumber = decodedText;
 				current_tag = last_tag;
-			}else if(tag_or_hu == 'tag' && partnumber != '' && qty == ''){
+			}else if(tag_or_wo == 'tag' && partnumber != '' && qty == ''){
 				console.log('Setting quantity to', decodedText);
 				qty = decodedText;
 				current_tag = last_tag;
@@ -288,7 +290,7 @@
 			var openbox = false; //confirm("Is openbox?") ? 1 : 0;
 
 			$.ajax({
-				url: '<?= base_url(); ?>capture/checkhu',
+				url: '<?= base_url(); ?>capture/checkCode',
 				type: 'POST',
 				dataType: 'json',
 				data: {tag: current_tag, location: location, openbox: openbox, partnumber: partnumber, quantity: qty},
@@ -301,16 +303,16 @@
 						$('#last-scanned').html('Last scanned: '+decodedText);
 						
 						if(data.isTag && data.message == 'TAG found, capture part number'){
-							tag_or_hu = 'tag';
+							tag_or_wo = 'tag';
 							last_tag = decodedText;
 						}else if(data.isTag && data.message == 'Part number correct, capture quantity'){
-							tag_or_hu = 'tag';
+							tag_or_wo = 'tag';
 						}else{
 							last_tag = '';
-							tag_or_hu = 'hu';
+							tag_or_wo = 'wo';
 							partnumber = '';
 							qty = '';
-							$('#alert-body').html('Scan the hu code or tag.');
+							$('#alert-body').html('Scan the tag or workorder.');
 						}
 						$('#alert-body').html(data.message);
 					}else{
