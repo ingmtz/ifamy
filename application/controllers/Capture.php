@@ -29,65 +29,87 @@ class Capture extends MY_Controller {
 			$result=$this->capture_model->checkWorkorder($_POST['tag']);
 		}
 		if($result){
-			if($type == 'hu' && $result->status == 'Used'){
+			if($result->status != null){ // Whether tag or workorder
 				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' already scanned'));
 				return;
 			}
-
-			if($type == 'tag' && $result->status != null){
-				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' already scanned'));
-				return;
-			}
-			// Check if the wh (storage location) is correct
-			// if($result->warehouse != $this->session->userdata('ifatrimplant')){
-			// 	echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' not in this storage location'));
-			// 	return;
-			// }
 
 			if($type == 'tag'){
-				if($_POST['partnumber'] != '' && $_POST['quantity'] != ''){
-					// Check is a positive number
-					if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
-						echo json_encode(array('status'=>false, 'message'=>'Quantity must be a positive number', 'isTag'=> true));
+				$response = array(
+					'isTag' => true,
+					'status' => false,
+					'message' => '',
+					'isComplete' => false,
+					'tag' => isset($_POST['tag']) ? $_POST['tag'] : '',
+					'partnumber' => isset($_POST['partnumber']) ? $_POST['partnumber'] : '',
+					'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : '',
+					'location' => isset($_POST['location']) ? $_POST['location'] : '',
+					'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : ''
+				);
+				// Validate location
+				if($_POST['partnumber'] != '' && $_POST['quantity'] != '' && $_POST['location'] != ''){
+					$loc=$this->db->where('location', $_POST['location'])->get('locations')->row();
+					if(!$loc){
+						$response['status']=false;
+						$response['message']='Location not found';
+						$response['location']='';
+						echo json_encode($response);
 						return;
 					}
-					// Update the tag with partnumber and quantity
-					$this->db->where('tag', $_POST['tag'])->update('tags', 
-						array('status'=> 'Used', 'itemcode'=> strtoupper($_POST['partnumber']), 'qty'=> floatval($_POST['quantity']), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'datetimecaptured'=> date('Y-m-d H:i:s'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
-					echo json_encode(array('status'=>true));
+
+					// Update the tag
+					$this->db->where('tag', $_POST['tag'])->update('tags', array(
+						'status'=> 'Used', 
+						'itemcode'=> strtoupper($_POST['partnumber']), 
+						'qty'=> floatval($_POST['quantity']), 
+						'iduser'=> $this->session->userdata('ifatrimuserid'), 'datetimecaptured'=> date('Y-m-d H:i:s'), 
+						'warehouse'=> $this->session->userdata('ifatrimplant'), 
+						'location'=> $_POST['location'], 
+						'openbox'=> $_POST['openbox']));
+
+					$response['status']=true;
+					$response['message']='Tag captured successfully';
+					$response['isComplete']=true;
+					echo json_encode($response);
 					return;
 				}
+				// Validate quantity and partnumber
+				if($_POST['partnumber'] != '' && $_POST['quantity'] != ''){
+					if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+						$response['status']=false;
+						$response['message']='Quantity must be a positive number';
+						$response['quantity']='';
+						echo json_encode($response);
+						return;
+					}
+				}
 
+				// Validate partnumber
 				if($_POST['partnumber'] && $_POST['partnumber'] != ''){
 					// Check itemcode exists
 					$itemcode=$this->capture_model->getitemcode($_POST['partnumber']);
 					if(!$itemcode){
-						echo json_encode(array('status'=>false, 'message'=>'Part number not found', 'isTag'=> true));
+						$response['status']=false;
+						$response['message']='Part number not found';
+						echo json_encode($response);
 						return;
 					}
-					echo json_encode(array('status'=>true, 'message'=> 'Part number correct, capture quantity', 'isTag'=> true));
+					$response['status']=true;
+					$response['message']= 'Part number correct, capture ' . (($_POST['quantity'] == '') ? 'quantity' : 'location');
+					echo json_encode($response);
 					return;
 				}
 
-				echo json_encode(array('status'=>true, 'message'=> 'TAG found, capture part number', 'isTag'=> true));
+				$response['status']=true;
+				$response['message']= 'TAG found, capture part number';
+				echo json_encode($response);
 				return;
 			}
-
-			// Update the hu
-			// if($type == 'hu'){
-			// 	$this->db->where('tag', $_POST['tag'])
-			// 			 ->or_where('batch', $_POST['tag'])
-			// 			 ->update('hus', 
-			// 				array('status'=> 'Used', 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
-			// 	//echo $this->db->last_query();exit;
-
-			// 	echo json_encode(array('status'=>true));
-			// }
 		}else{
 			// Save hu not found
 			$this->db->insert('hu_not_found', array('hu'=> $_POST['tag'], 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
 
-			echo json_encode(array('status'=>false, 'message'=>'HU or TAG not found'));
+			echo json_encode(array('status'=>false, 'message'=>'TAG or WO not found'));
 		}
 	}
 
