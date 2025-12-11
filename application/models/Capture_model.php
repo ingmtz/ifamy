@@ -91,7 +91,7 @@ class Capture_model extends CI_Model {
 
     public function checkHU($tag){
         $this->db->select('b.description, a.*');
-        $this->db->where("a.tag = '$tag' or a.batch = '$tag'");
+        $this->db->where("a.tag = '$tag'"); // or a.batch = '$tag'
         $this->db->join('masterdata b','b.itemcode=a.itemcode');
         $query=$this->db->get('hus a');
         return $query->row();

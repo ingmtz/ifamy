@@ -183,6 +183,127 @@ class Capture extends MY_Controller {
 		}
 	}
 
+	// Medica Capture
+	public function medica(){
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_medica_view', $data);
+	}
+
+	public function checkCodeMedica(){
+		$response = array(
+			'status' => false,
+			'message' => '',
+			'isComplete' => false,
+			'location' => isset($_POST['location']) ? $_POST['location'] : '',
+			'hu' => isset($_POST['hu']) ? $_POST['hu'] : '',
+			'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : '',
+			'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : ''
+		);
+
+		// Validate location
+		if($_POST['location'] != '' && $_POST['hu'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == ''){
+			// Check location exists
+			$loc=$this->db->where('location', $_POST['location'])->get('locations')->row();
+			if(!$loc){
+				$response['status']=false;
+				$response['message']='Location not found';
+				$response['location']='';
+				echo json_encode($response);
+				return;
+			}
+			$response['status']=true;
+			$response['message']= 'Location correct, capture HU';
+			echo json_encode($response);
+			return;
+		}
+
+		// Validate HU
+		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] == '' && $_POST['quantity'] == ''){
+			$hu = $this->db->where('tag', $_POST['hu'])->get('hus')->row();
+			if(!$hu){
+				$response['status']=false;
+				$response['message']='HU not found';
+				$response['hu']='';
+				echo json_encode($response);
+				return;
+			}
+			// Check if HU already used
+			if($hu->status == 'Used'){
+				$response['status']=false;
+				$response['message']='HU already scanned';
+				$response['hu']='';
+				echo json_encode($response);
+				return;
+			}
+			$response['status']=true;
+			$response['message']= 'HU correct, capture open box option';
+			echo json_encode($response);
+			return;
+		}
+
+		// Validate openbox
+		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == ''){
+			if($_POST['openbox'] == ''){
+				$response['status']=false;
+				$response['message']='Please select open box option';
+				$response['openbox']='';
+				echo json_encode($response);
+				return;
+			}
+			if($_POST['openbox'] == '1'){
+				// Open box selected, capture quantity
+				$response['status']=true;
+				$response['message']= 'Open box option selected, capture quantity';
+				echo json_encode($response);
+				return;
+			}else{
+				// Not open box, complete capture
+				// Update the hu
+				$this->db->where('tag', $_POST['hu'])
+						 ->update('hus', 
+							array(
+								'status'=> 'Used', 
+								'datetimecaptured'=> date('Y-m-d H:i:s'), 
+								'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 
+								'openbox'=> $_POST['openbox']));
+
+				$response['status']=true;
+				$response['message']='HU captured successfully';
+				$response['isComplete']=true;
+				echo json_encode($response);
+				return;
+			}
+		}
+
+		// Validate quantity
+		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] == '1' && $_POST['quantity'] != ''){
+			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+				$response['status']=false;
+				$response['message']='Quantity must be a positive number';
+				$response['quantity']='';
+				echo json_encode($response);
+				return;
+			}
+
+			// Update the hu
+			$this->db->where('tag', $_POST['hu'])
+					 ->update('hus', 
+						array(
+							'status'=> 'Used', 
+							'qty'=> floatval($_POST['quantity']),
+							'datetimecaptured'=> date('Y-m-d H:i:s'), 
+							'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 
+							'openbox'=> $_POST['openbox']));
+
+			$response['status']=true;
+			$response['message']='HU captured successfully';
+			$response['isComplete']=true;
+			echo json_encode($response);
+			return;
+		}
+	}
+
+	// End Medica Capture
 
 	public function index(){
 		$data['mode']='1';//capture or report
