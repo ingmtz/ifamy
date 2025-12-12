@@ -22,94 +22,144 @@ class Capture extends MY_Controller {
 	}
 
 	public function checkCode(){
-		$type='tag';
-		$result=$this->capture_model->checkTag($_POST['tag']);
-		if(!$result){
-			$type='workorder';
-			$result=$this->capture_model->checkWorkorder($_POST['tag']);
-		}
-		if($result){
-			if($result->status != null){ // Whether tag or workorder
-				echo json_encode(array('status'=>false, 'message'=> strtoupper($type) . ' already scanned'));
-				return;
-			}
+		$response = array(
+			'status' => false,
+			'message' => '',
+			'isComplete' => false,
+			'tag' => isset($_POST['tag']) ? $_POST['tag'] : '',
+			'itemcode' => isset($_POST['itemcode']) ? $_POST['itemcode'] : '',
+			'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : '',
+			'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : '',
+			'location' => isset($_POST['location']) ? $_POST['location'] : '',
+		);
 
-			if($type == 'tag'){
-				$response = array(
-					'isTag' => true,
-					'status' => false,
-					'message' => '',
-					'isComplete' => false,
-					'tag' => isset($_POST['tag']) ? $_POST['tag'] : '',
-					'partnumber' => isset($_POST['partnumber']) ? $_POST['partnumber'] : '',
-					'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : '',
-					'location' => isset($_POST['location']) ? $_POST['location'] : '',
-					'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : ''
-				);
-				// Validate location
-				if($_POST['partnumber'] != '' && $_POST['quantity'] != '' && $_POST['location'] != ''){
-					$loc=$this->db->where('location', $_POST['location'])->get('locations')->row();
-					if(!$loc){
-						$response['status']=false;
-						$response['message']='Location not found';
-						$response['location']='';
-						echo json_encode($response);
-						return;
-					}
-
-					// Update the tag
-					$this->db->where('tag', $_POST['tag'])->update('tags', array(
-						'status'=> 'Used', 
-						'itemcode'=> strtoupper($_POST['partnumber']), 
-						'qty'=> floatval($_POST['quantity']), 
-						'iduser'=> $this->session->userdata('ifatrimuserid'), 'datetimecaptured'=> date('Y-m-d H:i:s'), 
-						'warehouse'=> $this->session->userdata('ifatrimplant'), 
-						'location'=> $_POST['location'], 
-						'openbox'=> $_POST['openbox']));
-
-					$response['status']=true;
-					$response['message']='Tag captured successfully';
-					$response['isComplete']=true;
-					echo json_encode($response);
-					return;
-				}
-				// Validate quantity and partnumber
-				if($_POST['partnumber'] != '' && $_POST['quantity'] != ''){
-					if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
-						$response['status']=false;
-						$response['message']='Quantity must be a positive number';
-						$response['quantity']='';
-						echo json_encode($response);
-						return;
-					}
-				}
-
-				// Validate partnumber
-				if($_POST['partnumber'] && $_POST['partnumber'] != ''){
-					// Check itemcode exists
-					$itemcode=$this->capture_model->getitemcode($_POST['partnumber']);
-					if(!$itemcode){
-						$response['status']=false;
-						$response['message']='Part number not found';
-						echo json_encode($response);
-						return;
-					}
-					$response['status']=true;
-					$response['message']= 'Part number correct, capture ' . (($_POST['quantity'] == '') ? 'quantity' : 'location');
-					echo json_encode($response);
-					return;
-				}
-
-				$response['status']=true;
-				$response['message']= 'TAG found, capture part number';
+		// Validate tag
+		if($_POST['tag'] != '' && $_POST['itemcode'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
+			$tag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+			if(!$tag){
+				$response['status']=false;
+				$response['message']='Tag not found';
+				$response['tag']='';
 				echo json_encode($response);
 				return;
 			}
-		}else{
-			// Save hu not found
-			$this->db->insert('hu_not_found', array('hu'=> $_POST['tag'], 'datetimecaptured'=> date('Y-m-d H:i:s'), 'iduser'=> $this->session->userdata('ifatrimuserid'), 'warehouse'=> $this->session->userdata('ifatrimplant'), 'location'=> $_POST['location'], 'openbox'=> $_POST['openbox']));
+			// Check if tag already used
+			if($tag->status == 'Used'){
+				$response['status']=false;
+				$response['message']='Tag already scanned';
+				$response['tag']='';
+				echo json_encode($response);
+				return;
+			}
+			$response['status']=true;
+			$response['message']= 'Tag correct, capture HU, Batch or Part Number';
+			echo json_encode($response);
+			return;
+		}
 
-			echo json_encode(array('status'=>false, 'message'=>'TAG or WO not found'));
+		// Validate part number
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['openbox'] == '' && $_POST['location'] == ''){ //&& $_POST['quantity'] == '' 
+			// Check itemcode exists
+			$itemcode=$this->capture_model->getitemcode($_POST['itemcode']);
+			if(!$itemcode){
+				// Maybe it's a batch number?
+				$batchcode=$this->db->where('batch', $_POST['itemcode'])->get('hus')->row();
+				if($batchcode){
+					$response['status']=true;
+					$response['itemcode']= $batchcode->itemcode;
+					$response['quantity']= $batchcode->qty;
+					$response['message']= 'Batch number correct, capture open box option';
+					echo json_encode($response);
+					return;
+				}
+
+				$response['status']=false;
+				$response['message']='Part number not found';
+				$response['itemcode']='';
+				echo json_encode($response);
+				return;
+			}
+			$response['status']=true;
+			$response['message']= 'Part number correct, capture open box option';
+			echo json_encode($response);
+			return;
+		}
+
+		// Validate openbox
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
+			if($_POST['openbox'] == ''){
+				$response['status']=false;
+				$response['message']='Please select open box option';
+				$response['openbox']='';
+				echo json_encode($response);
+				return;
+			}
+			if($_POST['openbox'] == '1'){
+				// Open box selected, capture quantity
+				$response['status']=true;
+				$response['message']= 'Open box option selected, capture quantity';
+				echo json_encode($response);
+				return;
+			} else{
+				// Not open box, ask for quantity
+				$response['status']=true;
+				$response['message']= 'Open box option not selected, capture quantity';
+				echo json_encode($response);
+				return;
+			}
+		}
+
+		// Validate quantity
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['quantity'] != '' && $_POST['location'] == ''){//&& $_POST['openbox'] == '1' 
+			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+				$response['status']=false;
+				$response['message']='Quantity must be a positive number';
+				$response['quantity']='';
+				echo json_encode($response);
+				return;
+			}
+			// Ask for location
+			$response['status']=true;
+			$response['message']= 'Quantity captured, capture location';
+			echo json_encode($response);
+			return;
+		}
+
+		// Validate location
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['quantity'] != '' && $_POST['openbox'] != ''){
+			// Check location exists
+			if($_POST['location'] == ''){
+				$response['status']=true;
+				$response['message']='Please capture location';
+				$response['location']='';
+				echo json_encode($response);
+				return;
+			}
+			$loc=$this->db->where('location', $_POST['location'])->get('locations')->row();
+			if(!$loc){
+				$response['status']=false;
+				$response['message']='Location not found';
+				$response['location']='';
+				echo json_encode($response);
+				return;
+			}
+			// Complete capture
+			$this->db->where('tag', $_POST['tag'])->update('tags', 
+				array(
+					'status'=> 'Used', 
+					'itemcode'=> strtoupper($_POST['itemcode']), 
+					'qty'=> floatval($_POST['quantity']), 
+					'iduser'=> $this->session->userdata('ifatrimuserid'), 
+					'datetimecaptured'=> date('Y-m-d H:i:s'), 
+					'warehouse'=> $this->session->userdata('ifatrimplant'), 
+					'location'=> $_POST['location'], 
+					'openbox'=> $_POST['openbox']
+				)
+			);
+			$response['status']=true;
+			$response['message']='Tag captured successfully';
+			$response['isComplete']=true;
+			echo json_encode($response);
 		}
 	}
 

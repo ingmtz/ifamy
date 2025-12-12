@@ -68,7 +68,7 @@
 
 					<div class="alert alert-info alert-styled-left alert-arrow-left alert-component">
 						<!-- <h6 class="alert-heading" id="alert-title">Scan storage bin</h6> -->
-						<span class="text-semibold" id="alert-body">Scan the tag or workorder.</span>
+						<span class="text-semibold" id="alert-body">Scan the Tag</span>
 						<br/>
 						<span class="text-semibold" id="last-scanned"></span>
 					</div>
@@ -149,24 +149,12 @@
 		var correct = document.getElementById("correct");
 		var wrong = document.getElementById("wrong");		
 
-		var tag_or_wo = '';
 		var last_tag = '';
-		var partnumber = '';
-		var qty = '';
+		var itemcode = '';
 		var openbox = '';
+		var openbox_flag = false;
+		var qty = '';
 		var location = '';
-
-		// function checkScanStatus(){
-		// 	location = localStorage.getItem('location');
-		// 	if(location){
-		// 		$('#alert-title').html('Current storage location: '+wh + '<br/>Current location: '+location + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-xs btn-primary" onclick="localStorage.removeItem(\'location\');location.reload();">Change storage bin</button>');
-		// 		$('#alert-body').html('');
-		// 	}else{
-		// 		$('#alert-title').html('Current storage location: '+wh + '<br/>Scan storage bin');
-		// 		$('#alert-body').html('Scan the storage bin code to start the process.');
-		// 	}
-		// }
-		// checkScanStatus();
 
 		var lastScanned = '';
 		function onScanSuccess(decodedText, decodedResult) {
@@ -193,49 +181,6 @@
 			}
 		});
 
-		/*
-		function checkLocation(decodedText){
-			$('.alert-component').removeClass('alert-danger')
-					.removeClass('alert-info').removeClass('alert-success');
-			$.ajax({
-				url: '<?= base_url(); ?>capture/checklocation',
-				type: 'POST',
-				dataType: 'json',
-				data: {location: decodedText, wh: wh},
-			})
-			.done(function(data) {
-				try{
-					if(data.status){
-						localStorage.setItem('location', decodedText);
-						correct.play();
-						$('.alert-component').addClass('alert-success');
-						checkScanStatus();
-					}else{
-						wrong.play();
-						$('.alert-component').addClass('alert-danger');
-						$('#last-scanned').html(data.message);
-						// new PNotify({
-						// 	title: 'Error',
-						// 	text: data.message,
-						// 	type: 'error'
-						// });
-					}
-				}catch(e){
-					wrong.play();
-					$('.alert-component').addClass('alert-danger');
-					$('#last-scanned').html('There was an error');
-				}
-			})
-			.fail(function() {
-				new PNotify({
-					title: 'Error',
-					text: 'An error occurred',
-					type: 'error'
-				});
-			});
-		}
-		*/
-
 		function checkCode(decodedText){
 			if(decodedText.trim() == ''){
 				return;
@@ -245,7 +190,8 @@
 					.removeClass('alert-warning');
 
 			const arrHu = decodedText.split('|');
-			if(arrHu.length == 6){ // Code like: WEIDMANN|PRODL|MATNRE3CSW30.0376R0830|PAQTY31.751|AUFNR4500984497-30**|CHARGP00910000
+			if(arrHu.length == 6){ // It's a HU
+				// Code like: WEIDMANN|PRODL|MATNRE3CSW30.0376R0830|PAQTY31.751|AUFNR4500984497-30**|CHARGP00910000
 				decodedText = arrHu[2]; // Just preserve partnumber
 				// Remove 'MATNR' prefix if exists
 				decodedText = decodedText.replace('MATNR', '');
@@ -257,77 +203,66 @@
 					$('#last-scanned').html('Invalid quantity in HU');
 					return;
 				}
-			}else if(arrHu.length == 1){
-				// Just preserve numbers
-				if(last_tag == ''){ // Allow alphanumeric for partnumber
-					decodedText = decodedText.replace(/[^0-9]/g, '');
-				}
-			}else{
+			} else if(arrHu.length == 1){
+				// nothing to do
+			} else{
 				wrong.play();
 				$('.alert-component').addClass('alert-danger');
 				$('#last-scanned').html('Invalid HU');
 				return;
 			}
 
-			// let current_tag = decodedText;
-			// if(tag_or_wo == 'tag' && partnumber == ''){
-			// 	console.log('Setting partnumber to', decodedText);
-			// 	partnumber = decodedText;
-			// 	current_tag = last_tag;
-			// }else if(tag_or_wo == 'tag' && partnumber != '' && qty == ''){
-			// 	console.log('Setting quantity to', decodedText);
-			// 	qty = decodedText;
-			// 	current_tag = last_tag;
-			// }
 			if(last_tag == '') {
 				last_tag = decodedText;
-			} else if(partnumber == '') {
-				partnumber = decodedText;
-			} else if(qty == '') {
+			} else if(itemcode == '') {
+				itemcode = decodedText;
+			} else if(openbox == '') {
+				openbox = decodedText;
+			} else if(qty == '' && !openbox_flag) {
 				qty = decodedText;
-			} else if(location == '') {
+			} else if(location == '' && !openbox_flag) {
+				console.log('Setting location to', decodedText);
 				location = decodedText;
 			}
 
-			console.log('Checking code', last_tag, partnumber, qty, location);
-
-			var openbox = false; //confirm("Is openbox?") ? 1 : 0;
+			console.log('Checking code', last_tag, itemcode, openbox, qty, location);
 
 			$.ajax({
 				url: '<?= base_url(); ?>capture/checkCode',
 				type: 'POST',
 				dataType: 'json',
-				data: {tag: last_tag, location: location, openbox: openbox, partnumber: partnumber, quantity: qty},
+				data: {tag: last_tag, itemcode: itemcode, openbox: openbox, quantity: qty, location: location },
 			})
 			.done(function(data) {
 				try{
 					if(data.status){
 						correct.play();
 						$('.alert-component').addClass('alert-success');
-						let current_captured = '';
-						if(data.isTag){
-							current_captured = 'Tag: '+last_tag+'<br/>Part number: '+partnumber+'<br/>Quantity: '+qty+'<br/>Location: '+location;
-						}else{
-							//TODO: workorder captured message
-						}
-						$('#last-scanned').html(current_captured); //'Last scanned: '+decodedText
 
-						if(data.isTag){
-							tag_or_wo = 'tag';
-							last_tag = data.tag;
-							partnumber = data.partnumber;
-							qty = data.quantity;
-							openbox = data.openbox;
-							location = data.location;
-						}
+						last_tag = data.tag;
+						itemcode = data.itemcode;
+						openbox = data.openbox;
+						qty = data.quantity;
+						location = data.location;
+
+						let current_captured = '';
+						current_captured = 'Tag: '+last_tag+'<br/>Part number: '+itemcode+'<br/>Open box: '+openbox+'<br/>Quantity: '+qty+'<br/>Location: '+location;
+						$('#last-scanned').html(current_captured); //'Last scanned: '+decodedText
 
 						$('#alert-body').html(data.message);
 
+						if(data.message.includes('capture open box option')){
+							openbox = confirm('Is the box open? Click OK for Yes, Cancel for No') ? '1' : '0';
+							if(openbox == '1') qty = ''; // Clear qty if box is open
+							openbox_flag = true;
+							checkCode(openbox);
+							return;
+						}
+						openbox_flag = false;
+
 						if(data.isComplete){
-							// Reset all
-							tag_or_wo = '';
 							last_tag = '';
-							partnumber = '';
+							itemcode = '';
 							qty = '';
 							openbox = '';
 							location = '';
@@ -337,19 +272,23 @@
 								type: 'success'
 							});
 							$('.alert-component').addClass('alert-info');
-							$('#alert-body').html('Scan the tag or workorder.');
+							$('#alert-body').html('Scan the Tag');
 							$('#last-scanned').html('');
 						}
 					}else{
 						wrong.play();
 						$('#last-scanned').html(data.message);
 
-						if(data.message == 'Part number not found'){
-							partnumber = '';
+						if(data.message == 'Tag not found'){
+							last_tag = '';
+						}
+
+						if(data.message == 'Tag already scanned'){
+							last_tag = '';
 						}
 
 						if(data.message == 'Part number not found'){
-							partnumber = '';
+							itemcode = '';
 						}
 
 						if(data.message == 'Quantity must be a positive number'){
@@ -360,7 +299,7 @@
 							location = '';
 						}
 
-						if(data.message == 'HU already scanned'){
+						if(data.message == 'Tag already scanned'){
 							$('.alert-component').addClass('alert-danger');
 						}else{
 							$('.alert-component').addClass('alert-warning');

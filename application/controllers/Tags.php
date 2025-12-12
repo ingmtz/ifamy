@@ -502,9 +502,9 @@ class Tags extends MY_Controller {
 			// $this->fpdf->Code128(5,15,$tag,40,10);
 			$this->load->library('Qrcodegenerator');
 			$qrcode = new QRcode($tag, 'H'); // error level : L, M, Q, 
-			$qrcode->displayFPDF($this->fpdf, 20, 5, 60);
+			$qrcode->displayFPDF($this->fpdf, 10, 20, 60);
 
-			$this->fpdf->SetXY(27,6);
+			$this->fpdf->SetXY(17,21);
 			$this->fpdf->SetFont('Helvetica','',15);
 			$this->fpdf->Write(5,'Folio: '.$tag);
 			
