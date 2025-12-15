@@ -203,6 +203,11 @@
 					$('#last-scanned').html('Invalid quantity in HU');
 					return;
 				}
+			} else if(arrHu.length == 4){
+				// Example: WEIDMANN|HULAB|EXIDV237235599|VENUM0037466482
+				// Take the 3rd part as the HU, but preserve only numbers
+				decodedText = arrHu[2];
+				decodedText = decodedText.replace(/\D/g,''); // Remove non-numeric characters
 			} else if(arrHu.length == 1){
 				// nothing to do
 			} else{

@@ -35,6 +35,9 @@ class Capture extends MY_Controller {
 
 		// Validate tag
 		if($_POST['tag'] != '' && $_POST['itemcode'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
+			// Leave only numbers for the tag
+			$_POST['tag'] = preg_replace('/\D/', '', $_POST['tag']);
+
 			$tag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
 			if(!$tag){
 				$response['status']=false;
@@ -69,6 +72,17 @@ class Capture extends MY_Controller {
 					$response['itemcode']= $batchcode->itemcode;
 					$response['quantity']= $batchcode->qty;
 					$response['message']= 'Batch number correct, capture open box option';
+					echo json_encode($response);
+					return;
+				}
+
+				// Maybe it's a HU number?
+				$hucode=$this->db->where('tag', $_POST['itemcode'])->get('hus')->row();
+				if($hucode){
+					$response['status']=true;
+					$response['itemcode']= $hucode->itemcode;
+					$response['quantity']= $hucode->qty;
+					$response['message']= 'HU number correct, capture open box option';
 					echo json_encode($response);
 					return;
 				}

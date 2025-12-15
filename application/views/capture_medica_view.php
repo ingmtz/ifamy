@@ -188,14 +188,15 @@
 					.removeClass('alert-info').removeClass('alert-success')
 					.removeClass('alert-warning');
 
-			const arrHu = decodedText.split('/');
-			if(arrHu.length == 2){ // Code like: 400127347724040514-1011025174993112511201727103124105694302001/00243237298467371698M
-				decodedText = arrHu[1]; // Just preserve HU
-				// Ignore first 5 chars and take next 9 chars
-				if(decodedText.length >= 14){
-					decodedText = decodedText.substring(5, 14);
-				}
-			}else if(arrHu.length == 1 && decodedText.length >= 50){ 
+			// const arrHu = decodedText.split('/');
+			// if(arrHu.length == 2){ // Code like: 400127347724040514-1011025174993112511201727103124105694302001/00243237298467371698M
+			// 	decodedText = arrHu[1]; // Just preserve HU
+			// 	// Ignore first 5 chars and take next 9 chars
+			// 	if(decodedText.length >= 14){
+			// 		decodedText = decodedText.substring(5, 14);
+			// 	}
+			// }else 
+			if(decodedText.length >= 50){ //arrHu.length == 1 && 
 				// Code like: 400127343224040514-1011025170993112511171727103124105694302001/00243237293594371698M
 				// Remove non-printable characters
 				decodedText = decodedText.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
@@ -206,14 +207,16 @@
 					decodedText = decodedText.slice(-9);
 				}
 				console.log('Processed code:', decodedText);
-			} else if(arrHu.length == 1){
-				// nothing to do
-			}else{
-				wrong.play();
-				$('.alert-component').addClass('alert-danger');
-				$('#last-scanned').html('Invalid HU');
-				return;
-			}
+			} 
+			
+			// else if(arrHu.length == 1){
+			// 	// nothing to do
+			// }else{
+			// 	wrong.play();
+			// 	$('.alert-component').addClass('alert-danger');
+			// 	$('#last-scanned').html('Invalid HU');
+			// 	return;
+			// }
 
 			if(location == '') {
 				location = decodedText;
