@@ -37,6 +37,8 @@
 								
 								<li><a href="<?php echo base_url(); ?>capture/mobile"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> mobile</span></a></li>
 
+							<li><a href="<?php echo base_url(); ?>capture/auditmobile"><i class="fa fa-check-square" aria-hidden="true"></i> <span><?php echo $this->lang->line('Audit'); ?> mobile</span></a></li>
+
 								<!-- <li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li> -->
 								 
 								<?php if($this->session->userdata('ifatrimidprofile')=='1' || $this->session->userdata('ifatrimidprofile')=='3'){ ?>

@@ -511,6 +511,27 @@ class Capture extends MY_Controller {
 		$this->load->view('capture_audit_view', $data);
 	}
 
+	public function auditmobile(){
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_audit_mobile_view', $data);
+	}
+
+	public function checkTagForAudit(){
+		// Remove only numbers from the tag
+		$tagCode = preg_replace('/\D/', '', $_POST['tag']);
+		
+		$result=$this->db->where('tag', $tagCode)->get('tags')->row();
+		if($result){
+			if($result->status != 'Used'){
+				echo json_encode(array('status'=>false, 'message'=>'Tag has not been captured yet. Please capture it first.'));
+				return;
+			}
+			echo json_encode(array('status'=>true, 'data'=> $result));
+		}else{
+			echo json_encode(array('status'=>false, 'message'=>'Tag not found'));
+		}
+	}
+
 	public function checkhuaudit(){
 		$result=$this->capture_model->checkTag($_POST['tag']);
 		if($result){
@@ -531,6 +552,40 @@ class Capture extends MY_Controller {
 		}else{
 			echo json_encode(array('status'=>false, 'message'=>'Itemcode not found'));
 		}
+	}
+
+	public function saveAuditMobile(){
+		// Get current tag data
+		$tagCode = preg_replace('/\D/', '', $_POST['tag']);
+		$tag = $this->db->where('tag', $tagCode)->get('tags')->row();
+		
+		if(!$tag){
+			echo json_encode(array('status'=>false, 'message'=>'Tag not found'));
+			return;
+		}
+
+		if($tag->status != 'Used'){
+			echo json_encode(array('status'=>false, 'message'=>'Tag has not been captured yet'));
+			return;
+		}
+
+		$newQty = floatval($_POST['qty']);
+		$originalQty = floatval($_POST['originalQty']);
+		$isCorrect = ($newQty == $originalQty);
+
+		// Update tag with audit information
+		$auditData = array(
+			'qty' => $newQty,
+			'iduseraudit' => $this->session->userdata('ifatrimuserid'),
+			'idauditor' => $this->session->userdata('ifatrimuserid'),
+			'datetimeaudit' => date('Y-m-d H:i:s'),
+			'resultaudit' => $isCorrect ? 'Correct' : 'Incorrect',
+			'auditcounter' => ($tag->auditcounter ? $tag->auditcounter : 0) + 1
+		);
+
+		$this->db->where('tag', $tagCode)->update('tags', $auditData);
+
+		echo json_encode(array('status'=>true, 'message'=>'Audit saved successfully'));
 	}
 
 	public function saveAudit(){
