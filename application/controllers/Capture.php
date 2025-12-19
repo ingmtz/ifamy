@@ -27,11 +27,15 @@ class Capture extends MY_Controller {
 			'message' => '',
 			'isComplete' => false,
 			'tag' => isset($_POST['tag']) ? $_POST['tag'] : '',
+			'hu' => isset($_POST['hu']) ? $_POST['hu'] : '',
 			'itemcode' => isset($_POST['itemcode']) ? $_POST['itemcode'] : '',
 			'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : '',
 			'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : '',
 			'location' => isset($_POST['location']) ? $_POST['location'] : '',
 		);
+
+		// Save to a file for debugging
+		file_put_contents('debug_capture_'.date('Ymd').'.txt', implode('|', array_map(function($k, $v) { return "$k:$v"; }, array_keys($_POST), $_POST))."\n", FILE_APPEND);
 
 		// Validate tag
 		if($_POST['tag'] != '' && $_POST['itemcode'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
@@ -79,10 +83,19 @@ class Capture extends MY_Controller {
 				// Maybe it's a HU number?
 				$hucode=$this->db->where('tag', $_POST['itemcode'])->get('hus')->row();
 				if($hucode){
+					if($hucode->status == 'Used'){
+						$response['status']=false;
+						$response['message']='HU already scanned';
+						$response['itemcode']='';
+						$response['quantity']='';
+						echo json_encode($response);
+						return;
+					}
 					$response['status']=true;
+					$response['hu']= $hucode->tag;
 					$response['itemcode']= $hucode->itemcode;
 					$response['quantity']= $hucode->qty;
-					$response['message']= 'HU number correct, capture open box option';
+					$response['message']= 'HU correct, capture open box option';
 					echo json_encode($response);
 					return;
 				}
@@ -157,6 +170,9 @@ class Capture extends MY_Controller {
 				echo json_encode($response);
 				return;
 			}
+
+			// Leave only numbers for the tag
+			$_POST['tag'] = preg_replace('/\D/', '', $_POST['tag']);
 			// Complete capture
 			$this->db->where('tag', $_POST['tag'])->update('tags', 
 				array(
@@ -170,6 +186,21 @@ class Capture extends MY_Controller {
 					'openbox'=> $_POST['openbox']
 				)
 			);
+
+			if($_POST['hu'] != ''){
+				// Update the hu as well
+				$this->db->where('tag', $_POST['hu'])
+						 ->update('hus', 
+							array(
+								'status'=> 'Used', 
+								'datetimecaptured'=> date('Y-m-d H:i:s'), 
+								'iduser'=> $this->session->userdata('ifatrimuserid'), 
+								'warehouse'=> $this->session->userdata('ifatrimplant'), 
+								'location'=> $_POST['location'], 
+								'openbox'=> $_POST['openbox']
+							));
+			}
+
 			$response['status']=true;
 			$response['message']='Tag captured successfully';
 			$response['isComplete']=true;

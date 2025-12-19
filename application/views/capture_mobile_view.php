@@ -142,6 +142,31 @@
 	<audio id="correct" src="<?= base_url(); ?>assets/beep.mp3" autostart="false" ></audio>
 	<audio id="wrong" src="<?= base_url(); ?>assets/wrong.mp3" autostart="false" ></audio>
 
+	<!-- Custom Confirm Modal for Open Box -->
+	<div class="modal fade" id="confirmOpenBoxModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="confirmOpenBoxLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content" style="border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+				<div class="modal-header" style="background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); border: none; padding: 15px 20px;">
+					<h4 class="modal-title" id="confirmOpenBoxLabel" style="color: #fff; font-weight: 600; margin: 0;">
+						<i class="icon-question3" style="margin-right: 8px;"></i>Confirm
+					</h4>
+				</div>
+				<div class="modal-body" style="padding: 30px 20px; text-align: center;">
+					<i class="icon-box" style="font-size: 48px; color: #16a085; margin-bottom: 15px; display: block;"></i>
+					<p style="font-size: 20px; font-weight: 500; color: #333; margin: 0;">Is the box open?</p>
+				</div>
+				<div class="modal-footer" style="border: none; padding: 15px 20px; justify-content: center; display: flex; gap: 15px;">
+					<button type="button" class="btn btn-lg" id="confirmOpenBoxNo" style="background-color: #e74c3c; color: #fff; min-width: 100px; border-radius: 5px; font-weight: 600;">
+						<i class="icon-cross2" style="margin-right: 5px;"></i>No
+					</button>
+					<button type="button" class="btn btn-lg" id="confirmOpenBoxYes" style="background-color: #27ae60; color: #fff; min-width: 100px; border-radius: 5px; font-weight: 600;">
+						<i class="icon-checkmark3" style="margin-right: 5px;"></i>Yes
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 </body>
 <script src="<?= base_url(); ?>assets/html5-qrcode.min.js" type="text/javascript"></script>
 <script type="text/javascript">
@@ -151,10 +176,27 @@
 
 		var last_tag = '';
 		var itemcode = '';
+		var hu = '';
 		var openbox = '';
 		var openbox_flag = false;
 		var qty = '';
 		var location = '';
+
+		// Custom confirm function using Bootstrap modal (avoids camera freeze on iPhone)
+		function showOpenBoxConfirm(callback) {
+			$('#confirmOpenBoxModal').modal('show');
+			
+			// Remove previous event handlers to avoid duplicates
+			$('#confirmOpenBoxYes').off('click').on('click', function() {
+				$('#confirmOpenBoxModal').modal('hide');
+				callback(true);
+			});
+			
+			$('#confirmOpenBoxNo').off('click').on('click', function() {
+				$('#confirmOpenBoxModal').modal('hide');
+				callback(false);
+			});
+		}
 
 		var lastScanned = '';
 		function onScanSuccess(decodedText, decodedResult) {
@@ -192,6 +234,7 @@
 			const arrHu = decodedText.split('|');
 			if(arrHu.length == 6){ // It's a HU
 				// Code like: WEIDMANN|PRODL|MATNRE3CSW30.0376R0830|PAQTY31.751|AUFNR4500984497-30**|CHARGP00910000
+				// WEIDMANN|PRODL|MATNRE3DP000.0254R1543|PAQTY12.120|AUFNR52581233|CHARG4105433
 				decodedText = arrHu[2]; // Just preserve partnumber
 				// Remove 'MATNR' prefix if exists
 				decodedText = decodedText.replace('MATNR', '');
@@ -236,7 +279,7 @@
 				url: '<?= base_url(); ?>capture/checkCode',
 				type: 'POST',
 				dataType: 'json',
-				data: {tag: last_tag, itemcode: itemcode, openbox: openbox, quantity: qty, location: location },
+				data: {tag: last_tag, itemcode: itemcode, openbox: openbox, quantity: qty, location: location, hu: hu },
 			})
 			.done(function(data) {
 				try{
@@ -249,18 +292,22 @@
 						openbox = data.openbox;
 						qty = data.quantity;
 						location = data.location;
+						hu = data.hu;
 
 						let current_captured = '';
-						current_captured = 'Tag: '+last_tag+'<br/>Part number: '+itemcode+'<br/>Open box: '+openbox+'<br/>Quantity: '+qty+'<br/>Location: '+location;
+						current_captured = 'Tag: '+last_tag+'<br/>Part number: '+itemcode+'<br/>Open box: '+(openbox == '1' ? 'Yes' : 'No')+'<br/>Quantity: '+qty+'<br/>Location: '+location;
 						$('#last-scanned').html(current_captured); //'Last scanned: '+decodedText
 
 						$('#alert-body').html(data.message);
 
 						if(data.message.includes('capture open box option')){
-							openbox = confirm('Is the box open? Click OK for Yes, Cancel for No') ? '1' : '0';
-							if(openbox == '1') qty = ''; // Clear qty if box is open
-							openbox_flag = true;
-							checkCode(openbox);
+							// Show custom modal instead of native confirm (fixes camera freeze on iPhone)
+							showOpenBoxConfirm(function(isOpen) {
+								openbox = isOpen ? '1' : '0';
+								if(openbox == '1') qty = ''; // Clear qty if box is open
+								openbox_flag = true;
+								checkCode(openbox);
+							});
 							return;
 						}
 						openbox_flag = false;
@@ -302,6 +349,11 @@
 
 						if(data.message == 'Location not found'){
 							location = '';
+						}
+
+						if(data.message == 'HU already scanned'){
+							itemcode = '';
+							qty = '';
 						}
 
 						if(data.message == 'Tag already scanned'){

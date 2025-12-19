@@ -142,6 +142,31 @@
 	<audio id="correct" src="<?= base_url(); ?>assets/beep.mp3" autostart="false" ></audio>
 	<audio id="wrong" src="<?= base_url(); ?>assets/wrong.mp3" autostart="false" ></audio>
 
+	<!-- Custom Confirm Modal for Open Box -->
+	<div class="modal fade" id="confirmOpenBoxModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="confirmOpenBoxLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content" style="border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+				<div class="modal-header" style="background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); border: none; padding: 15px 20px;">
+					<h4 class="modal-title" id="confirmOpenBoxLabel" style="color: #fff; font-weight: 600; margin: 0;">
+						<i class="icon-question3" style="margin-right: 8px;"></i>Confirm
+					</h4>
+				</div>
+				<div class="modal-body" style="padding: 30px 20px; text-align: center;">
+					<i class="icon-box" style="font-size: 48px; color: #16a085; margin-bottom: 15px; display: block;"></i>
+					<p style="font-size: 20px; font-weight: 500; color: #333; margin: 0;">Is the box open?</p>
+				</div>
+				<div class="modal-footer" style="border: none; padding: 15px 20px; justify-content: center; display: flex; gap: 15px;">
+					<button type="button" class="btn btn-lg" id="confirmOpenBoxNo" style="background-color: #e74c3c; color: #fff; min-width: 100px; border-radius: 5px; font-weight: 600;">
+						<i class="icon-cross2" style="margin-right: 5px;"></i>No
+					</button>
+					<button type="button" class="btn btn-lg" id="confirmOpenBoxYes" style="background-color: #27ae60; color: #fff; min-width: 100px; border-radius: 5px; font-weight: 600;">
+						<i class="icon-checkmark3" style="margin-right: 5px;"></i>Yes
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 </body>
 <script src="<?= base_url(); ?>assets/html5-qrcode.min.js" type="text/javascript"></script>
 <script type="text/javascript">
@@ -154,6 +179,22 @@
 		var openbox = '';
 		var openbox_flag = false;
 		var location = '';
+
+		// Custom confirm function using Bootstrap modal (avoids camera freeze on iPhone)
+		function showOpenBoxConfirm(callback) {
+			$('#confirmOpenBoxModal').modal('show');
+			
+			// Remove previous event handlers to avoid duplicates
+			$('#confirmOpenBoxYes').off('click').on('click', function() {
+				$('#confirmOpenBoxModal').modal('hide');
+				callback(true);
+			});
+			
+			$('#confirmOpenBoxNo').off('click').on('click', function() {
+				$('#confirmOpenBoxModal').modal('hide');
+				callback(false);
+			});
+		}
 
 		var lastScanned = '';
 		function onScanSuccess(decodedText, decodedResult) {
@@ -242,7 +283,7 @@
 						correct.play();
 						$('.alert-component').addClass('alert-success');
 						let current_captured = '';
-						current_captured = 'Location: '+location+'<br/>Hu: '+last_hu+'<br/>Open box: '+openbox+'<br/>Quantity: '+qty;
+						current_captured = 'Location: '+location+'<br/>Hu: '+last_hu+'<br/>Open box: '+(openbox == '1' ? 'Yes' : 'No')+'<br/>Quantity: '+qty;
 						$('#last-scanned').html(current_captured); //'Last scanned: '+decodedText
 
 						last_hu = data.hu;
@@ -253,9 +294,12 @@
 						$('#alert-body').html(data.message);
 
 						if(data.message == 'HU correct, capture open box option'){
-							openbox = confirm('Is the box open? Click OK for Yes, Cancel for No') ? '1' : '0';
-							openbox_flag = true;
-							checkCode(openbox);
+							// Show custom modal instead of native confirm (fixes camera freeze on iPhone)
+							showOpenBoxConfirm(function(isOpen) {
+								openbox = isOpen ? '1' : '0';
+								openbox_flag = true;
+								checkCode(openbox);
+							});
 							return;
 						}
 						openbox_flag = false;
