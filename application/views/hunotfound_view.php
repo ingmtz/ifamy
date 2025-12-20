@@ -90,8 +90,9 @@
 							<thead>
 								<tr>
 									<th>HU</th>
+									<th>Tag</th>
 									<th>St. Location</th>
-									<th><?php echo $this->lang->line('Location'); ?></th>
+									<!-- <th><?php echo $this->lang->line('Location'); ?></th> -->
 								</tr>
 							</thead>
 							<tbody></tbody>
