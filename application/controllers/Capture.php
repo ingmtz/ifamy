@@ -128,6 +128,16 @@ class Capture extends MY_Controller {
 					return;
 				}
 
+				// Save part number not found
+				$this->db->insert('hu_not_found', array(
+					'hu'=> $_POST['itemcode'], 
+					'datetimecaptured'=> date('Y-m-d H:i:s'), 
+					'iduser'=> $this->session->userdata('ifatrimuserid'), 
+					'warehouse'=> $this->session->userdata('ifatrimplant'),
+					'tag'=> $_POST['tag']
+					)
+				);
+
 				$response['status']=false;
 				$response['message']='Part number not found';
 				$response['itemcode']='';
@@ -259,7 +269,8 @@ class Capture extends MY_Controller {
 					'datetimecaptured'=> date('Y-m-d H:i:s'), 
 					'warehouse'=> $this->session->userdata('ifatrimplant'), 
 					'location'=> $_POST['location'], 
-					'openbox'=> $_POST['openbox']
+					'openbox'=> $_POST['openbox'],
+					'hu'=> $_POST['hu']
 				)
 			);
 

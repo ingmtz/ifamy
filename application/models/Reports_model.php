@@ -36,7 +36,7 @@ class Reports_model extends CI_Model {
             $querystr="select a.area, count(*) as total, sum(case when status='Used' then 1 else 0 end) as used,
                         sum(case when status='Voided' then 1 else 0 end) as voided,
                         sum(case when status='Blank' then 1 else 0 end) as blank
-                        from tags_hus a
+                        from tags a
                         where 1=1 ".$where."
                         group by a.area
                         order by ";
@@ -45,7 +45,7 @@ class Reports_model extends CI_Model {
             ,case when tmp2.total < ".$params['lessthan']." then 'Less than ".$params['lessthan']."'
             when tmp2.total >=".$params['greaterthan']." then 'Greater than ".$params['greaterthan']."'
             else 'Open box' end as routine
-            from tags_hus a 
+            from tags a 
             left join masterdata b on a.itemcode=b.itemcode
             left join users d on a.iduser=d.Id
             left join perpetuo f on f.itemcode=a.itemcode
@@ -56,7 +56,7 @@ class Reports_model extends CI_Model {
               left join perpetuo b on a.itemcode=b.itemcode
               left join (
                 select a.itemcode, sum(qty) as total
-                from tags_hus a
+                from tags a
                 where not a.itemcode is null
                 group by a.itemcode
               ) as temp on temp.itemcode=a.itemcode
@@ -92,11 +92,11 @@ class Reports_model extends CI_Model {
         }
         if($type=='capture'){
             $querystr="select a.tag, a.plant, a.area, a.warehouse, a.status, case when a.auditcounter=0 then 'Pending to audit' else 'Audited' end auditstatus
-                        from tags_hus a
+                        from tags a
                         where 1=1 ".$where;
         }else{
             $querystr="select a.tag, a.plant, a.area, a.warehouse, a.status, case when a.auditcounter=0 then 'Pending to audit' else 'Audited' end auditstatus
-            from tags_hus a 
+            from tags a 
             left join masterdata b on a.itemcode=b.itemcode
             left join users d on a.iduser=d.Id
             left join perpetuo f on f.itemcode=a.itemcode
@@ -107,7 +107,7 @@ class Reports_model extends CI_Model {
               left join perpetuo b on a.itemcode=b.itemcode
               left join (
                 select a.itemcode, sum(qty) as total
-                from tags_hus a
+                from tags a
                 where not a.itemcode is null
                 group by a.itemcode
               ) as temp on temp.itemcode=a.itemcode
@@ -136,7 +136,7 @@ class Reports_model extends CI_Model {
             $where="and a.plant='$plant'";
         }
         $querystr="select case when b.orden is null then 0 else b.orden end as orden, b.area, count(*) as total, sum(case when resultaudit is null or resultaudit='' then 0 else 1 end) as audited
-                    from tags_hus a
+                    from tags a
                     left join areas b on a.area=b.Id
                     where b.active=1 and (a.toaudit=1 or a.openbox='1' or a.openbox='ok') $where
                     group by b.orden, b.area
@@ -145,11 +145,11 @@ class Reports_model extends CI_Model {
         return $query->result();
     }
     public function gettotaltags(){
-        $query=$this->db->query('select count(*) as total from tags_hus');
+        $query=$this->db->query('select count(*) as total from tags');
         return $query->row()->total;
     }
     public function getplants(){
-        $querystr="select distinct(plant) as plant from tags_hus order by plant";
+        $querystr="select distinct(plant) as plant from tags order by plant";
         $query=$this->db->query($querystr);
         return $query->result();
     }
@@ -189,7 +189,7 @@ class Reports_model extends CI_Model {
         //$this->db->insert('locations', $data);
     }
     public function getdetailvariation($itemcode){
-        $querystr="select a.*, b.description, b.uom, b.type, d.name, a.area as areadesc from tags_hus a 
+        $querystr="select a.*, b.description, b.uom, b.type, d.name, a.area as areadesc from tags a 
                     left join masterdata b on a.itemcode=b.itemcode
                     left join users d on a.iduser=d.Id
                     where a.status = 'Used' and a.itemcode='$itemcode'";
@@ -219,7 +219,7 @@ class Reports_model extends CI_Model {
                     left join perpetuo b on a.itemcode=b.itemcode
                     left join (
                                             select a.itemcode, sum(qty) as total, area, plant
-                                            from tags_hus a
+                                            from tags a
                                             where not a.itemcode is null and status = 'Used'
                                             group by a.itemcode
                                             ) as temp on temp.itemcode=a.itemcode";
@@ -293,7 +293,7 @@ class Reports_model extends CI_Model {
         }
     }*/
     function getScannedbyuser(){
-        $querystr="select a.plant, a.area, b.name, count(*) as cuantos from tags_hus a
+        $querystr="select a.plant, a.area, b.name, count(*) as cuantos from tags a
             left join users b on a.iduser=b.Id
             left join scanners c on b.Id=c.assigneduser
             where a.status='Used'
@@ -303,7 +303,7 @@ class Reports_model extends CI_Model {
         return $query->result();
     }
     function getAuditbyuser(){
-        $querystr="select b.name, c.profile, count(*) as cuantos from tags_hus a
+        $querystr="select b.name, c.profile, count(*) as cuantos from tags a
         left join users b on a.iduseraudit=b.Id
         left join profiles c on b.idprofile=c.Id
         where a.auditcounter>0 and a.status = 'Used'
@@ -314,7 +314,7 @@ class Reports_model extends CI_Model {
     }
     function getexporttotalcapture($mode){
         $querystr="select a.*, b.description, b.type, d.name, b.cost_price, e.name as counter, f.name as auditor, a.area as areadesc, case when a.toaudit=1 or a.openbox='Ok' then 'Yes' else 'No' end as toaudit2, b.uom as uom2
-                    from tags_hus a 
+                    from tags a 
                     left join masterdata b on a.itemcode=b.itemcode
                     left join users d on a.iduser=d.Id
                     left join users e on a.idcounter=e.Id
@@ -336,7 +336,7 @@ class Reports_model extends CI_Model {
 				left join perpetuo b on a.itemcode=b.itemcode
 				left join (
 										select a.itemcode, sum(qty) as total
-										from tags_hus a
+										from tags a
 										where not a.itemcode is null
 										group by a.itemcode
 										) as temp on temp.itemcode=a.itemcode";
@@ -353,7 +353,7 @@ class Reports_model extends CI_Model {
         left join perpetuo b on a.itemcode=b.itemcode
         left join (
                                 select a.itemcode, sum(qty) as total, plant, area
-                                from tags_hus a
+                                from tags a
                                 where not a.itemcode is null
                                 group by a.itemcode
                                 ) as temp on temp.itemcode=a.itemcode
