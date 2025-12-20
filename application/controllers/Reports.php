@@ -200,7 +200,7 @@ class Reports extends MY_Controller {
     	ini_set('memory_limit', '-1');
     	//, b.uom ==> Ahora se muestra la que se captura
 		$query="select a.*, b.description, b.type, d.name, b.cost_price, e.name as counter, f.name as auditor, a.area as areadesc, case when a.toaudit=1 or a.openbox='Ok' then 'Yes' else 'No' end as toaudit2, b.uom as uom2
-					from tags_hus a 
+					from tags a 
                     left join masterdata b on a.itemcode=b.itemcode
                     left join users d on a.iduser=d.Id
                     left join users e on a.idcounter=e.Id
@@ -226,55 +226,56 @@ class Reports extends MY_Controller {
 		        }
 		    ),
 		    array( 'db' => 'tag', 'dt' => 1 ),
-		    array( 'db' => 'areadesc',  'dt' => 2 ),
-		    array( 'db' => 'warehouse',  'dt' => 3 ),
-		    array( 'db' => 'location',  'dt' => 4 ),
-		    array( 'db' => 'itemcode',  'dt' => 5 ),
-		    array( 'db' => 'type',  'dt' => 6 ),
-		    array( 'db' => 'status',  'dt' => 7 ),
+		    array( 'db' => 'hu', 'dt' => 2 ),
+		    array( 'db' => 'areadesc',  'dt' => 3 ),
+		    array( 'db' => 'warehouse',  'dt' => 4 ),
+		    array( 'db' => 'location',  'dt' => 5 ),
+		    array( 'db' => 'itemcode',  'dt' => 6 ),
+		    array( 'db' => 'type',  'dt' => 7 ),
+		    array( 'db' => 'status',  'dt' => 8 ),
 		    array(
 		        'db'        => 'qty',
-		        'dt'        => 8,
+		        'dt'        => 9,
 		        'formatter' => function( $d, $row ) {
 		        	return ''.number_format($d, 2, '.', ',');//$
 		        }
 		    ),
-		    array( 'db' => 'openbox',  'dt' => 9 ),
+		    array( 'db' => 'openbox',  'dt' => 10 ),
 		    array(
 		        'db'        => 'cost_price',
-		        'dt'        => 10,
+		        'dt'        => 11,
 		        'formatter' => function( $d, $row ) {
 		        	return '$'.number_format($d, 2, '.', ',');
 		        }
 		    ),
 		    array(
 		        'db'        => 'cost_price',
-		        'dt'        => 11,
+		        'dt'        => 12,
 		        'formatter' => function( $d, $row ) {
 		        	return '$'.number_format($d*$row['qty'], 2, '.', ',');
 		        }
 		    ),
 		    //array( 'db' => 'toaudit2',  'dt' => 12 ),
-		    array( 'db' => 'auditcounter',  'dt' => 12 ),
-		    array( 'db' => 'description',  'dt' => 13 ),
+		    array( 'db' => 'auditcounter',  'dt' => 13 ),
+		    array( 'db' => 'description',  'dt' => 14 ),
 		    array(
 		        'db'        => 'uom',
-		        'dt'        => 14,
+		        'dt'        => 15,
 		        'formatter' => function( $d, $row ) {
 		        	return $this->config->item('client')=='CVG' ? $row['uom2'] : $row['uom'];
 		        }
 		    ),
-		    array( 'db' => 'uom2',  'dt' => 14 ),
-		    array( 'db' => 'name',  'dt' => 15 ),
-		    array( 'db' => 'counter',  'dt' => 16 ),
-		    array( 'db' => 'auditor',  'dt' => 17 ),
-		    array( 'db' => 'reasontoedit',  'dt' => 18 ),
+		    array( 'db' => 'uom2',  'dt' => 16 ),
+		    array( 'db' => 'name',  'dt' => 17 ),
+		    array( 'db' => 'counter',  'dt' => 18 ),
+		    array( 'db' => 'auditor',  'dt' => 19 ),
+		    array( 'db' => 'reasontoedit',  'dt' => 20 ),
 		    // Campos especiales Atlantic Prime=======================>
-		    array( 'db' => 'lot',  'dt' => 19 ),
+		    array( 'db' => 'lot',  'dt' => 21 ),
 		    //array( 'db' => 'packingdate',  'dt' => 20 ),
 		    array(
 		        'db'        => 'packingdate',
-		        'dt'        => 20,
+		        'dt'        => 22,
 		        'formatter' => function( $d, $row ) {
 		        	$packingdate=$d;
 		        	if(strlen($d)==6){
@@ -288,7 +289,7 @@ class Reports extends MY_Controller {
 		    ),
 		    array(
 		        'db'        => 'uom',
-		        'dt'        => 21,
+		        'dt'        => 23,
 		        'formatter' => function( $d, $row ) {
 		        	return $this->config->item('client')=='CVG' ? $row['uom'] : $row['uom2'];
 		        }
@@ -421,7 +422,7 @@ class Reports extends MY_Controller {
 			left join perpetuo b on a.itemcode=b.itemcode
 			left join (
 									select a.itemcode, sum(qty) as total
-									from tags_hus a
+									from tags a
 									where not a.itemcode is null and status = 'Used'
 									group by a.itemcode
 									) as temp on temp.itemcode=a.itemcode";
@@ -434,7 +435,7 @@ class Reports extends MY_Controller {
 		// 		(case when c.status is null then 0 else c.qty end - p.onhand) as variationqty,
 		// 		abs((case when c.status is null then 0 else c.qty end - p.onhand)) as variationqtyabs,
 		// 		abs(((case when c.status is null then 0 else c.qty end - p.onhand)*case when a.cost_price is null then 0 else a.cost_price end)) as extvariationabs
-		// 		from tags_hus c
+		// 		from tags c
 		// 		left join masterdata a  on c.itemcode=a.itemcode
 		// 		left join perpetuo p on c.tag =p.itemcode
 		// 		where c.status is null or c.status <> 'Voided'";
@@ -1059,7 +1060,7 @@ class Reports extends MY_Controller {
 	}
 	function loadlocationsreport(){
 		$query="select a.warehouse, a.location, a.itemcode, sum(a.qty) as qty
-				from tags_hus a
+				from tags a
 				group by a.warehouse, a.location, a.itemcode";
 		$primaryKey = 'warehouse';
 
