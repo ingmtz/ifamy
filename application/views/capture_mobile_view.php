@@ -181,6 +181,7 @@
 		var openbox_flag = false;
 		var qty = '';
 		var location = '';
+		var isCorrection = false;
 
 		// Custom confirm function using Bootstrap modal (avoids camera freeze on iPhone)
 		function showOpenBoxConfirm(callback) {
@@ -285,7 +286,7 @@
 				try{
 					if(data.status){
 						correct.play();
-						$('.alert-component').addClass('alert-success');
+						$('.alert-component').removeClass('alert-danger').removeClass('alert-info').addClass('alert-success');
 
 						last_tag = data.tag;
 						itemcode = data.itemcode;
@@ -293,10 +294,36 @@
 						qty = data.quantity;
 						location = data.location;
 						hu = data.hu;
+						
+						// Check if we're in correction mode
+						if(data.isCorrection){
+							isCorrection = true;
+							$('.alert-component').removeClass('alert-success').addClass('alert-warning');
+							
+							// Show current data on first scan (when entering correction mode)
+							if(data.currentData && !itemcode && !qty && !location){
+								let currentInfo = '<strong>⚠️ CURRENT DATA:</strong><br/>';
+								currentInfo += 'Part#: <strong>' + (data.currentData.itemcode || 'N/A') + '</strong><br/>';
+								currentInfo += 'Qty: <strong>' + (data.currentData.qty || '0') + '</strong><br/>';
+								currentInfo += 'Location: <strong>' + (data.currentData.location || 'N/A') + '</strong><br/>';
+								currentInfo += 'Open box: <strong>' + (data.currentData.openbox == '1' ? 'Yes' : 'No') + '</strong><br/>';
+								currentInfo += 'HU: <strong>' + (data.currentData.hu || 'N/A') + '</strong>';
+								$('#last-scanned').html(currentInfo);
+							}
+						}
 
+						// Build progress display
 						let current_captured = '';
-						current_captured = 'Tag: '+last_tag+'<br/>Part number: '+itemcode+'<br/>Open box: '+(openbox == '1' ? 'Yes' : 'No')+'<br/>Quantity: '+qty+'<br/>Location: '+location;
-						$('#last-scanned').html(current_captured); //'Last scanned: '+decodedText
+						if(last_tag) current_captured += 'Tag: ' + last_tag + '<br/>';
+						if(itemcode) current_captured += 'Part number: ' + itemcode + '<br/>';
+						if(openbox !== '') current_captured += 'Open box: ' + (openbox == '1' ? 'Yes' : 'No') + '<br/>';
+						if(qty) current_captured += 'Quantity: ' + qty + '<br/>';
+						if(location) current_captured += 'Location: ' + location;
+						
+						// Update display with progress (except when showing current data in correction mode)
+						if(!isCorrection || itemcode || qty || location){
+							if(current_captured) $('#last-scanned').html(current_captured);
+						}
 
 						$('#alert-body').html(data.message);
 
@@ -318,6 +345,7 @@
 							qty = '';
 							openbox = '';
 							location = '';
+							isCorrection = false;
 							new PNotify({
 								title: 'Success',
 								text: 'Capture complete. You can start a new capture.',
@@ -333,10 +361,12 @@
 
 						if(data.message == 'Tag not found'){
 							last_tag = '';
+							isCorrection = false;
 						}
 
 						if(data.message == 'Tag already scanned'){
 							last_tag = '';
+							isCorrection = false;
 						}
 
 						if(data.message == 'Part number not found'){

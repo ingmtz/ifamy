@@ -50,11 +50,27 @@ class Capture extends MY_Controller {
 				echo json_encode($response);
 				return;
 			}
-			// Check if tag already used
+			// Check if tag already used - Enter CORRECTION MODE
 			if($tag->status == 'Used'){
-				$response['status']=false;
-				$response['message']='Tag already scanned';
-				$response['tag']='';
+				$response['status']=true;
+				$response['message']='CORRECTION MODE - Capture HU, Batch or Part Number';
+				$response['isCorrection']=true;
+				$response['tag']=$tag->tag;
+				$response['itemcode']='';
+				$response['quantity']='';
+				$response['location']='';
+				$response['openbox']='';
+				$response['hu']='';
+				$response['currentData']= array(
+					'itemcode' => $tag->itemcode,
+					'qty' => $tag->qty,
+					'location' => $tag->location,
+					'openbox' => $tag->openbox,
+					'warehouse' => $tag->warehouse,
+					'hu' => $tag->hu,
+					'datetimecaptured' => $tag->datetimecaptured,
+					'iduser' => $tag->iduser
+				);
 				echo json_encode($response);
 				return;
 			}
@@ -72,10 +88,14 @@ class Capture extends MY_Controller {
 				// Maybe it's a batch number?
 				$batchcode=$this->db->where('batch', $_POST['itemcode'])->get('hus')->row();
 				if($batchcode){
+					// Check if we're in correction mode
+					$currentTag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+					$isCorrection = ($currentTag && $currentTag->status == 'Used');
 					$response['status']=true;
 					$response['itemcode']= $batchcode->itemcode;
 					$response['quantity']= $batchcode->qty;
-					$response['message']= 'Batch number correct, capture open box option';
+					$response['message']= ($isCorrection ? 'CORRECTION MODE - ' : '') . 'Batch number correct, capture open box option';
+					if($isCorrection) $response['isCorrection']=true;
 					echo json_encode($response);
 					return;
 				}
@@ -83,19 +103,27 @@ class Capture extends MY_Controller {
 				// Maybe it's a HU number?
 				$hucode=$this->db->where('tag', $_POST['itemcode'])->get('hus')->row();
 				if($hucode){
+					// Allow used HUs in correction mode (when tag already has data)
+					$isCorrection = false;
 					if($hucode->status == 'Used'){
-						$response['status']=false;
-						$response['message']='HU already scanned';
-						$response['itemcode']='';
-						$response['quantity']='';
-						echo json_encode($response);
-						return;
+						// Check if we're in correction mode
+						$currentTag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+						if(!$currentTag || $currentTag->status != 'Used'){
+							$response['status']=false;
+							$response['message']='HU already scanned';
+							$response['itemcode']='';
+							$response['quantity']='';
+							echo json_encode($response);
+							return;
+						}
+						$isCorrection = true;
 					}
 					$response['status']=true;
 					$response['hu']= $hucode->tag;
 					$response['itemcode']= $hucode->itemcode;
 					$response['quantity']= $hucode->qty;
-					$response['message']= 'HU correct, capture open box option';
+					$response['message']= ($isCorrection ? 'CORRECTION MODE: ' : '') . 'HU correct, capture open box option';
+					if($isCorrection) $response['isCorrection']=true;
 					echo json_encode($response);
 					return;
 				}
@@ -116,14 +144,18 @@ class Capture extends MY_Controller {
 				echo json_encode($response);
 				return;
 			}
-			$response['status']=true;
-			$response['message']= 'Part number correct, capture open box option';
-			echo json_encode($response);
-			return;
-		}
+		// Check if we're in correction mode
+		$currentTag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+		$isCorrection = ($currentTag && $currentTag->status == 'Used');
+		$response['status']=true;
+		$response['message']= ($isCorrection ? 'CORRECTION MODE - ' : '') . 'Part number correct, capture open box option';
+		if($isCorrection) $response['isCorrection']=true;
+		echo json_encode($response);
+		return;
+	}
 
-		// Validate openbox
-		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
+	// Validate openbox
+	if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
 			if($_POST['openbox'] == ''){
 				$response['status']=false;
 				$response['message']='Please select open box option';
@@ -131,16 +163,22 @@ class Capture extends MY_Controller {
 				echo json_encode($response);
 				return;
 			}
+			// Check if we're in correction mode
+			$currentTag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+			$isCorrection = ($currentTag && $currentTag->status == 'Used');
+			$prefix = $isCorrection ? 'CORRECTION MODE - ' : '';
 			if($_POST['openbox'] == '1'){
 				// Open box selected, capture quantity
 				$response['status']=true;
-				$response['message']= 'Open box option selected, capture quantity';
+				$response['message']= $prefix . 'Open box option selected, capture quantity';
+				if($isCorrection) $response['isCorrection']=true;
 				echo json_encode($response);
 				return;
 			} else{
 				// Not open box, ask for quantity
 				$response['status']=true;
-				$response['message']= 'Open box option not selected, capture quantity';
+				$response['message']= $prefix . 'Open box option not selected, capture quantity';
+				if($isCorrection) $response['isCorrection']=true;
 				echo json_encode($response);
 				return;
 			}
@@ -155,9 +193,13 @@ class Capture extends MY_Controller {
 				echo json_encode($response);
 				return;
 			}
+			// Check if we're in correction mode
+			$currentTag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+			$isCorrection = ($currentTag && $currentTag->status == 'Used');
 			// Ask for location
 			$response['status']=true;
-			$response['message']= 'Quantity captured, capture location';
+			$response['message']= ($isCorrection ? 'CORRECTION MODE - ' : '') . 'Quantity captured, capture location';
+			if($isCorrection) $response['isCorrection']=true;
 			echo json_encode($response);
 			return;
 		}
@@ -183,7 +225,41 @@ class Capture extends MY_Controller {
 
 			// Leave only numbers for the tag
 			$_POST['tag'] = preg_replace('/\D/', '', $_POST['tag']);
-			// Complete capture
+			
+			// Check if this is a correction (tag already exists with status Used)
+			$existingTag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+			if($existingTag && $existingTag->status == 'Used'){
+				// Register correction in history table
+				$this->db->insert('tag_correction_history', array(
+					'tag' => $_POST['tag'],
+					'correction_datetime' => date('Y-m-d H:i:s'),
+					'correction_user_id' => $this->session->userdata('ifatrimuserid'),
+					// Old values
+					'old_itemcode' => $existingTag->itemcode,
+					'old_qty' => $existingTag->qty,
+					'old_location' => $existingTag->location,
+					'old_openbox' => $existingTag->openbox,
+					'old_warehouse' => $existingTag->warehouse,
+					'old_hu' => $existingTag->hu,
+					'old_datetimecaptured' => $existingTag->datetimecaptured,
+					'old_iduser' => $existingTag->iduser,
+					// New values
+					'new_itemcode' => strtoupper($_POST['itemcode']),
+					'new_qty' => floatval($_POST['quantity']),
+					'new_location' => $_POST['location'],
+					'new_openbox' => $_POST['openbox'],
+					'new_warehouse' => $this->session->userdata('ifatrimplant'),
+					'new_hu' => $_POST['hu'],
+					'new_datetimecaptured' => date('Y-m-d H:i:s'),
+					'new_iduser' => $this->session->userdata('ifatrimuserid'),
+					// Additional info
+					'correction_reason' => 'Mobile correction',
+					'ip_address' => $_SERVER['REMOTE_ADDR'],
+					'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''
+				));
+			}
+			
+			// Complete capture or update correction
 			$this->db->where('tag', $_POST['tag'])->update('tags', 
 				array(
 					'status'=> 'Used', 
@@ -213,7 +289,7 @@ class Capture extends MY_Controller {
 			}
 
 			$response['status']=true;
-			$response['message']='Tag captured successfully';
+			$response['message']= ($existingTag && $existingTag->status == 'Used') ? 'Tag corrected successfully' : 'Tag captured successfully';
 			$response['isComplete']=true;
 			echo json_encode($response);
 		}
