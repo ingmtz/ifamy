@@ -32,12 +32,13 @@
 							<ul class="navigation navigation-main navigation-accordion">
 								<li class="navigation-header"><span><?php echo $this->lang->line('Menu'); ?></span> <i class="icon-menu" title="<?php echo $this->lang->line('Menu'); ?>"></i></li>
 
-								<li><a href="<?php echo base_url(); ?>capture/medica"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> Medica</span></a></li>
+								<!-- <li><a href="<?php echo base_url(); ?>capture/medica"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> Medica</span></a></li> -->
 								
+								<li><a href="<?php echo base_url(); ?>capture/correction"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> correction</span></a></li>
 								
 								<li><a href="<?php echo base_url(); ?>capture/mobile"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> mobile</span></a></li>
 
-							<li><a href="<?php echo base_url(); ?>capture/auditmobile"><i class="fa fa-check-square" aria-hidden="true"></i> <span><?php echo $this->lang->line('Audit'); ?> mobile</span></a></li>
+								<li><a href="<?php echo base_url(); ?>capture/auditmobile"><i class="fa fa-check-square" aria-hidden="true"></i> <span><?php echo $this->lang->line('Audit'); ?> mobile</span></a></li>
 
 								<!-- <li><a href="<?php echo base_url(); ?>capture"><i class="icon-stack2"></i> <span><?php echo $this->lang->line('Capture'); ?></span></a></li> -->
 								 

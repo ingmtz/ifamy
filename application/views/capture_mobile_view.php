@@ -339,9 +339,9 @@
 							last_tag = '';
 						}
 
-						if(data.message == 'Part number not found'){
-							itemcode = '';
-						}
+						// if(data.message == 'Part number not found'){
+						// 	itemcode = '';
+						// }
 
 						if(data.message == 'Quantity must be a positive number'){
 							qty = '';
