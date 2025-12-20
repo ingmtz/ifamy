@@ -273,7 +273,6 @@
 								<tr>
 									<th class="actions"><?php echo $this->lang->line('Actions'); ?></th>
 									<th><?php echo $this->lang->line('Tag'); ?></th>
-									<th>HU</th>
 									<th><?php echo $this->lang->line('Area'); ?></th>
 									<th>
 										<b>WH</b>
