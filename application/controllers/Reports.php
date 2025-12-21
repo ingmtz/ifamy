@@ -1181,14 +1181,17 @@ class Reports extends MY_Controller {
 	}
 
 	function loadhunotfound(){
-		$query="select Id, hu, tag, warehouse from hu_not_found hnf "; //, location
+		$query="select a.Id, a.hu, a.tag, a.warehouse, b.name, a.datetimecaptured from hu_not_found a
+			left join users b on a.iduser=b.Id";
 		$primaryKey = 'Id';
 
 		$columns = array(
 		    array( 'db' => 'hu', 'dt' => 0 ),
 		    array( 'db' => 'tag', 'dt' => 1 ),
-		    array( 'db' => 'warehouse', 'dt' => 2 ),
-		    array( 'db' => 'location',  'dt' => 3 ),
+		    array( 'db' => 'name', 'dt' => 2 ),
+		    array( 'db' => 'datetimecaptured', 'dt' => 3 ),
+		    array( 'db' => 'warehouse', 'dt' => 4 ),
+		    array( 'db' => 'location',  'dt' => 5 ),
 		);
 		
 		$data=$this->datatable->simple($_GET, $query, $primaryKey, $columns);
@@ -1238,4 +1241,21 @@ class Reports extends MY_Controller {
 	function issetor(&$var) {
 	    return isset($var) ? $var : '';
 	}
+
+
+	function fixhu(){
+		// 1.- Loop todos los tags de la tabla debug:
+		$rows = $this->db->query("select TRIM(REPLACE(UPPER(tag), 'WTEM', '')) as tag, hu from debug_capture dc 
+		where dc.hu <> ''
+		order by Id")->result();
+
+		// 2.- Update tags table
+		foreach ($rows as $key => $value) {
+			$this->db->query("UPDATE tags SET hu = ? WHERE TRIM(REPLACE(UPPER(tag), 'WTEM', '')) = ?", array($value->hu, $value->tag));
+		}
+	}
+
+
+
+
 }

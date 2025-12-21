@@ -91,6 +91,8 @@
 								<tr>
 									<th>HU</th>
 									<th>Tag</th>
+									<th>User</th>
+									<th>Datetime</th>
 									<th>St. Location</th>
 									<!-- <th><?php echo $this->lang->line('Location'); ?></th> -->
 								</tr>
