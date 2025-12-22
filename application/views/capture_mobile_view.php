@@ -318,6 +318,7 @@
 							qty = '';
 							openbox = '';
 							location = '';
+							hu = '';
 							new PNotify({
 								title: 'Success',
 								text: 'Capture complete. You can start a new capture.',

@@ -1243,7 +1243,7 @@ class Reports extends MY_Controller {
 	}
 
 
-	function fixhu(){
+	function fixhu_v1(){
 		// 1.- Loop todos los tags de la tabla debug:
 		$rows = $this->db->query("select TRIM(REPLACE(UPPER(tag), 'WTEM', '')) as tag, hu from debug_capture dc 
 		where dc.hu <> ''
@@ -1252,6 +1252,21 @@ class Reports extends MY_Controller {
 		// 2.- Update tags table
 		foreach ($rows as $key => $value) {
 			$this->db->query("UPDATE tags SET hu = ? WHERE TRIM(REPLACE(UPPER(tag), 'WTEM', '')) = ?", array($value->hu, $value->tag));
+		}
+	}
+
+	function fixhu(){
+		// 1.- Clear hus from tags table
+		$this->db->query("UPDATE tags SET hu = ''");
+		// 1.- Loop all complete scans from debug_capture table
+		$rows = $this->db->query("select REPLACE(TRIM(REPLACE(UPPER(tag), 'WTEM', '')), 'WETM','') as tag, hu 
+			from debug_capture dc 
+			where dc.hu <> '' and dc.location <> '' and dc.qty <> '' and dc.openbox <> '' and dc.item <> '' and dc.tag <> ''
+			order by Id")->result();
+
+		// 2.- Update hus table
+		foreach ($rows as $key => $value) {
+			$this->db->query("UPDATE tags SET hu = ? WHERE tag = ?", array($value->hu, $value->tag));
 		}
 	}
 
