@@ -128,8 +128,28 @@
 													</div>
 												</div>
 											</div>
+										</div>									
+									<!-- Raw Type File Section -->
+									<div class="row">
+										<div class="col-md-6">
+											<div class="panel panel-flat">
+												<div class="panel-heading">
+													<h5 class="panel-title">Raw Type File</h5>
+												</div>
+												<div class="panel-body">
+													<div id="msgpanel-rawtype" class="alert alert-info">
+														<strong id="msgresult-rawtype">
+															[A] -> "Material", [B] -> "Material2", [C] -> "TYPE RAW", [D] -> "GENERAL" columns are expected. Previous raw type data will be truncated.
+														</strong>
+													</div>
+													<div class="form-group">
+														<label for="file-upload-rawtype" class="control-label">Select raw type file to upload</label>
+														<input type="file" class="form-control" id="file-upload-rawtype" accept=".xls,.xlsx,.csv">
+													</div>
+												</div>
+											</div>
 										</div>
-								</div>
+									</div>								</div>
 							</section>
 						</div>
 					</div>
@@ -167,6 +187,14 @@
 	    var file = e.target.files[0];
 	    if (file) {
 	      uploadLocationsFile(file);
+	    }
+	  });
+	  
+	  // Raw Type file upload
+	  $('#file-upload-rawtype').on('change', function(e) {
+	    var file = e.target.files[0];
+	    if (file) {
+	      uploadRawTypeFile(file);
 	    }
 	  });
 	});
@@ -217,6 +245,29 @@
 		});
 	}
 	
+	function uploadRawTypeFile(file) {
+		var formData = new FormData();
+		formData.append('file', file);
+		
+		waitingDialog.show('Uploading '+file.name+'...');
+		
+		$.ajax({
+			url: '<?php echo base_url();?>reports/fileuploadrawtype',
+			type: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false,
+			success: function(response) {
+				processRawType(file.name, file.type);
+			},
+			error: function(xhr, status, error) {
+				waitingDialog.hide();
+				$('#msgpanel-rawtype').addClass('alert-danger').removeClass('alert-success');
+				$('#msgresult-rawtype').html('Upload failed for '+file.name+'<br/>');
+			}
+		});
+	}
+	
 	function processInventory(filename,tipo){
 		waitingDialog.show('Importing '+filename+'...');
 		$.post("<?php echo base_url(); ?>reports/import",{filename:filename,tipo:tipo},function(result){
@@ -259,6 +310,31 @@
 			waitingDialog.hide();
 			$('#msgpanel-locations').addClass('alert-danger').removeClass('alert-success');
 			$('#msgresult-locations').html('Problem with '+filename+'<br/>');
+			new PNotify({
+					title: '<?php echo $this->config->item('title'); ?>',
+					text: 'An error has ocurred.',
+					type: 'error'
+				});
+		});
+	}
+	
+	function processRawType(filename,tipo){
+		waitingDialog.show('Importing '+filename+'...');
+		$.post("<?php echo base_url(); ?>reports/importrawtype",{filename:filename,tipo:tipo},function(result){
+			waitingDialog.hide();
+			$('#msgpanel-rawtype').removeClass('alert-success').removeClass('alert-danger');
+			if(result.includes('Unknown') || result.includes('skipped') || result.includes('Please check') || result.includes('not imported')){
+				$('#msgpanel-rawtype').addClass('alert-danger').removeClass('alert-success');
+			}else{
+				$('#msgpanel-rawtype').addClass('alert-success').removeClass('alert-danger');
+			}
+			$('#msgpanel-rawtype').show('slow', function() {
+				$('#msgresult-rawtype').html('<br/>'+filename+' '+result+'<br/>');
+			});
+		}).fail(function(){
+			waitingDialog.hide();
+			$('#msgpanel-rawtype').addClass('alert-danger').removeClass('alert-success');
+			$('#msgresult-rawtype').html('Problem with '+filename+'<br/>');
 			new PNotify({
 					title: '<?php echo $this->config->item('title'); ?>',
 					text: 'An error has ocurred.',

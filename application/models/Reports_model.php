@@ -175,6 +175,10 @@ class Reports_model extends CI_Model {
     function truncatelocations(){
         $this->db->query('TRUNCATE TABLE locations');
     }
+    
+    function truncaterawtype(){
+        $this->db->query('TRUNCATE TABLE rawtype');
+    }
 
     function saveimportdata($data){
         $this->db->insert_batch('perpetuo', $data);
@@ -187,6 +191,10 @@ class Reports_model extends CI_Model {
     function insertLocation($data){
         $this->db->insert_batch('locations', $data);
         //$this->db->insert('locations', $data);
+    }
+    
+    function insertRawType($data){
+        $this->db->insert_batch('rawtype', $data);
     }
     public function getdetailvariation($itemcode){
         $querystr="select a.*, b.description, b.uom, b.type, d.name, a.area as areadesc from tags a 
@@ -369,5 +377,27 @@ class Reports_model extends CI_Model {
 
     public function truncaterawdata(){
         $this->db->query('TRUNCATE TABLE rawdata');
+    }
+
+    public function gettyperawvariation(){
+        $querystr = "select tmp1.type_raw, tmp1.value, tmp2.counted
+            from (
+                select r.type_raw, sum(a.onhand*b.cost_price) as value
+                from perpetuo a
+                left join rawtype r on a.itemcode = r.material
+                left join masterdata b on a.itemcode = b.itemcode
+                group by r.type_raw
+            ) as tmp1
+            left join (
+                select b.type_raw, sum(c.cost_price*a.qty) as counted
+                from tags a
+                left join rawtype b on a.itemcode = b.material
+                left join masterdata c on a.itemcode = c.itemcode
+                where a.status = 'Used'
+                group by b.type_raw
+            ) as tmp2 on tmp1.type_raw = tmp2.type_raw
+            order by value desc";
+        $query = $this->db->query($querystr);
+        return $query->result();
     }
 }

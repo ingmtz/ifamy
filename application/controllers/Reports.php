@@ -1166,6 +1166,59 @@ class Reports extends MY_Controller {
 		$result.='</span>';
 		echo $result;
     }
+	
+	public function fileuploadrawtype(){
+		$ds          = DIRECTORY_SEPARATOR;
+		$storeFolder = 'uploads';
+		if(!is_dir($storeFolder)){
+	  		mkdir($storeFolder);
+	    }
+		if (!empty($_FILES)) {
+		    $tempFile = $_FILES['file']['tmp_name'];
+		    $targetPath = getcwd (). $ds. $storeFolder . $ds;
+		    $targetFile =  $targetPath. $_FILES['file']['name'];
+		    move_uploaded_file($tempFile,$targetFile);
+		}
+	}
+	
+	public function importrawtype(){
+		set_time_limit(0);
+		ini_set('memory_limit','-1');
+		$ds          = DIRECTORY_SEPARATOR;
+		$storeFolder = 'uploads';
+		$file = getcwd().$ds.$storeFolder.$ds.$_POST['filename'];
+		$reader = ReaderFactory::create(Type::XLSX);
+        $reader->open($file);
+
+    	$datatoinsert=array();
+        foreach ($reader->getSheetIterator() as $sheet) {
+        	if ($sheet->isActive()) {
+	            foreach ($sheet->getRowIterator() as $key => $row) {
+	                if($key >= 2){
+						$datatoinsert[] = array(
+							'material' => trim($this->issetor($row[0])),
+							'material2' => trim($this->issetor($row[1])),
+							'type_raw' => trim($this->issetor($row[2])),
+							'general' => trim($this->issetor($row[3])),
+						);
+	                }
+                }
+            }
+        }
+
+        $reader->close();
+        unlink($file);
+
+        $result = '<span>';
+
+        //Truncate and insert data
+		$this->reports_model->truncaterawtype();
+		$this->reports_model->insertRawType($datatoinsert);
+
+        $result.='Raw type file imported '.count($datatoinsert).' records successfully.';
+		$result.='</span>';
+		echo $result;
+    }
 	//==========================>
 	function scannedbyuser(){
 		$data['users']=$this->reports_model->getScannedbyuser();
@@ -1270,7 +1323,12 @@ class Reports extends MY_Controller {
 		}
 	}
 
+	public function typerawvariation(){
+		$data['typerawdata'] = $this->reports_model->gettyperawvariation();
+		$data['title'] = 'Type Raw Variation Report';
+		$this->load->view('typerawvariation_view', $data);
+	}
 
 
 
-}
+}  

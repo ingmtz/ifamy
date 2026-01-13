@@ -44,10 +44,12 @@
 								 
 								<?php if($this->session->userdata('ifatrimidprofile')=='1' || $this->session->userdata('ifatrimidprofile')=='3'){ ?>
 								<li><a href="<?php echo base_url(); ?>itemcodes"><i class="icon-stack"></i> <span><?php echo $this->lang->line('Item codes'); ?></span></a></li>
+
+
 								<li><a href="<?php echo base_url(); ?>reports/totalcapture"><i class="glyphicon glyphicon-th"></i> <span><?php echo $this->lang->line('Total capture report'); ?></span></a></li>
 								
-								<li><a href="<?php echo base_url(); ?>reports/hunotfound"><i class="glyphicon glyphicon-th-list"></i> <span>HU not found report</span></a></li>
-
+							<li><a href="<?php echo base_url(); ?>reports/typerawvariation"><i class="glyphicon glyphicon-stats"></i> <span>Type Raw Variation Report</span></a></li>
+							
 								<li><a href="<?php echo base_url(); ?>reports/progress/capture"><i class="glyphicon glyphicon-align-left"></i> <span><?php echo $this->lang->line('Progress report'); ?></span></a></li>
 
 								<?php if($this->config->item('client')=='CVG'){ ?>
