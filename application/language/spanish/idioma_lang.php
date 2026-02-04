@@ -187,3 +187,16 @@ $lang['Branch'] 						= 'Sucursal';
 $lang['Barcode Structure']			= 'Estructura del código de barras';
 $lang['New Provider'] 				= 'Nuevo Proveedor';
 $lang['Edit Provider'] 				= 'Editar Proveedor';
+
+//Mobile Capture Modes=============>
+$lang['By Tag'] 					= 'Por Marbete';
+$lang['By HU'] 						= 'Por HU';
+$lang['By Batch'] 					= 'Por Lote';
+$lang['Correction'] 				= 'Corrección';
+$lang['Scan the Tag'] 				= 'Escanea el Marbete';
+$lang['Scan the Location'] 			= 'Escanea la Ubicación';
+$lang['Capture code here'] 			= 'Captura el código aquí';
+$lang['Confirm'] 					= 'Confirmar';
+$lang['Is the box open?'] 			= '¿La caja está abierta?';
+$lang['Yes'] 						= 'Sí';
+$lang['No'] 						= 'No';

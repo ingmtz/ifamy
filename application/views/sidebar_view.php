@@ -32,11 +32,23 @@
 							<ul class="navigation navigation-main navigation-accordion">
 								<li class="navigation-header"><span><?php echo $this->lang->line('Menu'); ?></span> <i class="icon-menu" title="<?php echo $this->lang->line('Menu'); ?>"></i></li>
 
-								<!-- <li><a href="<?php echo base_url(); ?>capture/medica"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> Medica</span></a></li> -->
-								
-								<li><a href="<?php echo base_url(); ?>capture/correction"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> correction</span></a></li>
-								
-								<li><a href="<?php echo base_url(); ?>capture/mobile"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> mobile</span></a></li>
+								<!-- ============================================
+								     MOBILE CAPTURE SUBMENU
+								     Submenu with 4 capture modes:
+								     1. By Tag: Tag → HU/PartNumber → OpenBox → Qty → Location
+								     2. By HU: Location → HU → OpenBox → Qty
+								     3. By Batch: Location → Batch → OpenBox → Qty  
+								     4. Correction: Re-capture used tags
+								============================================ -->
+								<li class="active">
+									<a href="#"><i class="fa fa-qrcode" aria-hidden="true"></i> <span><?php echo $this->lang->line('Capture'); ?> Mobile</span></a>
+									<ul>
+										<li><a href="<?php echo base_url(); ?>capture/mobileTag"><i class="fa fa-tag"></i> <?php echo $this->lang->line('By Tag'); ?></a></li>
+										<li><a href="<?php echo base_url(); ?>capture/mobileHU"><i class="fa fa-barcode"></i> <?php echo $this->lang->line('By HU'); ?></a></li>
+										<li><a href="<?php echo base_url(); ?>capture/mobileBatch"><i class="fa fa-cubes"></i> <?php echo $this->lang->line('By Batch'); ?></a></li>
+										<li><a href="<?php echo base_url(); ?>capture/correction"><i class="fa fa-edit"></i> <?php echo $this->lang->line('Correction'); ?></a></li>
+									</ul>
+								</li>
 
 								<li><a href="<?php echo base_url(); ?>capture/auditmobile"><i class="fa fa-check-square" aria-hidden="true"></i> <span><?php echo $this->lang->line('Audit'); ?> mobile</span></a></li>
 

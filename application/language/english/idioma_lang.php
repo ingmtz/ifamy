@@ -185,3 +185,16 @@ $lang['Branch'] 						= 'Branch';
 $lang['Barcode Structure']			= 'Barcode Structure';
 $lang['New Provider'] 				= 'New Provider';
 $lang['Edit Provider'] 				= 'Edit Provider';
+
+//Mobile Capture Modes=============>
+$lang['By Tag'] 					= 'By Tag';
+$lang['By HU'] 						= 'By HU';
+$lang['By Batch'] 					= 'By Batch';
+$lang['Correction'] 				= 'Correction';
+$lang['Scan the Tag'] 				= 'Scan the Tag';
+$lang['Scan the Location'] 			= 'Scan the Location';
+$lang['Capture code here'] 			= 'Capture code here';
+$lang['Confirm'] 					= 'Confirm';
+$lang['Is the box open?'] 			= 'Is the box open?';
+$lang['Yes'] 						= 'Yes';
+$lang['No'] 						= 'No';

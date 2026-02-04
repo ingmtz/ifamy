@@ -499,6 +499,559 @@ class Capture extends MY_Controller {
 		}
 	}
 
+	// ============================================
+	// CAPTURE BY TAG (Mobile)
+	// ============================================
+	// Flow: Tag → HU/PartNumber/Batch → OpenBox → Quantity → Location
+	// Updates: tags table (links physical tag to inventory item)
+	// ============================================
+
+	/**
+	 * Display the Capture by Tag mobile view
+	 */
+	public function mobileTag(){
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_tag_view', $data);
+	}
+
+	/**
+	 * Process capture by Tag - validates each step of the capture flow
+	 * This is the same logic as the original checkCode() but with cleaner structure
+	 * 
+	 * Flow:
+	 * 1. Validate tag exists and is not already used
+	 * 2. Validate itemcode/HU/batch and retrieve item info
+	 * 3. Get open box confirmation
+	 * 4. Validate quantity
+	 * 5. Validate location and complete capture
+	 */
+	public function checkCodeTag(){
+		// Initialize response with all possible fields
+		$response = array(
+			'status' => false,
+			'message' => '',
+			'isComplete' => false,
+			'tag' => isset($_POST['tag']) ? $_POST['tag'] : '',
+			'hu' => isset($_POST['hu']) ? $_POST['hu'] : '',
+			'itemcode' => isset($_POST['itemcode']) ? $_POST['itemcode'] : '',
+			'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : '',
+			'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : '',
+			'location' => isset($_POST['location']) ? $_POST['location'] : '',
+		);
+
+		// Debug logging (can be disabled in production)
+		file_put_contents('debug_capture_tag_'.date('Ymd').'.txt', 
+			date('H:i:s').' | '.implode('|', array_map(function($k, $v) { return "$k:$v"; }, array_keys($_POST), $_POST))."\n", 
+			FILE_APPEND);
+
+		// ============================================
+		// STEP 1: Validate Tag
+		// ============================================
+		if($_POST['tag'] != '' && $_POST['itemcode'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
+			// Clean tag - keep only numbers
+			$_POST['tag'] = preg_replace('/\D/', '', $_POST['tag']);
+
+			$tag = $this->db->where('tag', $_POST['tag'])->get('tags')->row();
+			if(!$tag){
+				$response['status'] = false;
+				$response['message'] = 'Tag not found';
+				$response['tag'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			// Check if tag is already used
+			if($tag->status == 'Used'){
+				$response['status'] = false;
+				$response['message'] = 'Tag already scanned';
+				$response['tag'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			$response['status'] = true;
+			$response['message'] = 'Tag correct, capture HU, Batch or Part Number';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 2: Validate Part Number / HU / Batch
+		// ============================================
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['openbox'] == '' && $_POST['location'] == ''){
+			// First, check if it's a known itemcode
+			$itemcode = $this->capture_model->getitemcode($_POST['itemcode']);
+			if($itemcode){
+				$response['status'] = true;
+				$response['message'] = 'Part number correct, capture open box option';
+				echo json_encode($response);
+				return;
+			}
+
+			// Maybe it's a batch number?
+			$batchcode = $this->db->where('batch', $_POST['itemcode'])->get('hus')->row();
+			if($batchcode){
+				$response['status'] = true;
+				$response['itemcode'] = $batchcode->itemcode;
+				$response['quantity'] = $batchcode->qty;
+				$response['message'] = 'Batch number correct, capture open box option';
+				echo json_encode($response);
+				return;
+			}
+
+			// Maybe it's a HU number?
+			$hucode = $this->db->where('tag', $_POST['itemcode'])->get('hus')->row();
+			if($hucode){
+				if($hucode->status == 'Used'){
+					$response['status'] = false;
+					$response['message'] = 'HU already scanned';
+					$response['itemcode'] = '';
+					$response['quantity'] = '';
+					echo json_encode($response);
+					return;
+				}
+				$response['status'] = true;
+				$response['hu'] = $hucode->tag;
+				$response['itemcode'] = $hucode->itemcode;
+				$response['quantity'] = $hucode->qty;
+				$response['message'] = 'HU correct, capture open box option';
+				echo json_encode($response);
+				return;
+			}
+
+			// Not found in any table - log it and continue
+			$this->db->insert('hu_not_found', array(
+				'hu' => $_POST['itemcode'], 
+				'datetimecaptured' => date('Y-m-d H:i:s'), 
+				'iduser' => $this->session->userdata('ifatrimuserid'), 
+				'warehouse' => $this->session->userdata('ifatrimplant'),
+				'tag' => $_POST['tag']
+			));
+
+			$response['status'] = true;
+			$response['message'] = 'HU or Part number not found, capture open box option';
+			$response['hu'] = $_POST['itemcode'];
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 3: Validate Open Box Option
+		// ============================================
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == '' && $_POST['location'] == ''){
+			if($_POST['openbox'] == ''){
+				$response['status'] = false;
+				$response['message'] = 'Please select open box option';
+				$response['openbox'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			$response['status'] = true;
+			$response['message'] = $_POST['openbox'] == '1' 
+				? 'Open box option selected, capture quantity'
+				: 'Open box option not selected, capture quantity';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 4: Validate Quantity
+		// ============================================
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['quantity'] != '' && $_POST['location'] == ''){
+			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+				$response['status'] = false;
+				$response['message'] = 'Quantity must be a positive number';
+				$response['quantity'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			$response['status'] = true;
+			$response['message'] = 'Quantity captured, capture location';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 5: Validate Location and Complete Capture
+		// ============================================
+		if($_POST['tag'] != '' && $_POST['itemcode'] != '' && $_POST['quantity'] != '' && $_POST['openbox'] != ''){
+			// Validate location
+			if($_POST['location'] == ''){
+				$response['status'] = true;
+				$response['message'] = 'Please capture location';
+				$response['location'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			$loc = $this->db->where('location', $_POST['location'])->get('locations')->row();
+			if(!$loc){
+				$response['status'] = false;
+				$response['message'] = 'Location not found';
+				$response['location'] = '';
+				echo json_encode($response);
+				return;
+			}
+
+			// Clean tag - keep only numbers
+			$_POST['tag'] = preg_replace('/\D/', '', $_POST['tag']);
+			
+			// Update the tag record with captured data
+			$this->db->where('tag', $_POST['tag'])->update('tags', array(
+				'status' => 'Used', 
+				'itemcode' => strtoupper($_POST['itemcode']), 
+				'qty' => floatval($_POST['quantity']), 
+				'iduser' => $this->session->userdata('ifatrimuserid'), 
+				'datetimecaptured' => date('Y-m-d H:i:s'), 
+				'warehouse' => $this->session->userdata('ifatrimplant'), 
+				'location' => $_POST['location'], 
+				'openbox' => $_POST['openbox'],
+				'hu' => $_POST['hu']
+			));
+
+			// If HU was scanned, update that record too
+			if($_POST['hu'] != ''){
+				$this->db->where('tag', $_POST['hu'])->update('hus', array(
+					'status' => 'Used', 
+					'datetimecaptured' => date('Y-m-d H:i:s'), 
+					'iduser' => $this->session->userdata('ifatrimuserid'), 
+					'warehouse' => $this->session->userdata('ifatrimplant'), 
+					'location' => $_POST['location'], 
+					'openbox' => $_POST['openbox']
+				));
+			}
+
+			$response['status'] = true;
+			$response['message'] = 'Tag captured successfully';
+			$response['isComplete'] = true;
+			echo json_encode($response);
+		}
+	}
+
+	// ============================================
+	// CAPTURE BY HU (Mobile)
+	// ============================================
+	// Flow: Location → HU → OpenBox → Quantity
+	// Updates: hus table only (direct HU capture without physical tags)
+	// ============================================
+
+	/**
+	 * Display the Capture by HU mobile view
+	 */
+	public function mobileHU(){
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_hu_view', $data);
+	}
+
+	/**
+	 * Process capture by HU - validates each step of the capture flow
+	 * 
+	 * Flow:
+	 * 1. Validate location exists
+	 * 2. Validate HU exists and is not already used
+	 * 3. Get open box confirmation
+	 * 4. If open box, validate quantity and complete capture
+	 * 5. If not open box, complete capture with original HU quantity
+	 */
+	public function checkCodeHU(){
+		// Initialize response with all possible fields
+		$response = array(
+			'status' => false,
+			'message' => '',
+			'isComplete' => false,
+			'location' => isset($_POST['location']) ? $_POST['location'] : '',
+			'hu' => isset($_POST['hu']) ? $_POST['hu'] : '',
+			'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : '',
+			'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : ''
+		);
+
+		// Debug logging
+		file_put_contents('debug_capture_hu_'.date('Ymd').'.txt', 
+			date('H:i:s').' | '.implode('|', array_map(function($k, $v) { return "$k:$v"; }, array_keys($_POST), $_POST))."\n", 
+			FILE_APPEND);
+
+		// ============================================
+		// STEP 1: Validate Location
+		// ============================================
+		if($_POST['location'] != '' && $_POST['hu'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == ''){
+			$loc = $this->db->where('location', $_POST['location'])->get('locations')->row();
+			if(!$loc){
+				$response['status'] = false;
+				$response['message'] = 'Location not found';
+				$response['location'] = '';
+				echo json_encode($response);
+				return;
+			}
+			$response['status'] = true;
+			$response['message'] = 'Location correct, capture HU';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 2: Validate HU
+		// ============================================
+		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] == '' && $_POST['quantity'] == ''){
+			$hu = $this->db->where('tag', $_POST['hu'])->get('hus')->row();
+			if(!$hu){
+				$response['status'] = false;
+				$response['message'] = 'HU not found';
+				$response['hu'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			// Check if HU is already used
+			if($hu->status == 'Used'){
+				$response['status'] = false;
+				$response['message'] = 'HU already scanned';
+				$response['hu'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			$response['status'] = true;
+			$response['message'] = 'HU correct, capture open box option';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 3: Validate Open Box Option
+		// ============================================
+		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == ''){
+			if($_POST['openbox'] == ''){
+				$response['status'] = false;
+				$response['message'] = 'Please select open box option';
+				$response['openbox'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			if($_POST['openbox'] == '1'){
+				// Open box - need to capture quantity
+				$response['status'] = true;
+				$response['message'] = 'Open box option selected, capture quantity';
+				echo json_encode($response);
+				return;
+			} else {
+				// Not open box - complete capture with original HU quantity
+				$this->db->where('tag', $_POST['hu'])->update('hus', array(
+					'status' => 'Used', 
+					'datetimecaptured' => date('Y-m-d H:i:s'), 
+					'iduser' => $this->session->userdata('ifatrimuserid'), 
+					'warehouse' => $this->session->userdata('ifatrimplant'), 
+					'location' => $_POST['location'], 
+					'openbox' => $_POST['openbox']
+				));
+
+				$response['status'] = true;
+				$response['message'] = 'HU captured successfully';
+				$response['isComplete'] = true;
+				echo json_encode($response);
+				return;
+			}
+		}
+
+		// ============================================
+		// STEP 4: Validate Quantity and Complete Capture (Open Box only)
+		// ============================================
+		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] == '1' && $_POST['quantity'] != ''){
+			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+				$response['status'] = false;
+				$response['message'] = 'Quantity must be a positive number';
+				$response['quantity'] = '';
+				echo json_encode($response);
+				return;
+			}
+
+			// Complete capture with user-entered quantity
+			$this->db->where('tag', $_POST['hu'])->update('hus', array(
+				'status' => 'Used', 
+				'qty' => floatval($_POST['quantity']),
+				'datetimecaptured' => date('Y-m-d H:i:s'), 
+				'iduser' => $this->session->userdata('ifatrimuserid'), 
+				'warehouse' => $this->session->userdata('ifatrimplant'), 
+				'location' => $_POST['location'], 
+				'openbox' => $_POST['openbox']
+			));
+
+			$response['status'] = true;
+			$response['message'] = 'HU captured successfully';
+			$response['isComplete'] = true;
+			echo json_encode($response);
+			return;
+		}
+	}
+
+	// ============================================
+	// CAPTURE BY BATCH (Mobile)
+	// ============================================
+	// Flow: Location → Batch → OpenBox → Quantity
+	// Updates: hus table only (finds HU by batch number)
+	// ============================================
+
+	/**
+	 * Display the Capture by Batch mobile view
+	 */
+	public function mobileBatch(){
+		$data['wh'] = $this->session->userdata('ifatrimplant');
+		$this->load->view('capture_batch_view', $data);
+	}
+
+	/**
+	 * Process capture by Batch - validates each step of the capture flow
+	 * 
+	 * Flow:
+	 * 1. Validate location exists
+	 * 2. Validate batch exists in hus table and HU is not already used
+	 * 3. Get open box confirmation
+	 * 4. If open box, validate quantity and complete capture
+	 * 5. If not open box, complete capture with original HU quantity
+	 */
+	public function checkCodeBatch(){
+		// Initialize response with all possible fields
+		$response = array(
+			'status' => false,
+			'message' => '',
+			'isComplete' => false,
+			'location' => isset($_POST['location']) ? $_POST['location'] : '',
+			'batch' => isset($_POST['batch']) ? $_POST['batch'] : '',
+			'hu' => isset($_POST['hu']) ? $_POST['hu'] : '',
+			'openbox' => isset($_POST['openbox']) ? $_POST['openbox'] : '',
+			'quantity' => isset($_POST['quantity']) ? $_POST['quantity'] : ''
+		);
+
+		// Debug logging
+		file_put_contents('debug_capture_batch_'.date('Ymd').'.txt', 
+			date('H:i:s').' | '.implode('|', array_map(function($k, $v) { return "$k:$v"; }, array_keys($_POST), $_POST))."\n", 
+			FILE_APPEND);
+
+		// ============================================
+		// STEP 1: Validate Location
+		// ============================================
+		if($_POST['location'] != '' && $_POST['batch'] == '' && $_POST['openbox'] == '' && $_POST['quantity'] == ''){
+			$loc = $this->db->where('location', $_POST['location'])->get('locations')->row();
+			if(!$loc){
+				$response['status'] = false;
+				$response['message'] = 'Location not found';
+				$response['location'] = '';
+				echo json_encode($response);
+				return;
+			}
+			$response['status'] = true;
+			$response['message'] = 'Location correct, capture Batch number';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 2: Validate Batch
+		// ============================================
+		if($_POST['location'] != '' && $_POST['batch'] != '' && $_POST['openbox'] == '' && $_POST['quantity'] == ''){
+			// Look up HU by batch number
+			$hu = $this->db->where('batch', $_POST['batch'])->get('hus')->row();
+			if(!$hu){
+				$response['status'] = false;
+				$response['message'] = 'Batch not found';
+				$response['batch'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			// Check if HU is already used
+			if($hu->status == 'Used'){
+				$response['status'] = false;
+				$response['message'] = 'Batch already scanned';
+				$response['batch'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			// Return the HU tag for later use
+			$response['status'] = true;
+			$response['hu'] = $hu->tag;
+			$response['message'] = 'Batch correct, capture open box option';
+			echo json_encode($response);
+			return;
+		}
+
+		// ============================================
+		// STEP 3: Validate Open Box Option
+		// ============================================
+		if($_POST['location'] != '' && $_POST['batch'] != '' && $_POST['openbox'] != '' && $_POST['quantity'] == ''){
+			if($_POST['openbox'] == ''){
+				$response['status'] = false;
+				$response['message'] = 'Please select open box option';
+				$response['openbox'] = '';
+				echo json_encode($response);
+				return;
+			}
+			
+			// Get HU from batch to determine how to complete
+			$hu = $this->db->where('batch', $_POST['batch'])->get('hus')->row();
+			$huTag = $hu ? $hu->tag : $_POST['hu'];
+			
+			if($_POST['openbox'] == '1'){
+				// Open box - need to capture quantity
+				$response['status'] = true;
+				$response['hu'] = $huTag;
+				$response['message'] = 'Open box option selected, capture quantity';
+				echo json_encode($response);
+				return;
+			} else {
+				// Not open box - complete capture with original HU quantity
+				$this->db->where('batch', $_POST['batch'])->update('hus', array(
+					'status' => 'Used', 
+					'datetimecaptured' => date('Y-m-d H:i:s'), 
+					'iduser' => $this->session->userdata('ifatrimuserid'), 
+					'warehouse' => $this->session->userdata('ifatrimplant'), 
+					'location' => $_POST['location'], 
+					'openbox' => $_POST['openbox']
+				));
+
+				$response['status'] = true;
+				$response['hu'] = $huTag;
+				$response['message'] = 'Batch captured successfully';
+				$response['isComplete'] = true;
+				echo json_encode($response);
+				return;
+			}
+		}
+
+		// ============================================
+		// STEP 4: Validate Quantity and Complete Capture (Open Box only)
+		// ============================================
+		if($_POST['location'] != '' && $_POST['batch'] != '' && $_POST['openbox'] == '1' && $_POST['quantity'] != ''){
+			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+				$response['status'] = false;
+				$response['message'] = 'Quantity must be a positive number';
+				$response['quantity'] = '';
+				echo json_encode($response);
+				return;
+			}
+
+			// Complete capture with user-entered quantity
+			$this->db->where('batch', $_POST['batch'])->update('hus', array(
+				'status' => 'Used', 
+				'qty' => floatval($_POST['quantity']),
+				'datetimecaptured' => date('Y-m-d H:i:s'), 
+				'iduser' => $this->session->userdata('ifatrimuserid'), 
+				'warehouse' => $this->session->userdata('ifatrimplant'), 
+				'location' => $_POST['location'], 
+				'openbox' => $_POST['openbox']
+			));
+
+			$response['status'] = true;
+			$response['message'] = 'Batch captured successfully';
+			$response['isComplete'] = true;
+			echo json_encode($response);
+			return;
+		}
+	}
+
 	// Medica Capture
 	public function medica(){
 		$data['wh'] = $this->session->userdata('ifatrimplant');
