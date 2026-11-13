@@ -183,7 +183,7 @@ $(document).ready(function($) {
 	// to avoid camera freeze issues on iPhone
 	// ============================================
 	function showOpenBoxConfirm(callback) {
-		$('#confirmOpenBoxModal').modal('show');
+		$('#confirmOpenBoxModal').modal({backdrop: 'static', keyboard: false});
 		
 		// Remove previous handlers to avoid duplicates
 		$('#confirmOpenBoxYes').off('click').on('click', function() {
@@ -203,6 +203,7 @@ $(document).ready(function($) {
 	var lastScanned = '';  // Prevent duplicate scans
 	
 	function onScanSuccess(decodedText, decodedResult) {
+		if(requestPending || awaitingOpenBox) return;
 		// Prevent processing the same code twice in a row
 		if (decodedText === lastScanned) {
 			return;
@@ -239,7 +240,11 @@ $(document).ready(function($) {
 	// MAIN CODE PROCESSING FUNCTION
 	// Parses scanned/entered codes and sends to server
 	// ============================================
+	var requestPending = false;
+	var awaitingOpenBox = false;
+
 	function checkCode(decodedText) {
+		if(requestPending || awaitingOpenBox) return;
 		if(decodedText.trim() == '') {
 			return;
 		}
@@ -275,12 +280,13 @@ $(document).ready(function($) {
 			qty = decodedText;
 		}
 
-		console.log('Checking:', {location, batch, hu, openbox, qty});
+		sendCapture();
+	}
 
-		// ============================================
-		// AJAX REQUEST TO SERVER
-		// Validates and processes the capture step
-		// ============================================
+	// Confirmation submits state without consuming a quantity scan.
+	function sendCapture() {
+		if(requestPending) return;
+		requestPending = true;
 		$.ajax({
 			url: '<?= base_url(); ?>capture/checkCodeBatch',
 			type: 'POST',
@@ -294,6 +300,7 @@ $(document).ready(function($) {
 			},
 		})
 		.done(function(data) {
+			requestPending = false;
 			try {
 				if(data.status) {
 					// ============================================
@@ -321,10 +328,13 @@ $(document).ready(function($) {
 
 					// Check if we need to show open box confirmation
 					if(data.message.includes('capture open box option')) {
+						awaitingOpenBox = true;
 						showOpenBoxConfirm(function(isOpen) {
+							awaitingOpenBox = false;
 							openbox = isOpen ? '1' : '0';
 							openbox_flag = true;
-							checkCode(openbox);
+							qty = '';
+							sendCapture();
 						});
 						return;
 					}
@@ -358,12 +368,22 @@ $(document).ready(function($) {
 
 					// Reset the field that caused the error
 					if(data.message == 'Location not found') {
+						batch = '';
+						openbox = '';
+						qty = '';
+						openbox_flag = false;
 						location = '';
 						$('.alert-component').addClass('alert-danger');
 					} else if(data.message == 'Batch not found') {
+						openbox = '';
+						qty = '';
+						openbox_flag = false;
 						batch = '';
 						$('.alert-component').addClass('alert-warning');
 					} else if(data.message == 'Batch already scanned') {
+						openbox = '';
+						qty = '';
+						openbox_flag = false;
 						batch = '';
 						$('.alert-component').addClass('alert-warning');
 					} else if(data.message == 'Quantity must be a positive number') {
@@ -380,11 +400,12 @@ $(document).ready(function($) {
 				$('#last-scanned').html('There was an error processing the response');
 			}
 		})
-		.fail(function() {
+		.fail(function(xhr, status) {
+			requestPending = false;
 			$('.alert-component').addClass('alert-danger');
 			new PNotify({
 				title: 'Error',
-				text: 'An error occurred communicating with the server',
+				text: status === 'parsererror' ? 'Invalid server response. Please retry.' : 'Could not complete the request. Check your connection or sign in again.',
 				type: 'error'
 			});
 		});

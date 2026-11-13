@@ -756,6 +756,11 @@ class Capture extends MY_Controller {
 	 * 5. If not open box, complete capture with original HU quantity
 	 */
 	public function checkCodeHU(){
+		header('Content-Type: application/json; charset=utf-8');
+		// Normalize missing/invalid fields without PHP notices.
+		foreach (array('location', 'hu', 'batch', 'openbox', 'quantity') as $field) {
+			$_POST[$field] = isset($_POST[$field]) && is_scalar($_POST[$field]) ? trim((string) $_POST[$field]) : '';
+		}
 		// Initialize response with all possible fields
 		$response = array(
 			'status' => false,
@@ -771,6 +776,23 @@ class Capture extends MY_Controller {
 		file_put_contents('debug_capture_hu_'.date('Ymd').'.txt', 
 			date('H:i:s').' | '.implode('|', array_map(function($k, $v) { return "$k:$v"; }, array_keys($_POST), $_POST))."\n", 
 			FILE_APPEND);
+
+		// Revalidate persisted state on every step, not only on the first scan.
+		$error = '';
+		if ($_POST['location'] == '' || !$this->db->where('location', $_POST['location'])->get('locations')->row()) {
+			$error = 'Location not found';
+		} elseif ($_POST['openbox'] !== '' && !in_array($_POST['openbox'], array('0', '1'), true)) {
+			$error = 'Please select open box option';
+		} elseif ($_POST['hu'] !== '') {
+			$currentHU = $this->db->where('tag', $_POST['hu'])->get('hus')->row();
+			if (!$currentHU) $error = 'HU not found';
+			elseif ($currentHU->status == 'Used') $error = 'HU already scanned';
+		}
+		if ($error !== '') {
+			$response['message'] = $error;
+			echo json_encode($response);
+			return;
+		}
 
 		// ============================================
 		// STEP 1: Validate Location
@@ -838,7 +860,9 @@ class Capture extends MY_Controller {
 				return;
 			} else {
 				// Not open box - complete capture with original HU quantity
-				$this->db->where('tag', $_POST['hu'])->update('hus', array(
+				$previousDbDebug = $this->db->db_debug;
+				$this->db->db_debug = false;
+				$saved = $this->db->where('tag', $_POST['hu'])->where("COALESCE(status, '') !=", 'Used')->update('hus', array(
 					'status' => 'Used', 
 					'datetimecaptured' => date('Y-m-d H:i:s'), 
 					'iduser' => $this->session->userdata('ifatrimuserid'), 
@@ -846,6 +870,12 @@ class Capture extends MY_Controller {
 					'location' => $_POST['location'], 
 					'openbox' => $_POST['openbox']
 				));
+				$this->db->db_debug = $previousDbDebug;
+				if (!$saved || $this->db->affected_rows() < 1) {
+					$response['message'] = 'Capture could not be saved or was already captured. Reload and verify.';
+					echo json_encode($response);
+					return;
+				}
 
 				$response['status'] = true;
 				$response['message'] = 'HU captured successfully';
@@ -859,7 +889,7 @@ class Capture extends MY_Controller {
 		// STEP 4: Validate Quantity and Complete Capture (Open Box only)
 		// ============================================
 		if($_POST['location'] != '' && $_POST['hu'] != '' && $_POST['openbox'] == '1' && $_POST['quantity'] != ''){
-			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+			if(!is_numeric($_POST['quantity']) || !is_finite(floatval($_POST['quantity'])) || floatval($_POST['quantity']) <= 0){
 				$response['status'] = false;
 				$response['message'] = 'Quantity must be a positive number';
 				$response['quantity'] = '';
@@ -868,7 +898,9 @@ class Capture extends MY_Controller {
 			}
 
 			// Complete capture with user-entered quantity
-			$this->db->where('tag', $_POST['hu'])->update('hus', array(
+			$previousDbDebug = $this->db->db_debug;
+				$this->db->db_debug = false;
+				$saved = $this->db->where('tag', $_POST['hu'])->where("COALESCE(status, '') !=", 'Used')->update('hus', array(
 				'status' => 'Used', 
 				'qty' => floatval($_POST['quantity']),
 				'datetimecaptured' => date('Y-m-d H:i:s'), 
@@ -877,6 +909,12 @@ class Capture extends MY_Controller {
 				'location' => $_POST['location'], 
 				'openbox' => $_POST['openbox']
 			));
+				$this->db->db_debug = $previousDbDebug;
+				if (!$saved || $this->db->affected_rows() < 1) {
+					$response['message'] = 'Capture could not be saved or was already captured. Reload and verify.';
+					echo json_encode($response);
+					return;
+				}
 
 			$response['status'] = true;
 			$response['message'] = 'HU captured successfully';
@@ -884,6 +922,8 @@ class Capture extends MY_Controller {
 			echo json_encode($response);
 			return;
 		}
+		$response['message'] = 'Invalid capture state. Reload and scan again.';
+		echo json_encode($response);
 	}
 
 	// ============================================
@@ -912,6 +952,11 @@ class Capture extends MY_Controller {
 	 * 5. If not open box, complete capture with original HU quantity
 	 */
 	public function checkCodeBatch(){
+		header('Content-Type: application/json; charset=utf-8');
+		// Normalize missing/invalid fields without PHP notices.
+		foreach (array('location', 'hu', 'batch', 'openbox', 'quantity') as $field) {
+			$_POST[$field] = isset($_POST[$field]) && is_scalar($_POST[$field]) ? trim((string) $_POST[$field]) : '';
+		}
 		// Initialize response with all possible fields
 		$response = array(
 			'status' => false,
@@ -928,6 +973,23 @@ class Capture extends MY_Controller {
 		file_put_contents('debug_capture_batch_'.date('Ymd').'.txt', 
 			date('H:i:s').' | '.implode('|', array_map(function($k, $v) { return "$k:$v"; }, array_keys($_POST), $_POST))."\n", 
 			FILE_APPEND);
+
+		// Revalidate persisted state on every step, not only on the first scan.
+		$error = '';
+		if ($_POST['location'] == '' || !$this->db->where('location', $_POST['location'])->get('locations')->row()) {
+			$error = 'Location not found';
+		} elseif ($_POST['openbox'] !== '' && !in_array($_POST['openbox'], array('0', '1'), true)) {
+			$error = 'Please select open box option';
+		} elseif ($_POST['batch'] !== '') {
+			$currentHU = $this->db->where('batch', $_POST['batch'])->get('hus')->row();
+			if (!$currentHU) $error = 'Batch not found';
+			elseif ($currentHU->status == 'Used') $error = 'Batch already scanned';
+		}
+		if ($error !== '') {
+			$response['message'] = $error;
+			echo json_encode($response);
+			return;
+		}
 
 		// ============================================
 		// STEP 1: Validate Location
@@ -1003,7 +1065,9 @@ class Capture extends MY_Controller {
 				return;
 			} else {
 				// Not open box - complete capture with original HU quantity
-				$this->db->where('batch', $_POST['batch'])->update('hus', array(
+				$previousDbDebug = $this->db->db_debug;
+				$this->db->db_debug = false;
+				$saved = $this->db->where('batch', $_POST['batch'])->where("COALESCE(status, '') !=", 'Used')->update('hus', array(
 					'status' => 'Used', 
 					'datetimecaptured' => date('Y-m-d H:i:s'), 
 					'iduser' => $this->session->userdata('ifatrimuserid'), 
@@ -1011,6 +1075,12 @@ class Capture extends MY_Controller {
 					'location' => $_POST['location'], 
 					'openbox' => $_POST['openbox']
 				));
+				$this->db->db_debug = $previousDbDebug;
+				if (!$saved || $this->db->affected_rows() < 1) {
+					$response['message'] = 'Capture could not be saved or was already captured. Reload and verify.';
+					echo json_encode($response);
+					return;
+				}
 
 				$response['status'] = true;
 				$response['hu'] = $huTag;
@@ -1025,7 +1095,7 @@ class Capture extends MY_Controller {
 		// STEP 4: Validate Quantity and Complete Capture (Open Box only)
 		// ============================================
 		if($_POST['location'] != '' && $_POST['batch'] != '' && $_POST['openbox'] == '1' && $_POST['quantity'] != ''){
-			if(!is_numeric($_POST['quantity']) || floatval($_POST['quantity']) <= 0){
+			if(!is_numeric($_POST['quantity']) || !is_finite(floatval($_POST['quantity'])) || floatval($_POST['quantity']) <= 0){
 				$response['status'] = false;
 				$response['message'] = 'Quantity must be a positive number';
 				$response['quantity'] = '';
@@ -1034,7 +1104,9 @@ class Capture extends MY_Controller {
 			}
 
 			// Complete capture with user-entered quantity
-			$this->db->where('batch', $_POST['batch'])->update('hus', array(
+			$previousDbDebug = $this->db->db_debug;
+				$this->db->db_debug = false;
+				$saved = $this->db->where('batch', $_POST['batch'])->where("COALESCE(status, '') !=", 'Used')->update('hus', array(
 				'status' => 'Used', 
 				'qty' => floatval($_POST['quantity']),
 				'datetimecaptured' => date('Y-m-d H:i:s'), 
@@ -1043,6 +1115,12 @@ class Capture extends MY_Controller {
 				'location' => $_POST['location'], 
 				'openbox' => $_POST['openbox']
 			));
+				$this->db->db_debug = $previousDbDebug;
+				if (!$saved || $this->db->affected_rows() < 1) {
+					$response['message'] = 'Capture could not be saved or was already captured. Reload and verify.';
+					echo json_encode($response);
+					return;
+				}
 
 			$response['status'] = true;
 			$response['message'] = 'Batch captured successfully';
@@ -1050,6 +1128,8 @@ class Capture extends MY_Controller {
 			echo json_encode($response);
 			return;
 		}
+		$response['message'] = 'Invalid capture state. Reload and scan again.';
+		echo json_encode($response);
 	}
 
 	// Medica Capture
