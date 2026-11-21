@@ -369,3 +369,26 @@ $config['proxy_ips'] = '';
 
 /* End of file config.php */
 /* Location: ./application/config/config.php */
+
+// BATCH runtime is isolated from the original applications and from the other variants.
+$husRuntime='/var/www/.pits-private/batch/';
+$husSecret=json_decode(file_get_contents(getenv('PITS_BATCH_CONFIG')?:$husRuntime.'config.json'),true);
+$config['base_url']='https://novarum.app/PITS-BATCH/';
+$config['index_page']='';
+$config['encryption_key']=$husSecret['encryption_key'];
+$config['sess_cookie_name']='pits_batch_session';
+$config['sess_save_path']=$husRuntime.'sessions';
+$config['sess_expiration']=28800;
+$config['sess_match_ip']=FALSE;
+$config['cookie_prefix']='';
+$config['cookie_path']='/PITS-BATCH/';
+$config['cookie_domain']='';
+$config['cookie_secure']=TRUE;
+$config['cookie_httponly']=TRUE;
+$config['csrf_protection']=TRUE;
+$config['csrf_token_name']='batch_csrf';
+$config['csrf_cookie_name']='pits_batch_csrf';
+$config['csrf_regenerate']=FALSE;
+$config['log_path']=$husRuntime.'logs/';
+$config['log_threshold']=1;
+unset($husSecret);
