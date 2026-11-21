@@ -396,7 +396,7 @@ class Reports_model extends CI_Model {
                 where a.status = 'Used'
                 group by b.type_raw
             ) as tmp2 on tmp1.type_raw = tmp2.type_raw
-            order by value desc";
+            order by tmp1.value desc";
         $query = $this->db->query($querystr);
         return $query->result();
     }

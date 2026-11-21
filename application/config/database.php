@@ -1,57 +1,8 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-$active_group = 'default';
-$query_builder = TRUE;
-$db['default'] = array(
-	'dsn'	=> '',
-	'hostname' => 'localhost',
-	
-	'username' => 'root',
-	'password' => '',
-	//'database' => 'ifa',
-
-	'dbdriver' => 'mysqli',
-	'dbprefix' => '',
-	'pconnect' => FALSE,
-	'db_debug' => FALSE,//(ENVIRONMENT !== 'production'),
-	'cache_on' => FALSE,
-	'cachedir' => '',
-	'char_set' => 'utf8',
-	'dbcollat' => 'utf8_general_ci',
-	'swap_pre' => '',
-	'encrypt' => FALSE,
-	'compress' => FALSE,
-	'stricton' => FALSE,
-	'failover' => array(),
-	'save_queries' => TRUE
-);
-$tmparr=explode('/', $_SERVER['REQUEST_URI']);
-$dbstr='';
-switch ($tmparr[1]) {
-  case 'APICS':
-    $dbstr='nv_apics';
-    break;
-  case 'APICSVALLARTA':
-    $dbstr='nv_apicsvallarta';
-    break;
-  case 'APICSMONTERREY':
-    $dbstr='nv_apicsmonterrey';
-    break;
-  case 'APICSMEXICO':
-    $dbstr='nv_apicsmexico';
-    break;
-  case 'APICSMATRIZ':
-    $dbstr='nv_apicsmatriz';
-    break;
-  case 'APICSGUADALAJARA':
-    $dbstr='nv_apicsguadalajara';
-    break;
-  case 'APICSCANCUN':
-    $dbstr='nv_apicscancun';
-    break;
-  case 'APICSCABOS':
-    $dbstr='nv_apicscabos';
-    break;
-}
-
-$db['default']['database']='ifa';//$dbstr;
+ defined('BASEPATH') OR exit('No direct script access allowed');
+$runtime=getenv('PITS_HUS_CONFIG')?:'/var/www/.pits-private/hus/config.json';
+$secret=json_decode(file_get_contents($runtime),true);
+if(!$secret || !preg_match('/^pits_(?:dev_)?hus(?:_[a-z0-9]+)*$/',$secret['database']))throw new RuntimeException('HUS isolated database configuration required.');
+$active_group='default';$query_builder=TRUE;
+$db['default']=array('dsn'=>'','hostname'=>$secret['host'],'username'=>$secret['sql_user'],'password'=>$secret['sql_password'],'database'=>$secret['database'],'dbdriver'=>'mysqli','dbprefix'=>'','pconnect'=>FALSE,'db_debug'=>FALSE,'cache_on'=>FALSE,'cachedir'=>'','char_set'=>'utf8','dbcollat'=>'utf8_general_ci','swap_pre'=>'','encrypt'=>FALSE,'compress'=>FALSE,'stricton'=>TRUE,'failover'=>array(),'save_queries'=>FALSE);
+unset($secret);

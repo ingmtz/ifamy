@@ -1,8 +1,9 @@
+Options -Indexes
 <IfModule mod_rewrite.c>
-    RewriteEngine on
-    Rewritebase /
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond $1 !^(index\.php|css|images|robots\.txt)
-    RewriteRule ^(.*)$ /ifamy/index.php/$1 [L]
+RewriteEngine On
+RewriteBase /PITS-HUS/
+RewriteRule ^(?:application|system|database|tests|\.git)(?:/|$) - [F,L,NC]
+RewriteRule ^assets/hus/[^/]+\.(?:css|js)$ - [L]
+RewriteRule ^index\.php(?:/|$) - [L]
+RewriteRule ^(.*)$ index.php/$1 [L,QSA]
 </IfModule>
