@@ -369,3 +369,26 @@ $config['proxy_ips'] = '';
 
 /* End of file config.php */
 /* Location: ./application/config/config.php */
+
+// TAGS runtime is isolated from the original applications and from the other variants.
+$tagsRuntime='/var/www/.pits-private/tags/';
+$tagsSecret=json_decode(file_get_contents(getenv('PITS_TAGS_CONFIG')?:$tagsRuntime.'config.json'),true);
+$config['base_url']='https://novarum.app/PITS-TAGS/';
+$config['index_page']='';
+$config['encryption_key']=$tagsSecret['encryption_key'];
+$config['sess_cookie_name']='pits_tags_session';
+$config['sess_save_path']=$tagsRuntime.'sessions';
+$config['sess_expiration']=28800;
+$config['sess_match_ip']=FALSE;
+$config['cookie_prefix']='';
+$config['cookie_path']='/PITS-TAGS/';
+$config['cookie_domain']='';
+$config['cookie_secure']=TRUE;
+$config['cookie_httponly']=TRUE;
+$config['csrf_protection']=TRUE;
+$config['csrf_token_name']='tags_csrf';
+$config['csrf_cookie_name']='pits_tags_csrf';
+$config['csrf_regenerate']=FALSE;
+$config['log_path']=$tagsRuntime.'logs/';
+$config['log_threshold']=1;
+unset($tagsSecret);
