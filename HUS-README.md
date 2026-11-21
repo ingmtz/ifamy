@@ -21,7 +21,9 @@ Runtime JSON is outside every application docroot, at `/var/www/.pits-private/hu
 
 ## XLSX import contracts
 Inventory keeps original positions: C HU, D item, E description, F batch, G quantity, H UOM, Q warehouse, R location, T unit price, V area. Optional W adds area description; original22-column files still work. Keep identifiers as text to preserve leading zeros and avoid spreadsheet numeric truncation. Material description/price/UOM must be consistent for the same item; conflicting files fail validation rather than multiply joined rows.
-Locations: plant, area, warehouse, location, platform. Type Raw: material, material2, type_raw, general. Whole-file validation precedes a transaction across all reference/detail updates; an invalid row leaves no partial import. XLSX only,20MB compressed limit; no upload is saved under a public filename. An import omitting an already captured HU is rejected rather than deleting its capture.
+Rows without HU remain reference inventory (masterdata/perpetuo), matching the existing importer; they do not become capturable HU units. Missing warehouse/area metadata is not fabricated.
+
+Locations: plant, area, warehouse, location, platform. A location may appear in multiple warehouses, as in the current data; capture resolves the warehouse from the HU when possible. Type Raw: material, material2, type_raw, general. Whole-file validation precedes a transaction across all reference/detail updates; an invalid row leaves no partial import. XLSX only,20MB compressed limit; no upload is saved under a public filename. An import omitting an already captured HU is rejected rather than deleting its capture.
 
 ## Meaningful verification
 `tests/hus_integration.php` is CLI-only and refuses any database other than the disposable `pits_dev_hus_qa_20261121`. It loads the real CI database driver and production model, using a minimal CI_Model host. Set `PITS_HUS_CONFIG` to a private QA-only JSON. Modes: seed, race (launch two processes), failure (QA-only failure trigger required), basic, import (synthetic XLSX fixtures required), global. Never seed a live or review database.

@@ -183,7 +183,7 @@ class Pits_hus_model extends CI_Model {
                     $master[$r['material']]=array('itemcode'=>$r['material'],'description'=>$r['material_description'],'cost_price'=>$r['cost_price'],'uom'=>$r['um']);
                     if(!isset($perpetuo[$r['material']])) $perpetuo[$r['material']]=0;
                     $perpetuo[$r['material']]+=(float)$r['qty'];
-                    if(!isset($protected[$r['hu']])) $this->insert('hus',array('tag'=>$r['hu'],'itemcode'=>$r['material'],'qty'=>$r['qty'],'warehouse'=>$r['wh'],'area'=>$r['area'],'description'=>$r['material_description'],'area_description'=>$r['area_description'],'uom'=>$r['um'],'batch'=>$r['batch'],'location'=>$r['location'],'plant'=>'Unknown','printcounter'=>0,'auditcounter'=>0));
+                    if($r['hu']!=='' && !isset($protected[$r['hu']])) $this->insert('hus',array('tag'=>$r['hu'],'itemcode'=>$r['material'],'qty'=>$r['qty'],'warehouse'=>$r['wh'],'area'=>$r['area'],'description'=>$r['material_description'],'area_description'=>$r['area_description'],'uom'=>$r['um'],'batch'=>$r['batch'],'location'=>$r['location'],'plant'=>'Unknown','printcounter'=>0,'auditcounter'=>0));
                 }
                 foreach($master as $r) $this->insert('masterdata',$r);
                 foreach($perpetuo as $item=>$qty) $this->insert('perpetuo',array('itemcode'=>$item,'onhand'=>$qty));

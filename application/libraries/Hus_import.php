@@ -18,7 +18,7 @@ class Hus_import {
         $zip=new ZipArchive();if($zip->open($file)!==true)throw new DomainException('Invalid XLSX archive.');
         $size=0;for($i=0;$i<$zip->numFiles;$i++)$size+=$zip->statIndex($i)['size'];$zip->close();
         if($size>150*1024*1024)throw new DomainException('Expanded file is too large.');
-        $reader=ReaderFactory::create(Type::XLSX);$rows=array();$master=array();$seenLocations=array();
+        $reader=ReaderFactory::create(Type::XLSX);$rows=array();$master=array();
         try {
             $reader->open($file);
             foreach($reader->getSheetIterator() as $sheet) if($sheet->isActive()) foreach($sheet->getRowIterator() as $n=>$row) {
@@ -28,7 +28,7 @@ class Hus_import {
                 if($kind==='inventory') {
                     if(count($row)<22)throw new DomainException('Inventory requires the existing 22-column layout. Row '.$n);
                     $r=array('hu'=>$this->text($row,2,20),'material'=>$this->text($row,3,50),'material_description'=>$this->text($row,4),'batch'=>$this->text($row,5,100),'qty'=>$this->numeric($row,6),'um'=>$this->text($row,7,5),'location'=>$this->text($row,17,50),'wh'=>$this->text($row,16,50),'cost_price'=>$this->numeric($row,19),'area'=>$this->text($row,21),'area_description'=>isset($row[22])?$this->text($row,22):'');
-                    if($r['hu']==='' || $r['material']==='' || $r['wh']==='' || $r['area']==='')throw new DomainException('HU, material, warehouse and area are required. Row '.$n);
+                    if($r['material']==='')throw new DomainException('Material is required. Row '.$n);
                     $signature=json_encode(array($r['material_description'],(float)$r['cost_price'],$r['um']));
                     if(isset($master[$r['material']]) && $master[$r['material']]!==$signature)throw new DomainException('Conflicting description/price/UOM for item '.$r['material']);
                     $master[$r['material']]=$signature;
@@ -36,8 +36,6 @@ class Hus_import {
                     if(count($row)<5)throw new DomainException('Locations require 5 columns.');
                     $r=array('plant'=>$this->text($row,0),'area'=>$this->text($row,1),'wh'=>$this->text($row,2),'location'=>$this->text($row,3),'plataforma'=>$this->text($row,4,20));
                     if($r['wh']==='' || $r['location']==='')throw new DomainException('Warehouse and location are required.');
-                    if(isset($seenLocations[$r['location']]) && $seenLocations[$r['location']]!==$r['wh'])throw new DomainException('Location is ambiguous across warehouses: '.$r['location']);
-                    $seenLocations[$r['location']]=$r['wh'];
                 } elseif($kind==='rawtype') {
                     if(count($row)<4)throw new DomainException('Raw Type requires 4 columns.');
                     $r=array('material'=>$this->text($row,0),'material2'=>$this->text($row,1),'type_raw'=>$this->text($row,2),'general'=>$this->text($row,3));

@@ -26,6 +26,20 @@ if($mode==='seed') {
  }
  check(true,'QA fixtures seeded');exit;
 }
+if($mode==='legacyformat') {
+ require APPPATH.'libraries/Hus_import.php';$parser=new Hus_import();
+ $rows=$parser->parse('/var/www/.pits-private/hus/qa-legacy22.xlsx','inventory');
+ check(count($rows)===4 && $rows[0]['area_description']==='', 'original22-column inventory layout accepted without optional area description');
+ check($rows[3]['hu']==='' && $rows[3]['material']==='ZZHUS_A','reference inventory rows without HU retained like existing importer');
+ $locations=$parser->parse('/var/www/.pits-private/hus/qa-locations.xlsx','locations');
+ check(count($locations)===2 && $locations[0]['location']===$locations[1]['location'],'existing locations shared across warehouses accepted');
+ // Exercise no-HU row import on QA only after removing captured QA test state.
+ query('DELETE FROM hus');query('DELETE FROM pits_hu_captures');query('DROP TRIGGER qa_fail_import');
+ $m->importRows('inventory',$rows,99,'qa-legacy22');
+ check((int)query('SELECT COUNT(*) n FROM hus')->row()->n===3,'no-HU reference row does not become a capture unit');
+ check(abs((float)query("SELECT onhand FROM perpetuo WHERE itemcode='ZZHUS_A'")->row()->onhand-9.4)<1e-9,'no-HU row contributes to reference on-hand without duplicating capture');
+ exit;
+}
 if($mode==='global') {
  query("INSERT INTO locations(wh,location) SELECT 'ZZHUS_OTHER','ZZHUS_ALT' WHERE NOT EXISTS(SELECT 1 FROM locations WHERE location='ZZHUS_ALT')");
  try{$m->capture('ZZHUS_WEB26','ZZHUS_ALT',99,'qa-global-duplicate');throw new RuntimeException('Alternate warehouse allowed recapture');}catch(UnexpectedValueException $e){check(true,'captured HU remains globally unique across other warehouse/location');}
