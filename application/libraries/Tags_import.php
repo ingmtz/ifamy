@@ -34,11 +34,11 @@ class Tags_import {
                     $master[$r['material']]=$signature;
                 } elseif($kind==='locations') {
                     if(count($row)<5)throw new DomainException('Locations require 5 columns.');
-                    $r=array('plant'=>$this->text($row,0),'area'=>$this->text($row,1),'wh'=>$this->text($row,2),'location'=>$this->text($row,2),'plataforma'=>$this->text($row,3,20));
+                    $r=array('plant'=>$this->text($row,0),'area'=>$this->text($row,1),'wh'=>$this->text($row,2),'location'=>$this->text($row,3),'plataforma'=>$this->text($row,4,20));
                     if($r['wh']==='' || $r['location']==='')throw new DomainException('Warehouse and location are required.');
                 } elseif($kind==='rawtype') {
                     if(count($row)<4)throw new DomainException('Raw Type requires 4 columns.');
-                    $r=array('material'=>$this->text($row,0),'material2'=>$this->text($row,1),'type_raw'=>$this->text($row,2),'general'=>$this->text($row,2));
+                    $r=array('material'=>$this->text($row,0),'material2'=>$this->text($row,1),'type_raw'=>$this->text($row,2),'general'=>$this->text($row,3));
                     if($r['material']==='')throw new DomainException('Material is required.');
                 } else throw new DomainException('Unknown import type.');
                 $rows[]=$r;

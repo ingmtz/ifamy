@@ -50,7 +50,17 @@ $('lookup-form')?.addEventListener('submit',async e=>{e.preventDefault();busy(e.
 $('audit-form')?.addEventListener('submit',async e=>{e.preventDefault();if(!inspected)return;const f=e.currentTarget;busy(f,true);try{const body=new FormData(f);body.set('tag',inspected.tag);body.set('revision',inspected.revision);const r=await api('audit',body);notice(r.message);f.hidden=true;inspected=null;await loadReport();}catch(err){notice(err.message,true);}finally{busy(f,false);}});
 $('edit-form')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;busy(f,true);try{const r=await api('correct',new FormData(f));$('edit-dialog').close();notice(r.message);await loadReport();}catch(err){notice(err.message,true);}finally{busy(f,false);}});
 $('cancel-edit')?.addEventListener('click',()=>$('edit-dialog').close());
-$('import-form')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;busy(f,true);notice('Validando archivo completo e importando…');try{const r=await api('importfile',new FormData(f));notice(r.message);f.reset();}catch(err){notice(err.message,true);}finally{busy(f,false);}});
+document.querySelectorAll('.import-form').forEach(f=>f.addEventListener('submit',async e=>{
+ e.preventDefault();if(f.dataset.loading==='true')return;
+ const status=$('import-status-'+f.dataset.importKind),file=f.elements.file.files[0];
+ status.className='import-status';
+ if(!file||!file.name.toLowerCase().endsWith('.xlsx')){status.textContent='Selecciona un archivo XLSX.';status.classList.add('error');return;}
+ if(file.size>20*1024*1024){status.textContent='El archivo supera el máximo de 20 MB.';status.classList.add('error');return;}
+ f.dataset.loading='true';busy(f,true);status.textContent='Validando e importando '+file.name+'…';
+ try{const result=await api('importfile',new FormData(f));status.textContent=file.name+' · '+result.message;status.classList.add('success');f.reset();}
+ catch(err){status.textContent=file.name+' · '+err.message;status.classList.add('error');}
+ finally{f.dataset.loading='false';busy(f,false);}
+}));
 $('refresh')?.addEventListener('click',loadReport);$('search')?.addEventListener('input',renderReport);
 loadReport();
 
