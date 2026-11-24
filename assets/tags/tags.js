@@ -126,18 +126,34 @@ window.addEventListener('pagehide',stopCamera);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();else startCamera();});
 // Preserve external barcode readers without exposing an additional input field.
 let scanBuffer='',keyAt=0;document.addEventListener('keydown',e=>{if(cfg.page!=='capture'||e.ctrlKey||e.metaKey||e.altKey||$('scan-confirm')?.open||e.target.closest('input,textarea,select'))return;if(e.key==='Enter'){e.preventDefault();const value=scanBuffer;scanBuffer='';processScan(value);}else if(e.key.length===1){if(Date.now()-keyAt>150)scanBuffer='';scanBuffer+=e.key;keyAt=Date.now();}});
-// Original short success/error sounds, unlocked by a page gesture on mobile browsers.
-const scanAudio={context:null,buffers:{},loads:{}};
+// Use the original HTMLAudio playback path. Mobile needs an explicit gesture, separate from camera permission.
+const scanAudio={players:{},enabled:false,unlocking:false};
+function audioStatus(message,enabled=false){scanAudio.enabled=enabled;if($('sound-status'))$('sound-status').textContent=message;if($('sound-enable'))$('sound-enable').textContent=enabled?'Probar sonido':'Activar sonido';}
 function initScanAudio(){
- if(cfg.page!=='capture'||scanAudio.context)return;
- const Context=window.AudioContext||window.webkitAudioContext;if(!Context)return;
- try{scanAudio.context=new Context();for(const name of ['beep','wrong'])scanAudio.loads[name]=fetch(cfg.base+'assets/'+({hu:'hus',tag:'tags',batch:'batch'}[scanMode])+'/'+name+'.mp3').then(r=>{if(!r.ok)throw new Error('Audio unavailable');return r.arrayBuffer();}).then(data=>scanAudio.context.decodeAudioData(data)).then(buffer=>{scanAudio.buffers[name]=buffer;return buffer;}).catch(()=>null);}catch(e){}
+ if(cfg.page!=='capture'||scanAudio.players.beep)return;
+ const mode={hu:'hus',tag:'tags',batch:'batch'}[scanMode];
+ for(const name of ['beep','wrong']){const player=new Audio(cfg.base+'assets/'+mode+'/'+name+'.mp3');player.preload='auto';player.volume=1;player.muted=false;player.setAttribute('playsinline','');player.addEventListener('error',()=>audioStatus('No se pudo cargar el sonido. Toca Activar sonido para reintentar.'));scanAudio.players[name]=player;}
+ audioStatus('Toca Activar sonido para escuchar el bip de prueba.');
 }
-function unlockScanAudio(){initScanAudio();if(scanAudio.context?.state==='suspended')scanAudio.context.resume().catch(()=>{});}
-document.addEventListener('pointerdown',unlockScanAudio,{passive:true});document.addEventListener('touchend',unlockScanAudio,{passive:true});document.addEventListener('keydown',unlockScanAudio);
-async function playScanSound(name){
- try{initScanAudio();const ctx=scanAudio.context;if(!ctx)return;if(ctx.state!=='running')return;const buffer=scanAudio.buffers[name]||await scanAudio.loads[name];if(!buffer)return;const source=ctx.createBufferSource();source.buffer=buffer;source.connect(ctx.destination);source.start();}catch(e){/* Audio must never interrupt or retry an inventory operation. */}
+function prepareAudioSession(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}}
+function unlockScanAudio(){
+ initScanAudio();if(scanAudio.unlocking)return;scanAudio.unlocking=true;prepareAudioSession();
+ const beep=scanAudio.players.beep,wrong=scanAudio.players.wrong;if(!beep||!wrong){scanAudio.unlocking=false;return;}
+ // Both play calls happen synchronously in the trusted click, not after a fetch or await.
+ beep.pause();beep.currentTime=0;beep.muted=false;beep.volume=1;
+ wrong.pause();wrong.currentTime=0;wrong.muted=true;
+ let first,second;
+ try{first=beep.play();second=wrong.play();}
+ catch(e){audioStatus('El navegador bloqueó el sonido. Toca Activar sonido nuevamente.');wrong.muted=false;scanAudio.unlocking=false;return;}
+ Promise.resolve(second).then(()=>{wrong.pause();wrong.currentTime=0;wrong.muted=false;}).catch(()=>{wrong.muted=false;});
+ Promise.resolve(first).then(()=>audioStatus('Sonido activado. Si no escuchaste el bip, sube el volumen multimedia.',true)).catch(()=>audioStatus('El navegador bloqueó el sonido. Toca Activar sonido nuevamente.')).finally(()=>{scanAudio.unlocking=false;});
 }
+function playScanSound(name){
+ try{initScanAudio();const player=scanAudio.players[name];if(!player||scanAudio.unlocking)return;prepareAudioSession();player.pause();player.currentTime=0;player.muted=false;player.volume=1;
+ const playing=player.play();Promise.resolve(playing).then(()=>audioStatus('Sonido activado.',true)).catch(()=>audioStatus('Sonido bloqueado: toca Activar sonido para habilitarlo.'));
+ }catch(e){audioStatus('Sonido no disponible: toca Activar sonido para reintentar.');}
+}
+$('sound-enable')?.addEventListener('click',unlockScanAudio);
 if(cfg.page==='capture')initScanAudio();
 
 if(cfg.page==='capture'){scanPrompt();startCamera();}
