@@ -25,7 +25,7 @@ class Pits_hus_model extends CI_Model {
             h.qty AS Quantity,COALESCE(m.cost_price,0) AS `Unit Price USD`,h.qty*COALESCE(m.cost_price,0) AS `Amount USD`,
             h.warehouse AS WAREHOUSE,h.area AS AREA,COALESCE(h.area_description,'') AS `Area Description`,h.location AS Location,
             COALESCE(h.status,'Pending') AS Status,h.batch AS Batch,h.uom AS UOM
-            FROM hus h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
+            FROM hus h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(type) type,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
             WHERE h.tag=? ORDER BY h.Id",array($hu));
     }
     public function inspect($hu) {
@@ -106,7 +106,7 @@ class Pits_hus_model extends CI_Model {
         return array('row'=>$row,'revision'=>hash('sha256',json_encode($row)));
     }
     private function variation() {
-        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,
+        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,COALESCE(m.type,'') AS Type,
             COALESCE(p.onhand,0) AS `On Hand`,COALESCE(m.cost_price,0) AS `Unit Price USD`,
             COALESCE(p.onhand,0)*COALESCE(m.cost_price,0) AS `On Hand USD`,COALESCE(c.counted,0) AS Counted,
             COALESCE(c.counted,0)*COALESCE(m.cost_price,0) AS `Counted USD`,
@@ -115,7 +115,7 @@ class Pits_hus_model extends CI_Model {
             ABS(COALESCE(c.counted,0)-COALESCE(p.onhand,0)) AS `Absolute Variation`,
             ABS((COALESCE(c.counted,0)-COALESCE(p.onhand,0))*COALESCE(m.cost_price,0)) AS `Absolute Variation USD`
             FROM (SELECT itemcode FROM masterdata UNION SELECT itemcode FROM perpetuo UNION SELECT itemcode FROM hus WHERE status='Used') i
-            LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=i.itemcode
+            LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(type) type,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=i.itemcode
             LEFT JOIN (SELECT itemcode,SUM(onhand) onhand FROM perpetuo GROUP BY itemcode) p ON p.itemcode=i.itemcode
             LEFT JOIN (SELECT itemcode,SUM(qty) counted FROM hus WHERE status='Used' GROUP BY itemcode) c ON c.itemcode=i.itemcode
             WHERE i.itemcode IS NOT NULL ORDER BY i.itemcode");
@@ -148,7 +148,7 @@ class Pits_hus_model extends CI_Model {
         if($kind==='total') $rows=$this->rows("SELECT h.tag HU,h.itemcode `Item Code`,COALESCE(NULLIF(h.description,''),m.description,'') Description,h.Id,h.qty Quantity,
             COALESCE(m.cost_price,0) `Unit Price USD`,h.qty*COALESCE(m.cost_price,0) `Amount USD`,h.warehouse WAREHOUSE,h.area AREA,
             COALESCE(h.area_description,'') `Area Description`,h.location Location,h.datetimecaptured `Captured At`,u.name `Captured By`
-            FROM hus h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
+            FROM hus h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(type) type,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
             LEFT JOIN users u ON u.Id=h.iduser WHERE h.status='Used' ORDER BY h.tag,h.Id");
         elseif($kind==='audit') $rows=$this->rows('SELECT a.id,a.hu HU,a.warehouse WAREHOUSE,a.location Location,a.result Result,a.observations Observations,u.name Auditor,a.created_at Date,a.snapshot Content FROM pits_hu_audits a LEFT JOIN users u ON u.Id=a.user_id ORDER BY a.id DESC');
         elseif($kind==='history') $rows=$this->rows('SELECT c.id,c.hu HU,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_hu_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');

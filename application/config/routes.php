@@ -12,4 +12,5 @@ foreach(array('lookup','checklocation','capture','audit','editable','correct','i
 $route['api/report/(:any)']='hus/report/$1';
 $route['export/(:any)']='hus/export/$1';
 // Fail closed: no legacy TAG, BATCH, Openbox, upload or AJAX endpoints in HUS.
+$route['api/schedule']='hus/schedule';
 $route['(.+)']='hus/missing';
