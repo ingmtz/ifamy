@@ -8,7 +8,7 @@ async function api(path,values=null){
  if(values!==null){const body=values instanceof FormData?values:new URLSearchParams(values);body.set(cfg.csrfName,cfg.csrf);options.method='POST';options.body=body;}
  let r;try{r=await fetch(cfg.base+'api/'+path,options);}catch(e){throw new Error('Sin conexión. Consulta el HU antes de reintentar: no se ha confirmado el resultado.');}
  let result;try{result=await r.json();}catch(e){throw new Error('Respuesta no confirmada. Consulta el estado antes de reintentar.');}
- if(!r.ok || !result.ok)throw new Error((result.message||'Operación no confirmada')+(result.correlation?' · Ref. '+result.correlation:''));
+ if(!r.ok || !result.ok)throw new Error((result.message||'Operación no confirmada')+(cfg.page!=='capture'&&result.correlation?' · Ref. '+result.correlation:''));
  return result.data;
 }
 function table(rows,container,meta={},editable=false){
@@ -95,6 +95,7 @@ function parseScan(text,key){
 }
 async function processScan(raw){
  if(scanBusy||$('scan-confirm').open)return;const text=String(raw).trim();if(!text)return;
+ $('scan-last-value').textContent='Último escaneo: '+text;
  if(text===lastScan&&Date.now()-lastScanAt<1500)return;lastScan=text;lastScanAt=Date.now();scanBusy=true;
  try{
   const key=scanSteps[scanStep],value=parseScan(text,key);
@@ -103,9 +104,9 @@ async function processScan(raw){
   else if(key==='qty'&&(!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>1e14))throw new Error('Escanea una cantidad válida mayor que cero.');
   let compoundQty=null;if(key==='itemcode'&&text.split('|').length===6){compoundQty=text.split('|')[3].replace(/^PAQTY/,'');if(!Number.isFinite(Number(compoundQty))||Number(compoundQty)<=0||Number(compoundQty)>1e14)throw new Error('Cantidad inválida en etiqueta.');}
   scanValues[key]=value;scanStep++;if(compoundQty!==null){scanValues.qty=compoundQty;scanStep++;}
-  if(scanStep<scanSteps.length){scanPrompt();$('camera-status').textContent='Código leído. Continúa con '+scanLabels[scanSteps[scanStep]]+'.';}
+  if(scanStep<scanSteps.length){scanPrompt();$('camera-status').textContent='Escaneado: '+value+'. Continúa con '+scanLabels[scanSteps[scanStep]]+'.';}
   else{await stopCamera();$('scan-review').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU',batch:'BATCH',tag:'TAG',itemcode:'Parte',qty:'Cantidad'}[k])+': '+v).join('\n')+'\n'+(scanMode==='tag'?'':scanInspection.rows.length+' partidas');$('scan-confirm').showModal();}
- }catch(e){notice(e.message,true);$('camera-status').textContent=e.message;}
+ }catch(e){notice('Escaneado: '+text+' · '+e.message,true);$('camera-status').textContent='Escaneado: '+text+' · '+e.message;}
  finally{scanBusy=false;}
 }
 function resetScan(){scanValues={};scanStep=0;scanInspection=null;lastScan='';scanPrompt();}
@@ -114,8 +115,8 @@ $('scan-restart')?.addEventListener('click',()=>{if(scanBusy)return;resetScan();
 $('scan-cancel')?.addEventListener('click',()=>{$('scan-confirm').close();resetScan();startCamera();});
 $('scan-save')?.addEventListener('click',async()=>{
  if(scanBusy)return;scanBusy=true;$('scan-save').disabled=true;$('scan-cancel').disabled=true;
- try{const r=await api('capture',scanValues);$('scan-confirm').close();notice(`${r.message} ${r.partidas} partidas · Ref. ${r.correlation}`);resetScan();}
- catch(e){$('scan-confirm').close();notice(e.message,true);resetScan();$('camera-status').textContent='Escanea nuevamente; el servidor verificará el estado antes de permitir una captura.';}
+ try{const r=await api('capture',scanValues);$('scan-confirm').close();notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · Locación: ${scanValues.location} · ${r.partidas} partidas guardadas.`);resetScan();}
+ catch(e){$('scan-confirm').close();notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · ${e.message}`,true);resetScan();$('camera-status').textContent='Escanea nuevamente; el servidor verificará el estado antes de permitir una captura.';}
  finally{scanBusy=false;$('scan-save').disabled=false;$('scan-cancel').disabled=false;startCamera();}
 });
 $('scan-confirm')?.addEventListener('cancel',e=>{e.preventDefault();if(!scanBusy)$('scan-cancel').click();});
