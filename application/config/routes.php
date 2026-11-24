@@ -12,4 +12,5 @@ foreach(array('lookup','checklocation','capture','audit','editable','correct','i
 $route['api/report/(:any)']='batch/report/$1';
 $route['export/(:any)']='batch/export/$1';
 // Fail closed: no legacy TAG, BATCH, Openbox, upload or AJAX endpoints in BATCH.
+$route['api/schedule']='batch/schedule';
 $route['(.+)']='batch/missing';

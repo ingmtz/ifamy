@@ -29,8 +29,8 @@ async function loadReport(){
 }
 function renderReport(){
  const q=($('search')?.value||'').toLocaleLowerCase();const rows=report.rows.filter(r=>Object.values(r).some(v=>String(v??'').toLocaleLowerCase().includes(q)));
- table(rows,$('report'),report,cfg.page==='total'&&cfg.role===3);
- if(report.units){const heading=document.createElement('h2');heading.textContent='Batches capturados y pendientes';heading.style.marginTop='28px';const detail=document.createElement('div');$('report').append(heading,detail);const units=report.units.filter(r=>Object.values(r).some(v=>String(v??'').toLocaleLowerCase().includes(q)));table(units,detail);}
+ if(cfg.page==='variation')renderVariation(rows);else if(cfg.page==='progress')renderProgress(rows);else table(rows,$('report'),report,cfg.page==='total'&&cfg.role===3);
+ if(report.units && cfg.page!=='progress'){const heading=document.createElement('h2');heading.textContent='Batches capturados y pendientes';heading.style.marginTop='28px';const detail=document.createElement('div');$('report').append(heading,detail);const units=report.units.filter(r=>Object.values(r).some(v=>String(v??'').toLocaleLowerCase().includes(q)));table(units,detail);}
 
  if($('summary')){$('summary').replaceChildren();const values=cfg.page==='progress'?report.totals:{Registros:report.rows.length};for(const [k,v]of Object.entries(values||{})){if(!['Batches','Captured','Pending','Registros'].includes(k))continue;const card=document.createElement('div');card.className='stat';const label=document.createElement('span');label.textContent=k;const n=document.createElement('strong');n.textContent=v;card.append(label,n);$('summary').append(card);}}
 }
@@ -57,3 +57,71 @@ $('refresh')?.addEventListener('click',loadReport);$('search')?.addEventListener
 loadReport();
 
 const requestedBATCH=new URLSearchParams(window.location.search).get('batch');if(requestedBATCH&&$('lookup-form')){$('lookup-batch').value=requestedBATCH;lookup(requestedBATCH).catch(e=>notice(e.message,true));}
+
+// Shared presentation only. Variant APIs remain authoritative for all counts and writes.
+const mobileMenu=window.matchMedia('(max-width:800px)');
+function setMenu(open){$('main-menu').hidden=!open;$('menu-toggle').setAttribute('aria-expanded',String(open));}
+setMenu(!mobileMenu.matches);$('menu-toggle').addEventListener('click',()=>setMenu($('main-menu').hidden));
+mobileMenu.addEventListener('change',e=>setMenu(!e.matches));
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&mobileMenu.matches)setMenu(false);});
+let scanner=null,cameraGeneration=0,cameraOpening=false;
+async function stopCamera(){cameraGeneration++;if(scanner){const active=scanner;scanner=null;try{await active.stop();}catch(e){}try{active.clear();}catch(e){}}if($('camera-reader')){$('camera-reader').hidden=true;$('camera-stop').hidden=true;}}
+$('camera-stop')?.addEventListener('click',stopCamera);
+window.addEventListener('pagehide',stopCamera);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();});
+$('camera-start')?.addEventListener('click',async()=>{
+ if(cameraOpening)return;cameraOpening=true;await stopCamera();const generation=cameraGeneration,status=$('camera-status');$('camera-start').disabled=true;
+ try{
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Cámara no disponible. Verifica que estés usando HTTPS.');
+  if(!window.Html5Qrcode)throw new Error('No se pudo cargar el lector de códigos. Recarga la página o usa un lector externo.');
+  $('camera-reader').hidden=false;$('camera-stop').hidden=false;
+  const reader=new Html5Qrcode('camera-reader',{verbose:false});scanner=reader;
+  const success=async text=>{if(generation!==cameraGeneration)return;const input=$($('camera-target').value);input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));await stopCamera();input.focus();status.textContent='Código leído. Revisa los campos antes de guardar.';};
+  const options={fps:10,disableFlip:true};
+  try{await reader.start({facingMode:'environment'},{...options,videoConstraints:{facingMode:{ideal:'environment'}}},success,()=>{});}
+  catch(e){const name=e.name||String(e);if(!/OverconstrainedError|NotFoundError|DevicesNotFoundError/.test(name))throw e;await reader.start({facingMode:'environment'},{...options,videoConstraints:{}},success,()=>{});}
+  if(generation!==cameraGeneration){try{await reader.stop();reader.clear();}catch(e){}return;}
+  status.textContent='Apunta al código con la cámara trasera. La lectura no guarda automáticamente.';
+ }catch(e){await stopCamera();status.textContent=/NotAllowed|Permission|denied/i.test(String(e))?'Permiso de cámara denegado. Habilítalo en el navegador o usa entrada manual.':(e.message||'No se pudo abrir la cámara. Puedes escribir o usar un lector externo.');}
+ finally{cameraOpening=false;$('camera-start').disabled=false;}
+});
+function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
+const money=v=>'$'+Math.ceil(Number(v||0)).toLocaleString('en-US');
+const integer=v=>Math.ceil(Number(v||0)).toLocaleString('en-US');
+let variationPage=0,variationSize=25,variationSort='Item Code',variationAscending=true;
+function reportActions(container){const bar=el('div',undefined,'report-actions');const excel=el('a','Excel','button secondary small');excel.href=cfg.base+'export/'+cfg.page;const print=el('button','Print','secondary small');print.type='button';print.onclick=()=>window.print();bar.append(excel,print);container.append(bar);return bar;}
+function renderVariation(rows){
+ const container=$('report');container.replaceChildren();const actions=reportActions(container);const select=el('select');select.setAttribute('aria-label','Filas por página');for(const count of [10,25,50,-1]){const option=el('option',count===-1?'Mostrar todos':count+' filas');option.value=count;option.selected=count===variationSize;select.append(option);}select.onchange=()=>{variationSize=Number(select.value);variationPage=0;renderReport();};actions.append(select);
+ const wrap=el('div',undefined,'table-wrap');const t=el('table',undefined,'reference-variation');t.id='variationtable';const head=el('thead');const totals=report.totals;
+ const top=el('tr');const pc=Number(totals['On Hand USD'])?Math.min(100,Number(totals['Counted USD'])/Number(totals['On Hand USD'])*100):0;
+ const progress=el('th','Progress: '+pc.toFixed(2)+'%','variation-progress');progress.colSpan=2;top.append(progress);
+ for(const [label,key,cls,span]of [['On hand','On Hand USD','onhand',3],['Counted','Counted USD','counted',2],['Variation','Variation USD','variation',2]]){const h=el('th',label,cls);h.colSpan=span;const amount=el('th',money(totals[key]),cls+' number'+(key==='Variation USD'&&Number(totals[key])<0?' negative':''));top.append(h,amount);}head.append(top);
+ const columns=[['Item Code','Item code'],['Type','Type'],['Description','Description'],['On Hand','Quantity'],['Unit Price USD','Unit price USD'],['On Hand USD','Extended USD'],['Counted','Quantity'],['Unit Price USD','Unit price USD'],['Counted USD','Extended USD'],['Variation','Quantity'],['Unit Price USD','Unit price USD'],['Variation USD','Extended USD']];
+ const titles=el('tr');columns.forEach(([key,label])=>{const th=el('th');const sort=el('button',label,'column-sort');sort.onclick=()=>{variationAscending=variationSort===key?!variationAscending:true;variationSort=key;renderReport();};th.append(sort);titles.append(th);});head.append(titles);t.append(head);
+ const sorted=[...rows].sort((a,b)=>{const av=a[variationSort]??'',bv=b[variationSort]??'';return (report.numeric.includes(variationSort)?Number(av)-Number(bv):String(av).localeCompare(String(bv)))*(variationAscending?1:-1);});
+ const pages=variationSize===-1?1:Math.max(1,Math.ceil(rows.length/variationSize));variationPage=Math.min(variationPage,pages-1);const visible=variationSize===-1?sorted:sorted.slice(variationPage*variationSize,(variationPage+1)*variationSize);
+ const body=el('tbody');visible.forEach(row=>{const tr=el('tr');columns.forEach(([k],i)=>{const value=k==='Type'?(row.Type||''):row[k];const td=el('td',i<3?String(value??''):(k.endsWith('USD')?money(value):integer(value)),i>=3?'number':'');if(k==='Variation USD'&&Number(value)<0)td.classList.add('negative');if(i===0){const b=el('button',String(value),'item-detail');b.onclick=()=>showItem(row['Item Code']);td.replaceChildren(b);}tr.append(td);});body.append(tr);});t.append(body);
+ const foot=el('tfoot'),tr=el('tr'),label=el('th','Totals');label.colSpan=3;tr.append(label);for(let i=3;i<columns.length;i++){const k=columns[i][0];const td=el('th',k==='Unit Price USD'?'':(k.endsWith('USD')?money(totals[k]):integer(totals[k])),'number');if(k==='On Hand'||k==='Counted')td.classList.add('quantity-total');if(k==='On Hand USD'||k==='Counted USD')td.classList.add('amount-total');if(k==='Variation USD')td.classList.add(Number(totals[k])<0?'negative':'variation');tr.append(td);}foot.append(tr);t.append(foot);wrap.append(t);container.append(wrap);
+ const pager=el('div',undefined,'report-actions');pager.append(el('span',`${rows.length} registros · Página ${variationPage+1} de ${pages}`));for(const [text,delta]of [['Anterior',-1],['Siguiente',1]]){const b=el('button',text,'secondary small');b.disabled=delta<0?variationPage===0:variationPage>=pages-1;b.onclick=()=>{variationPage+=delta;renderReport();};pager.append(b);}container.append(pager);
+}
+async function showItem(code){try{const data=await api('report/total');showDetails('Detail data · '+code,data.rows.filter(r=>r['Item Code']===code));}catch(e){notice(e.message,true);}}
+function showDetails(title,rows){const dialog=el('dialog',undefined,'report-detail');const close=el('button','Cerrar','secondary');close.onclick=()=>dialog.close();const target=el('div');dialog.append(el('h2',title),close,target);document.body.append(dialog);table(rows,target);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();}
+let schedule=null,progressWarehouse='';
+function timeNumber(value){const [h,m]=value.split(':').map(Number);return h+m/60;}
+function scheduleRange(){const s=timeNumber(schedule.starttime),e=timeNumber(schedule.endtime);let range=[s];for(let h=Math.floor(s)+1;h<e;h++){if(String(schedule.break)==='1'&&h>timeNumber(schedule.startbreak)&&h<=timeNumber(schedule.endbreak))continue;range.push(h);}range.push(e);return range;}
+function renderProgress(rows){
+ if(!schedule){api('schedule').then(data=>{schedule=data;renderReport();}).catch(e=>notice(e.message,true));return;}
+ const container=$('report');container.replaceChildren();reportActions(container);const wrap=el('div',undefined,'table-wrap progress-wrap');const t=el('table',undefined,'reference-progress');const range=scheduleRange(),n=range.length-1,head=el('thead');
+ const timeRow=el('tr'),changeCell=el('th'),change=el('button','Change schedule','secondary small');change.disabled=cfg.role!==3;change.onclick=editSchedule;changeCell.append(change);timeRow.append(changeCell);range.forEach(h=>timeRow.append(el('th',String(Math.floor(h)).padStart(2,'0')+':'+String(Math.round(h%1*60)).padStart(2,'0')+'hrs')));head.append(timeRow);
+ const selected=rows.filter(r=>!progressWarehouse||r.WAREHOUSE===progressWarehouse),unitKey=Object.keys(report.totals).find(k=>['HUs','TAGs','BATCHes','Batches','BATCHs'].includes(k))||Object.keys(report.totals).find(k=>!['WAREHOUSE','AREA','Area Description','Captured','Pending'].includes(k));
+ const total=selected.reduce((s,r)=>s+Number(r[unitKey]),0),captured=selected.reduce((s,r)=>s+Number(r.Captured),0);
+ const clockRow=el('tr');clockRow.append(el('th','Progress: '+(total?captured/total*100:0).toFixed(2)+'%','variation-progress'),el('th','Current time'));const track=el('th',undefined,'time-track');track.colSpan=n;const clock=el('div',undefined,'bartime');clock.id='progress-clock';track.append(clock);clockRow.append(track);head.append(clockRow);
+ const scaleRow=el('tr'),filter=el('th');filter.colSpan=2;const select=el('select');select.setAttribute('aria-label','Almacén');const all=el('option','All racks');all.value='';select.append(all);for(const wh of [...new Set(report.rows.map(r=>r.WAREHOUSE))]){const op=el('option',wh);op.value=wh;select.append(op);}select.value=progressWarehouse;select.onchange=()=>{progressWarehouse=select.value;renderReport();};filter.append(select);scaleRow.append(filter);for(let i=1;i<=n;i++)scaleRow.append(el('th',(i/n*100).toFixed(2)+'%','progress-scale'));head.append(scaleRow);t.append(head);
+ const body=el('tbody');selected.sort((a,b)=>Number(a.Captured)/Number(a[unitKey])-Number(b.Captured)/Number(b[unitKey])).forEach(row=>{const tr=el('tr');const area=el('td',row.WAREHOUSE+' / '+row.AREA+(row['Area Description']?' · '+row['Area Description']:''));area.title=row.WAREHOUSE;const count=el('td'),link=el('button',row.Captured+'/'+row[unitKey],'item-detail');link.onclick=()=>showDetails(row.AREA,report.units.filter(u=>u.WAREHOUSE===row.WAREHOUSE&&u.AREA===row.AREA&&u['Area Description']===row['Area Description']));count.append(link);const cell=el('td',undefined,'progress-track');cell.colSpan=n;const pc=Number(row[unitKey])?Number(row.Captured)/Number(row[unitKey])*100:0;const bar=el('div',pc.toFixed(2)+'%','bar');bar.style.width=pc+'%';cell.append(bar,el('div',undefined,'time-marker'));tr.append(area,count,cell);body.append(tr);});t.append(body);
+ const foot=el('tfoot'),tr=el('tr');tr.append(el('th','Totals'),el('th',captured+'/'+total,'amount-total'));const blank=el('th');blank.colSpan=n;tr.append(blank);foot.append(tr);t.append(foot);wrap.append(t);container.append(wrap);updateClock();
+}
+function updateClock(){if(!$('progress-clock')||!schedule)return;const range=scheduleRange(),now=new Date(),hour=now.getHours()+now.getMinutes()/60+now.getSeconds()/3600;let fraction=hour<=range[0]?0:hour>=range.at(-1)?1:0;for(let i=0;i<range.length-1;i++){if(hour>=range[i]&&hour<range[i+1])fraction=(i+(hour-range[i])/(range[i+1]-range[i]))/(range.length-1);}const pc=Math.max(0,Math.min(100,fraction*100));$('progress-clock').textContent=now.toLocaleTimeString('en-GB');$('progress-clock').style.width=pc+'%';document.querySelectorAll('.time-marker').forEach(e=>e.style.left=pc+'%');}
+setInterval(updateClock,1000);if(cfg.page==='progress')setInterval(loadReport,60000);
+function editSchedule(){const dialog=el('dialog'),form=el('form');form.append(el('h2','Change schedule'));for(const [key,title]of [['starttime','Start'],['endtime','End'],['startbreak','Start break'],['endbreak','End break']]){const label=el('label',title),input=el('input');input.type='time';input.name=key;input.required=true;input.value=schedule[key];label.append(input);form.append(label);}const label=el('label','Break time?'),input=el('input');input.type='checkbox';input.name='break';input.checked=String(schedule.break)==='1';label.append(input);form.append(label);const save=el('button','Guardar'),cancel=el('button','Cancelar','secondary');cancel.type='button';cancel.onclick=()=>dialog.close();form.append(save,cancel);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{const data=new FormData(form);data.set('break',input.checked?'1':'0');schedule=await api('schedule',data);dialog.close();renderReport();}catch(e){notice(e.message,true);}finally{save.disabled=false;}};dialog.append(form);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();}
+
+$('capture-form')?.addEventListener('submit',stopCamera);

@@ -102,6 +102,26 @@ class Batch extends CI_Controller {
             return $this->batch_model->correct($this->field('id',20),$qty,$this->field('itemcode',50),$this->field('reason',500),$this->field('revision',64),(int)$this->user['Id'],$cid);
         });
     }
+    public function schedule() {
+        $write=$this->input->method()==='post';
+        if(!$this->requireUser($write?array(3):array(1,3)))return;
+        if($write && !$this->post())return;
+        $this->operation(function($cid)use($write){
+            $keys=array('starttime','endtime','startbreak','endbreak');
+            if($write){
+                $data=array();
+                foreach($keys as $key){$value=$this->field($key,5);if(!preg_match('/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/D',$value))throw new DomainException('Invalid schedule time.');$data[$key]=$value;}
+                $data['break']=$this->field('break',1);if(!in_array($data['break'],array('0','1'),true))throw new DomainException('Invalid break.');
+                if($data['starttime']>=$data['endtime'])throw new DomainException('End must be after start.');
+                if($data['break']==='1' && !($data['starttime']<=$data['startbreak'] && $data['startbreak']<$data['endbreak'] && $data['endbreak']<$data['endtime']))throw new DomainException('Break must be inside the schedule.');
+                if(!$this->db->where('Id',1)->update('config',$data))throw new RuntimeException('Schedule not saved.');
+            }
+            $row=$this->db->select('starttime,endtime,startbreak,endbreak,break')->where('Id',1)->get('config')->row_array();
+            if(!$row)throw new DomainException('Schedule not configured.');
+            foreach($keys as $key)$row[$key]=substr($row[$key],0,5);
+            return $row;
+        });
+    }
     public function report($kind='variation') {
         $roles=in_array($kind,array('logs','history'),true)?array(3):array(1,3);
         if(!$this->requireUser($roles))return;
