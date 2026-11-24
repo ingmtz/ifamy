@@ -36,8 +36,6 @@ function renderReport(){
 }
 async function edit(id){try{const data=await api('editable',{id});const f=$('edit-form');f.elements.id.value=data.row.Id;f.elements.revision.value=data.revision;f.elements.itemcode.value=data.row.itemcode;f.elements.qty.value=data.row.qty;f.elements.reason.value='';$('edit-dialog').showModal();}catch(e){notice(e.message,true);}}
 function busy(form,value){form.querySelectorAll('button').forEach(b=>b.disabled=value);}
-$('capture-location')?.addEventListener('keydown',async e=>{if(e.key!=='Enter')return;e.preventDefault();try{const r=await api('checklocation',{location:e.target.value});notice('Locación válida · '+r.warehouse);$('capture-batch').focus();}catch(err){notice(err.message,true);}});
-$('capture-form')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;busy(f,true);const batch=f.elements.batch.value.trim();try{const r=await api('capture',new FormData(f));notice(`${r.message} ${r.partidas} partidas · Ref. ${r.correlation}`);f.elements.batch.value='';$('lookup-batch').value=batch;await lookup(batch,false);f.elements.location.value='';f.elements.location.focus();}catch(err){notice(err.message,true);}finally{busy(f,false);}});
 async function lookup(batch,announce=true){
  inspected=null;if($('audit-form'))$('audit-form').hidden=true;
  $('lookup-summary').textContent='';$('lookup-table').replaceChildren();
@@ -64,27 +62,69 @@ function setMenu(open){$('main-menu').hidden=!open;$('menu-toggle').setAttribute
 setMenu(!mobileMenu.matches);$('menu-toggle').addEventListener('click',()=>setMenu($('main-menu').hidden));
 mobileMenu.addEventListener('change',e=>setMenu(!e.matches));
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&mobileMenu.matches)setMenu(false);});
-let scanner=null,cameraGeneration=0,cameraOpening=false;
-async function stopCamera(){cameraGeneration++;if(scanner){const active=scanner;scanner=null;try{await active.stop();}catch(e){}try{active.clear();}catch(e){}}if($('camera-reader')){$('camera-reader').hidden=true;$('camera-stop').hidden=true;}}
-$('camera-stop')?.addEventListener('click',stopCamera);
-window.addEventListener('pagehide',stopCamera);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();});
-$('camera-start')?.addEventListener('click',async()=>{
- if(cameraOpening)return;cameraOpening=true;await stopCamera();const generation=cameraGeneration,status=$('camera-status');$('camera-start').disabled=true;
+// Camera-first capture: no editable fields, selection boxes or automatic inventory writes.
+let scanner=null,cameraGeneration=0,cameraOpening=false,scanBusy=false,scanReady=false,lastScan='',lastScanAt=0;
+const scanMode=cfg.base.includes('PITS-TAGS')?'tag':cfg.base.includes('PITS-BATCH')?'batch':'hu';
+let scanValues={},scanStep=0,scanInspection=null;
+const scanSteps=scanMode==='tag'?['location','tag','itemcode','qty']:['location',scanMode];
+const scanLabels={location:'la locación',hu:'el HU',batch:'el BATCH',tag:'el marbete',itemcode:'el número de parte',qty:'la cantidad'};
+function scanPrompt(){if(!$('scan-instruction'))return;$('scan-instruction').textContent='Escanea '+scanLabels[scanSteps[scanStep]];$('scan-progress').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU',batch:'BATCH',tag:'TAG',itemcode:'Parte',qty:'Cantidad'}[k])+': '+v).join(' · ');}
+async function stopCamera(){cameraGeneration++;scanReady=false;if(scanner){const reader=scanner;scanner=null;try{await reader.stop();}catch(e){}try{reader.clear();}catch(e){}}}
+async function startCamera(){
+ if(!$('camera-reader')||cameraOpening||scanner||document.hidden||$('scan-confirm')?.open)return;
+ cameraOpening=true;const generation=++cameraGeneration;$('camera-retry').hidden=true;
  try{
-  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Cámara no disponible. Verifica que estés usando HTTPS.');
-  if(!window.Html5Qrcode)throw new Error('No se pudo cargar el lector de códigos. Recarga la página o usa un lector externo.');
-  $('camera-reader').hidden=false;$('camera-stop').hidden=false;
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Cámara no disponible. Abre esta página con HTTPS.');
+  if(!window.Html5Qrcode)throw new Error('No se pudo cargar el escáner. Recarga la página.');
   const reader=new Html5Qrcode('camera-reader',{verbose:false});scanner=reader;
-  const success=async text=>{if(generation!==cameraGeneration)return;const input=$($('camera-target').value);input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));await stopCamera();input.focus();status.textContent='Código leído. Revisa los campos antes de guardar.';};
-  const options={fps:10,disableFlip:true};
-  try{await reader.start({facingMode:'environment'},{...options,videoConstraints:{facingMode:{ideal:'environment'}}},success,()=>{});}
-  catch(e){const name=e.name||String(e);if(!/OverconstrainedError|NotFoundError|DevicesNotFoundError/.test(name))throw e;await reader.start({facingMode:'environment'},{...options,videoConstraints:{}},success,()=>{});}
-  if(generation!==cameraGeneration){try{await reader.stop();reader.clear();}catch(e){}return;}
-  status.textContent='Apunta al código con la cámara trasera. La lectura no guarda automáticamente.';
- }catch(e){await stopCamera();status.textContent=/NotAllowed|Permission|denied/i.test(String(e))?'Permiso de cámara denegado. Habilítalo en el navegador o usa entrada manual.':(e.message||'No se pudo abrir la cámara. Puedes escribir o usar un lector externo.');}
- finally{cameraOpening=false;$('camera-start').disabled=false;}
+  const options={fps:10,disableFlip:true,videoConstraints:{facingMode:{ideal:'environment'}}};
+  const success=text=>{if(generation===cameraGeneration&&scanReady)processScan(text);};
+  try{await reader.start({facingMode:'environment'},options,success,()=>{});}
+  catch(e){if(!/OverconstrainedError|NotFoundError|DevicesNotFoundError/.test(e.name||String(e)))throw e;await reader.start({facingMode:'environment'},{...options,videoConstraints:{}},success,()=>{});}
+  if(generation!==cameraGeneration){try{await reader.stop();reader.clear();}catch(e){}if(!document.hidden)setTimeout(startCamera,0);return;}
+  scanReady=true;$('camera-status').textContent='Apunta al código con la cámara trasera.';scanPrompt();
+ }catch(e){await stopCamera();$('camera-status').textContent=/NotAllowed|Permission|denied/i.test(String(e))?'Permiso de cámara denegado. Habilítalo en el navegador y vuelve a intentar.':(e.message||'No se pudo abrir la cámara.');$('camera-retry').hidden=false;}
+ finally{cameraOpening=false;}
+}
+function parseScan(text,key){
+ const parts=text.split('|');if(parts.length===1)return text;
+ if(key==='hu'&&parts.length===4&&parts[2].startsWith('EXIDV'))return parts[2].slice(5);
+ if(key==='batch'&&parts.length===6&&parts[5].startsWith('CHARG'))return parts[5].slice(5);
+ if(key==='itemcode'&&parts.length===6&&parts[2].startsWith('MATNR'))return parts[2].slice(5);
+ throw new Error('Este código no corresponde a '+scanLabels[key]+'.');
+}
+async function processScan(raw){
+ if(scanBusy||$('scan-confirm').open)return;const text=String(raw).trim();if(!text)return;
+ if(text===lastScan&&Date.now()-lastScanAt<1500)return;lastScan=text;lastScanAt=Date.now();scanBusy=true;
+ try{
+  const key=scanSteps[scanStep],value=parseScan(text,key);
+  if(key==='location')await api('checklocation',{location:value});
+  else if(key===scanMode){const data=await api('lookup',{[scanMode]:value});if(data.capture||data.rows.every(r=>r.Status==='Used'))throw new Error('Este '+scanMode.toUpperCase()+' ya fue capturado.');scanInspection=data;}
+  else if(key==='qty'&&(!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>1e14))throw new Error('Escanea una cantidad válida mayor que cero.');
+  let compoundQty=null;if(key==='itemcode'&&text.split('|').length===6){compoundQty=text.split('|')[3].replace(/^PAQTY/,'');if(!Number.isFinite(Number(compoundQty))||Number(compoundQty)<=0||Number(compoundQty)>1e14)throw new Error('Cantidad inválida en etiqueta.');}
+  scanValues[key]=value;scanStep++;if(compoundQty!==null){scanValues.qty=compoundQty;scanStep++;}
+  if(scanStep<scanSteps.length){scanPrompt();$('camera-status').textContent='Código leído. Continúa con '+scanLabels[scanSteps[scanStep]]+'.';}
+  else{await stopCamera();$('scan-review').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU',batch:'BATCH',tag:'TAG',itemcode:'Parte',qty:'Cantidad'}[k])+': '+v).join('\n')+'\n'+(scanMode==='tag'?'':scanInspection.rows.length+' partidas');$('scan-confirm').showModal();}
+ }catch(e){notice(e.message,true);$('camera-status').textContent=e.message;}
+ finally{scanBusy=false;}
+}
+function resetScan(){scanValues={};scanStep=0;scanInspection=null;lastScan='';scanPrompt();}
+$('camera-retry')?.addEventListener('click',startCamera);
+$('scan-restart')?.addEventListener('click',()=>{if(scanBusy)return;resetScan();startCamera();});
+$('scan-cancel')?.addEventListener('click',()=>{$('scan-confirm').close();resetScan();startCamera();});
+$('scan-save')?.addEventListener('click',async()=>{
+ if(scanBusy)return;scanBusy=true;$('scan-save').disabled=true;$('scan-cancel').disabled=true;
+ try{const r=await api('capture',scanValues);$('scan-confirm').close();notice(`${r.message} ${r.partidas} partidas · Ref. ${r.correlation}`);resetScan();}
+ catch(e){$('scan-confirm').close();notice(e.message,true);resetScan();$('camera-status').textContent='Escanea nuevamente; el servidor verificará el estado antes de permitir una captura.';}
+ finally{scanBusy=false;$('scan-save').disabled=false;$('scan-cancel').disabled=false;startCamera();}
 });
+$('scan-confirm')?.addEventListener('cancel',e=>{e.preventDefault();if(!scanBusy)$('scan-cancel').click();});
+window.addEventListener('pagehide',stopCamera);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();else startCamera();});
+// Preserve external barcode readers without exposing an additional input field.
+let scanBuffer='',keyAt=0;document.addEventListener('keydown',e=>{if(cfg.page!=='capture'||e.ctrlKey||e.metaKey||e.altKey||$('scan-confirm')?.open||e.target.closest('input,textarea,select'))return;if(e.key==='Enter'){e.preventDefault();const value=scanBuffer;scanBuffer='';processScan(value);}else if(e.key.length===1){if(Date.now()-keyAt>150)scanBuffer='';scanBuffer+=e.key;keyAt=Date.now();}});
+if(cfg.page==='capture'){scanPrompt();startCamera();}
+
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 const money=v=>'$'+Math.ceil(Number(v||0)).toLocaleString('en-US');
 const integer=v=>Math.ceil(Number(v||0)).toLocaleString('en-US');
@@ -123,5 +163,3 @@ function renderProgress(rows){
 function updateClock(){if(!$('progress-clock')||!schedule)return;const range=scheduleRange(),now=new Date(),hour=now.getHours()+now.getMinutes()/60+now.getSeconds()/3600;let fraction=hour<=range[0]?0:hour>=range.at(-1)?1:0;for(let i=0;i<range.length-1;i++){if(hour>=range[i]&&hour<range[i+1])fraction=(i+(hour-range[i])/(range[i+1]-range[i]))/(range.length-1);}const pc=Math.max(0,Math.min(100,fraction*100));$('progress-clock').textContent=now.toLocaleTimeString('en-GB');$('progress-clock').style.width=pc+'%';document.querySelectorAll('.time-marker').forEach(e=>e.style.left=pc+'%');}
 setInterval(updateClock,1000);if(cfg.page==='progress')setInterval(loadReport,60000);
 function editSchedule(){const dialog=el('dialog'),form=el('form');form.append(el('h2','Change schedule'));for(const [key,title]of [['starttime','Start'],['endtime','End'],['startbreak','Start break'],['endbreak','End break']]){const label=el('label',title),input=el('input');input.type='time';input.name=key;input.required=true;input.value=schedule[key];label.append(input);form.append(label);}const label=el('label','Break time?'),input=el('input');input.type='checkbox';input.name='break';input.checked=String(schedule.break)==='1';label.append(input);form.append(label);const save=el('button','Guardar'),cancel=el('button','Cancelar','secondary');cancel.type='button';cancel.onclick=()=>dialog.close();form.append(save,cancel);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{const data=new FormData(form);data.set('break',input.checked?'1':'0');schedule=await api('schedule',data);dialog.close();renderReport();}catch(e){notice(e.message,true);}finally{save.disabled=false;}};dialog.append(form);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();}
-
-$('capture-form')?.addEventListener('submit',stopCamera);
