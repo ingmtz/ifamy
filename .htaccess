@@ -3,7 +3,7 @@ Options -Indexes
 RewriteEngine On
 RewriteBase /PITS-HUS/
 RewriteRule ^(?:application|system|database|tests|\.git)(?:/|$) - [F,L,NC]
-RewriteRule ^assets/hus/[^/]+\.(?:css|js|png)$ - [L]
+RewriteRule ^assets/hus/[^/]+\.(?:css|js|png|mp3)$ - [L]
 RewriteRule ^index\.php(?:/|$) - [L]
 RewriteRule ^(.*)$ index.php/$1 [L,QSA]
 </IfModule>

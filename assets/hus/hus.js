@@ -103,10 +103,10 @@ async function processScan(raw){
   else if(key===scanMode){const data=await api('lookup',{[scanMode]:value});if(data.capture||data.rows.every(r=>r.Status==='Used'))throw new Error('Este '+scanMode.toUpperCase()+' ya fue capturado.');scanInspection=data;}
   else if(key==='qty'&&(!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>1e14))throw new Error('Escanea una cantidad válida mayor que cero.');
   let compoundQty=null;if(key==='itemcode'&&text.split('|').length===6){compoundQty=text.split('|')[3].replace(/^PAQTY/,'');if(!Number.isFinite(Number(compoundQty))||Number(compoundQty)<=0||Number(compoundQty)>1e14)throw new Error('Cantidad inválida en etiqueta.');}
-  scanValues[key]=value;scanStep++;if(compoundQty!==null){scanValues.qty=compoundQty;scanStep++;}
+  scanValues[key]=value;playScanSound('beep');scanStep++;if(compoundQty!==null){scanValues.qty=compoundQty;scanStep++;}
   if(scanStep<scanSteps.length){scanPrompt();$('camera-status').textContent='Escaneado: '+value+'. Continúa con '+scanLabels[scanSteps[scanStep]]+'.';}
   else{await stopCamera();$('scan-review').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU',batch:'BATCH',tag:'TAG',itemcode:'Parte',qty:'Cantidad'}[k])+': '+v).join('\n')+'\n'+(scanMode==='tag'?'':scanInspection.rows.length+' partidas');$('scan-confirm').showModal();}
- }catch(e){notice('Escaneado: '+text+' · '+e.message,true);$('camera-status').textContent='Escaneado: '+text+' · '+e.message;}
+ }catch(e){playScanSound('wrong');notice('Escaneado: '+text+' · '+e.message,true);$('camera-status').textContent='Escaneado: '+text+' · '+e.message;}
  finally{scanBusy=false;}
 }
 function resetScan(){scanValues={};scanStep=0;scanInspection=null;lastScan='';scanPrompt();}
@@ -115,8 +115,8 @@ $('scan-restart')?.addEventListener('click',()=>{if(scanBusy)return;resetScan();
 $('scan-cancel')?.addEventListener('click',()=>{$('scan-confirm').close();resetScan();startCamera();});
 $('scan-save')?.addEventListener('click',async()=>{
  if(scanBusy)return;scanBusy=true;$('scan-save').disabled=true;$('scan-cancel').disabled=true;
- try{const r=await api('capture',scanValues);$('scan-confirm').close();notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · Locación: ${scanValues.location} · ${r.partidas} partidas guardadas.`);resetScan();}
- catch(e){$('scan-confirm').close();notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · ${e.message}`,true);resetScan();$('camera-status').textContent='Escanea nuevamente; el servidor verificará el estado antes de permitir una captura.';}
+ try{const r=await api('capture',scanValues);$('scan-confirm').close();playScanSound('beep');notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · Locación: ${scanValues.location} · ${r.partidas} partidas guardadas.`);resetScan();}
+ catch(e){$('scan-confirm').close();playScanSound('wrong');notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · ${e.message}`,true);resetScan();$('camera-status').textContent='Escanea nuevamente; el servidor verificará el estado antes de permitir una captura.';}
  finally{scanBusy=false;$('scan-save').disabled=false;$('scan-cancel').disabled=false;startCamera();}
 });
 $('scan-confirm')?.addEventListener('cancel',e=>{e.preventDefault();if(!scanBusy)$('scan-cancel').click();});
@@ -124,6 +124,20 @@ window.addEventListener('pagehide',stopCamera);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();else startCamera();});
 // Preserve external barcode readers without exposing an additional input field.
 let scanBuffer='',keyAt=0;document.addEventListener('keydown',e=>{if(cfg.page!=='capture'||e.ctrlKey||e.metaKey||e.altKey||$('scan-confirm')?.open||e.target.closest('input,textarea,select'))return;if(e.key==='Enter'){e.preventDefault();const value=scanBuffer;scanBuffer='';processScan(value);}else if(e.key.length===1){if(Date.now()-keyAt>150)scanBuffer='';scanBuffer+=e.key;keyAt=Date.now();}});
+// Original short success/error sounds, unlocked by a page gesture on mobile browsers.
+const scanAudio={context:null,buffers:{},loads:{}};
+function initScanAudio(){
+ if(cfg.page!=='capture'||scanAudio.context)return;
+ const Context=window.AudioContext||window.webkitAudioContext;if(!Context)return;
+ try{scanAudio.context=new Context();for(const name of ['beep','wrong'])scanAudio.loads[name]=fetch(cfg.base+'assets/'+({hu:'hus',tag:'tags',batch:'batch'}[scanMode])+'/'+name+'.mp3').then(r=>{if(!r.ok)throw new Error('Audio unavailable');return r.arrayBuffer();}).then(data=>scanAudio.context.decodeAudioData(data)).then(buffer=>{scanAudio.buffers[name]=buffer;return buffer;}).catch(()=>null);}catch(e){}
+}
+function unlockScanAudio(){initScanAudio();if(scanAudio.context?.state==='suspended')scanAudio.context.resume().catch(()=>{});}
+document.addEventListener('pointerdown',unlockScanAudio,{passive:true});document.addEventListener('touchend',unlockScanAudio,{passive:true});document.addEventListener('keydown',unlockScanAudio);
+async function playScanSound(name){
+ try{initScanAudio();const ctx=scanAudio.context;if(!ctx)return;if(ctx.state!=='running')return;const buffer=scanAudio.buffers[name]||await scanAudio.loads[name];if(!buffer)return;const source=ctx.createBufferSource();source.buffer=buffer;source.connect(ctx.destination);source.start();}catch(e){/* Audio must never interrupt or retry an inventory operation. */}
+}
+if(cfg.page==='capture')initScanAudio();
+
 if(cfg.page==='capture'){scanPrompt();startCamera();}
 
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
