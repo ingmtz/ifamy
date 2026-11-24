@@ -10,3 +10,5 @@ td details{margin:0;white-space:normal;min-width:180px}td details pre{white-spac
 [hidden]{display:none!important}
 
 .camera-only{max-width:900px;margin:0 auto}.camera-only #camera-reader{max-width:100%;min-height:220px}.camera-only #scan-instruction{text-align:center;margin:0 0 12px}.camera-only #scan-progress{overflow-wrap:anywhere}#scan-review{white-space:pre-wrap;font:inherit;line-height:1.8}body[data-page="capture"] .heading{display:none}@media(max-width:800px){.camera-only{padding:8px}.camera-only #camera-reader video{max-height:65vh;object-fit:cover}.camera-only #scan-instruction{font-size:18px}}
+
+.scan-sound{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}.scan-sound span{font-size:12px;color:#536b7b;flex:1;min-width:180px}
