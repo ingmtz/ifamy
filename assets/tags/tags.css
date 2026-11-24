@@ -8,3 +8,5 @@ td details{margin:0;white-space:normal;min-width:180px}td details pre{white-spac
 @media(max-width:800px){header{height:auto;min-height:60px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}.identity{margin-left:auto;max-width:100%;overflow-wrap:anywhere}.brand{flex-shrink:0}.weidmann-logo{flex-shrink:0}header #menu-toggle{flex-shrink:0}.shell>nav{top:0}}
 
 [hidden]{display:none!important}
+
+.camera-only{max-width:900px;margin:0 auto}.camera-only #camera-reader{max-width:100%;min-height:220px}.camera-only #scan-instruction{text-align:center;margin:0 0 12px}.camera-only #scan-progress{overflow-wrap:anywhere}#scan-review{white-space:pre-wrap;font:inherit;line-height:1.8}body[data-page="capture"] .heading{display:none}@media(max-width:800px){.camera-only{padding:8px}.camera-only #camera-reader video{max-height:65vh;object-fit:cover}.camera-only #scan-instruction{font-size:18px}}
