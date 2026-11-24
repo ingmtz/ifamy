@@ -12,4 +12,5 @@ foreach(array('lookup','checklocation','capture','audit','editable','correct','i
 $route['api/report/(:any)']='marbetes/report/$1';
 $route['export/(:any)']='marbetes/export/$1';
 // Fail closed: no legacy TAG, BATCH, Openbox, upload or AJAX endpoints in TAGS.
+$route['api/schedule']='marbetes/schedule';
 $route['(.+)']='marbetes/missing';
