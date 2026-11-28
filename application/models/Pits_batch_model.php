@@ -11,7 +11,7 @@ class Pits_batch_model extends CI_Model {
     private function rows($sql,$args=array()) { return $this->q($sql,$args)->result_array(); }
     public function event($action,$outcome,$batch,$uid,$cid,$detail) {
         $this->q('INSERT INTO pits_batch_events(batch,user_id,action,outcome,correlation,detail,created_at) VALUES(?,?,?,?,?,?,?)',
-            array($batch,$uid,$action,$outcome,$cid,json_encode($detail,JSON_UNESCAPED_UNICODE),$this->now()));
+            array($batch,$uid,$action,$outcome,$cid,json_encode($detail,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),$this->now()));
     }
     private function begin($exclusive=false) {
         if(!$this->db->trans_begin()) throw new RuntimeException('Cannot start transaction');
@@ -59,12 +59,16 @@ class Pits_batch_model extends CI_Model {
             $this->q('INSERT INTO pits_batch_captures(batch,location,warehouse,user_id,captured_at,correlation) VALUES(?,?,?,?,?,?)',array($batch,$location,$warehouse,$uid,$this->now(),$cid));
             $this->q("UPDATE hus SET status='Used',location=?,iduser=?,datetimecaptured=? WHERE batch=?",array($location,$uid,$this->now(),$batch));
             if($this->db->affected_rows()!==count($items)) throw new RuntimeException('Incomplete BATCH update');
-            $this->event('capture','committed',$batch,$uid,$cid,array('partidas'=>count($items),'location'=>$location));
+            $snapshot=$this->details($batch);
+            if(count($snapshot)!==count($items))throw new RuntimeException('Incomplete capture snapshot');
+            $this->event('capture','committed',$batch,$uid,$cid,array(
+                'partidas'=>count($items),'location'=>$location,'warehouse'=>$warehouse,'rows'=>$snapshot
+            ));
             $this->commit();
             return array('batch'=>$batch,'partidas'=>count($items),'message'=>'BATCH saved / BATCH guardado.','correlation'=>$cid);
         } catch(Throwable $e) {
             $this->db->trans_rollback();
-            try { $this->event('capture',$e instanceof UnexpectedValueException?'duplicate':'rejected',$batch,$uid,$cid,array('reason'=>$e instanceof LogicException?$e->getMessage():'Persistence failed')); }
+            try { $this->event('capture',$e instanceof UnexpectedValueException?'duplicate':'rejected',$batch,$uid,$cid,array('location'=>$location,'reason'=>($e instanceof DomainException || $e instanceof UnexpectedValueException)?$e->getMessage():'Persistence failed')); }
             catch(Throwable $logError) { log_message('error','BATCH '.$cid.' capture rejected; database log unavailable'); }
             throw $e;
         }
@@ -106,7 +110,7 @@ class Pits_batch_model extends CI_Model {
         return array('row'=>$row,'revision'=>hash('sha256',json_encode($row)));
     }
     private function variation() {
-        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,COALESCE(m.type,'') AS Type,
+        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,
             COALESCE(p.onhand,0) AS `On Hand`,COALESCE(m.cost_price,0) AS `Unit Price USD`,
             COALESCE(p.onhand,0)*COALESCE(m.cost_price,0) AS `On Hand USD`,COALESCE(c.counted,0) AS Counted,
             COALESCE(c.counted,0)*COALESCE(m.cost_price,0) AS `Counted USD`,
@@ -151,8 +155,33 @@ class Pits_batch_model extends CI_Model {
             FROM hus h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(type) type,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
             LEFT JOIN users u ON u.Id=h.iduser WHERE h.status='Used' AND h.batch IS NOT NULL AND TRIM(h.batch)<>'' ORDER BY h.batch,h.Id");
         elseif($kind==='audit') $rows=$this->rows('SELECT a.id,a.batch BATCH,a.warehouse WAREHOUSE,a.location Location,a.result Result,a.observations Observations,u.name Auditor,a.created_at Date,a.snapshot Content FROM pits_batch_audits a LEFT JOIN users u ON u.Id=a.user_id ORDER BY a.id DESC');
-        elseif($kind==='history') $rows=$this->rows('SELECT c.id,c.batch BATCH,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_batch_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');
-        elseif($kind==='logs') $rows=$this->rows('SELECT e.id,e.batch BATCH,u.name User,e.action Action,e.outcome Result,e.correlation Correlation,e.detail Detail,e.created_at Date FROM pits_batch_events e LEFT JOIN users u ON u.Id=e.user_id ORDER BY e.id DESC');
+        elseif($kind==='history') {
+            $rows=$this->rows('SELECT c.id,c.batch BATCH,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_batch_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');
+            foreach($rows as &$row) {
+                foreach(array('BeforeValue','AfterValue') as $field) {
+                    $value=json_decode($row[$field],true);
+                    if(!is_array($value)) {
+                        $row[$field]='Detalle histórico no disponible.';
+                        continue;
+                    }
+                    unset($value['openbox']);
+                    $row[$field]=json_encode($value,JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_SUBSTITUTE);
+                }
+            }
+            unset($row);
+        }
+        elseif($kind==='logs') {
+            $rows=$this->rows('SELECT e.id,e.batch BATCH,u.name User,e.action Action,e.outcome Result,e.correlation Correlation,e.detail Detail,e.created_at Date FROM pits_batch_events e LEFT JOIN users u ON u.Id=e.user_id ORDER BY e.id DESC');
+            foreach($rows as &$row) {
+                if($row['Action']!=='capture' || $row['Result']!=='committed')continue;
+                $detail=json_decode($row['Detail'],true);
+                if(!isset($detail['rows'])) {
+                    $detail['historical_note']='Captura histórica sin detalle original de partidas.';
+                    $row['Detail']=json_encode($detail,JSON_UNESCAPED_UNICODE);
+                }
+            }
+            unset($row);
+        }
         elseif($kind==='typeraw') {
             $map=$this->rows("SELECT material,GROUP_CONCAT(DISTINCT type_raw ORDER BY type_raw SEPARATOR ' / ') type_raw FROM rawtype GROUP BY material");
             $types=array_column($map,'type_raw','material');$group=array();
@@ -171,9 +200,8 @@ class Pits_batch_model extends CI_Model {
             if($kind==='inventory') {
                 // Imports refresh reference data; preserve ALL captured detail rows unchanged.
                 $captured=array_column($this->rows("SELECT DISTINCT batch FROM hus WHERE status='Used' AND batch IS NOT NULL AND TRIM(batch)<>''"),'batch');
-                $protected=array_fill_keys($captured,true);
-                $incoming=array();foreach($records as $r) $incoming[$r['batch']]=true;
-                foreach($captured as $batch) if(!isset($incoming[$batch])) throw new DomainException('Import omits captured BATCH '.$batch.'. Existing captures were not changed.');
+                $protected=array_fill_keys(array_map('strtolower',$captured),true);
+                $this->validateCapturedBatches($protected,$records);
                 $incomingItems=array_fill_keys(array_column($records,'material'),true);
                 foreach($this->rows("SELECT DISTINCT itemcode FROM hus WHERE status='Used' AND TRIM(COALESCE(batch,''))<>''") as $detail)
                     if(!isset($incomingItems[$detail['itemcode']]))throw new DomainException('Import omits captured item '.$detail['itemcode'].'.');
@@ -186,7 +214,7 @@ class Pits_batch_model extends CI_Model {
                     $master[$r['material']]=array('itemcode'=>$r['material'],'description'=>$r['material_description'],'cost_price'=>$r['cost_price'],'uom'=>$r['um']);
                     if(!isset($perpetuo[$r['material']])) $perpetuo[$r['material']]=0;
                     $perpetuo[$r['material']]+=(float)$r['qty'];
-                    if($r['batch']!=='' && !isset($protected[$r['batch']])) $this->insert('hus',array('tag'=>$r['hu'],'itemcode'=>$r['material'],'qty'=>$r['qty'],'warehouse'=>$r['wh'],'area'=>$r['area'],'description'=>$r['material_description'],'area_description'=>$r['area_description'],'uom'=>$r['um'],'batch'=>$r['batch'],'location'=>$r['location'],'plant'=>'Unknown','printcounter'=>0,'auditcounter'=>0));
+                    if($r['batch']!=='' && !isset($protected[strtolower($r['batch'])])) $this->insert('hus',array('tag'=>$r['hu'],'itemcode'=>$r['material'],'qty'=>$r['qty'],'warehouse'=>$r['wh'],'area'=>$r['area'],'description'=>$r['material_description'],'area_description'=>$r['area_description'],'uom'=>$r['um'],'batch'=>$r['batch'],'location'=>$r['location'],'plant'=>'Unknown','printcounter'=>0,'auditcounter'=>0));
                 }
                 foreach($master as $r) $this->insert('masterdata',$r);
                 foreach($perpetuo as $item=>$qty) $this->insert('perpetuo',array('itemcode'=>$item,'onhand'=>$qty));
@@ -198,6 +226,32 @@ class Pits_batch_model extends CI_Model {
             $this->commit();
             return array('message'=>count($records).' rows imported atomically / filas importadas. Existing captures preserved.');
         } catch(Throwable $e) { $this->db->trans_rollback(); throw $e; }
+    }
+    private function validateCapturedBatches($protected,$records) {
+        if(!$protected)return;
+        $signature=function($row) {
+            return json_encode(array(
+                (string)$row['hu'],(string)$row['material'],(float)$row['qty'],(string)$row['um']
+            ),JSON_THROW_ON_ERROR);
+        };
+        $original=array();
+        $source=$this->rows("SELECT r.batch,r.hu,r.material,r.qty,r.um FROM rawdata r
+            INNER JOIN (SELECT DISTINCT batch FROM hus WHERE status='Used' AND TRIM(COALESCE(batch,''))<>'') c
+            ON c.batch=r.batch");
+        foreach($source as $row)$original[strtolower($row['batch'])][]=$signature($row);
+        $incoming=array();
+        foreach($records as $row) {
+            $batch=strtolower($row['batch']);
+            if(isset($protected[$batch]))$incoming[$batch][]=$signature($row);
+        }
+        foreach(array_keys($protected) as $batch) {
+            if(!isset($incoming[$batch]))throw new DomainException('La carga omite el lote capturado '.$batch.'.');
+            if(!isset($original[$batch]))throw new DomainException('No hay inventario original para validar el lote capturado '.$batch.'.');
+            sort($incoming[$batch],SORT_STRING);
+            sort($original[$batch],SORT_STRING);
+            if($incoming[$batch]!==$original[$batch])
+                throw new DomainException('La carga cambia las partidas del lote capturado '.$batch.'.');
+        }
     }
     private function insert($table,$data) {
         if(!$this->db->insert($table,$data)) throw new RuntimeException('Import insert failed');

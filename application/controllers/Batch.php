@@ -136,6 +136,31 @@ class Batch extends CI_Controller {
             $keys=$report['rows']?array_keys($report['rows'][0]):($report['totals']?array_keys($report['totals']):array('No records'));
             foreach($keys as $i=>$key) $sheet->setCellValueExplicitByColumnAndRow($i,1,$key,PHPExcel_Cell_DataType::TYPE_STRING);
             $rows=$report['rows'];if($report['totals'])$rows[]=$report['totals'];
+            if($kind==='logs') {
+                $detailSheet=$book->createSheet();
+                $detailSheet->setTitle('Capture detail');
+                $detailRow=1;
+                foreach($rows as &$row) {
+                    if($row['Action']!=='capture' || $row['Result']!=='committed')continue;
+                    $event=json_decode($row['Detail'],true);
+                    if(empty($event['rows']))continue;
+                    foreach($event['rows'] as $part) {
+                        $part=array('Correlation'=>$row['Correlation'])+$part;
+                        if($detailRow===1) {
+                            foreach(array_keys($part) as $i=>$key)
+                                $detailSheet->setCellValueExplicitByColumnAndRow($i,$detailRow,$key,PHPExcel_Cell_DataType::TYPE_STRING);
+                            $detailRow++;
+                        }
+                        foreach(array_values($part) as $i=>$value)
+                            $detailSheet->setCellValueExplicitByColumnAndRow($i,$detailRow,(string)$value,PHPExcel_Cell_DataType::TYPE_STRING);
+                        $detailRow++;
+                    }
+                    unset($event['rows']);
+                    $row['Detail']=json_encode($event,JSON_UNESCAPED_UNICODE);
+                }
+                unset($row);
+            }
+
             foreach($rows as $n=>$row) foreach($keys as $i=>$key) {
                 $v=isset($row[$key])?$row[$key]:'';
                 if($report['round'] && in_array($key,$report['numeric'],true) && is_numeric($v)){$rounded=ceil((float)$v);$v=$rounded==0?'0':(string)$rounded;}
