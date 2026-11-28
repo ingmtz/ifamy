@@ -11,7 +11,7 @@ class Pits_tags_model extends CI_Model {
     private function rows($sql,$args=array()) { return $this->q($sql,$args)->result_array(); }
     public function event($action,$outcome,$tag,$uid,$cid,$detail) {
         $this->q('INSERT INTO pits_tag_events(tag,user_id,action,outcome,correlation,detail,created_at) VALUES(?,?,?,?,?,?,?)',
-            array($tag,$uid,$action,$outcome,$cid,json_encode($detail,JSON_UNESCAPED_UNICODE),$this->now()));
+            array($tag,$uid,$action,$outcome,$cid,json_encode($detail,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),$this->now()));
     }
     private function begin($exclusive=false) {
         if(!$this->db->trans_begin()) throw new RuntimeException('Cannot start transaction');
@@ -62,12 +62,16 @@ class Pits_tags_model extends CI_Model {
             $this->q('INSERT INTO pits_tag_captures(tag,location,warehouse,user_id,captured_at,correlation) VALUES(?,?,?,?,?,?)',array($tag,$location,$warehouse,$uid,$this->now(),$cid));
             $this->q("UPDATE tags SET status='Used',location=?,iduser=?,datetimecaptured=?,itemcode=?,qty=?,description=NULL,warehouse=? WHERE tag=?",array($location,$uid,$this->now(),$itemcode,$qty,$warehouse,$tag));
             if($this->db->affected_rows()!==count($items)) throw new RuntimeException('Incomplete TAG update');
-            $this->event('capture','committed',$tag,$uid,$cid,array('partidas'=>count($items),'location'=>$location));
+            $snapshot=$this->details($tag);
+            if(count($snapshot)!==count($items))throw new RuntimeException('Incomplete capture snapshot');
+            $this->event('capture','committed',$tag,$uid,$cid,array(
+                'partidas'=>count($items),'location'=>$location,'warehouse'=>$warehouse,'rows'=>$snapshot
+            ));
             $this->commit();
             return array('tag'=>$tag,'partidas'=>count($items),'message'=>'TAG saved / TAG guardado.','correlation'=>$cid);
         } catch(Throwable $e) {
             $this->db->trans_rollback();
-            try { $this->event('capture',$e instanceof UnexpectedValueException?'duplicate':'rejected',$tag,$uid,$cid,array('reason'=>$e instanceof LogicException?$e->getMessage():'Persistence failed')); }
+            try { $this->event('capture',$e instanceof UnexpectedValueException?'duplicate':'rejected',$tag,$uid,$cid,array('location'=>$location,'reason'=>($e instanceof DomainException || $e instanceof UnexpectedValueException)?$e->getMessage():'Persistence failed')); }
             catch(Throwable $logError) { log_message('error','TAGS '.$cid.' capture rejected; database log unavailable'); }
             throw $e;
         }
@@ -109,7 +113,7 @@ class Pits_tags_model extends CI_Model {
         return array('row'=>$row,'revision'=>hash('sha256',json_encode($row)));
     }
     private function variation() {
-        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,COALESCE(m.type,'') AS Type,
+        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,
             COALESCE(p.onhand,0) AS `On Hand`,COALESCE(m.cost_price,0) AS `Unit Price USD`,
             COALESCE(p.onhand,0)*COALESCE(m.cost_price,0) AS `On Hand USD`,COALESCE(c.counted,0) AS Counted,
             COALESCE(c.counted,0)*COALESCE(m.cost_price,0) AS `Counted USD`,
@@ -154,8 +158,33 @@ class Pits_tags_model extends CI_Model {
             FROM tags h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(type) type,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
             LEFT JOIN users u ON u.Id=h.iduser WHERE h.status='Used' ORDER BY h.tag,h.Id");
         elseif($kind==='audit') $rows=$this->rows('SELECT a.id,a.tag TAG,a.warehouse WAREHOUSE,a.location Location,a.result Result,a.observations Observations,u.name Auditor,a.created_at Date,a.snapshot Content FROM pits_tag_audits a LEFT JOIN users u ON u.Id=a.user_id ORDER BY a.id DESC');
-        elseif($kind==='history') $rows=$this->rows('SELECT c.id,c.tag TAG,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_tag_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');
-        elseif($kind==='logs') $rows=$this->rows('SELECT e.id,e.tag TAG,u.name User,e.action Action,e.outcome Result,e.correlation Correlation,e.detail Detail,e.created_at Date FROM pits_tag_events e LEFT JOIN users u ON u.Id=e.user_id ORDER BY e.id DESC');
+        elseif($kind==='history') {
+            $rows=$this->rows('SELECT c.id,c.tag TAG,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_tag_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');
+            foreach($rows as &$row) {
+                foreach(array('BeforeValue','AfterValue') as $field) {
+                    $value=json_decode($row[$field],true);
+                    if(!is_array($value)) {
+                        $row[$field]='Detalle histórico no disponible.';
+                        continue;
+                    }
+                    unset($value['openbox']);
+                    $row[$field]=json_encode($value,JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_SUBSTITUTE);
+                }
+            }
+            unset($row);
+        }
+        elseif($kind==='logs') {
+            $rows=$this->rows('SELECT e.id,e.tag TAG,u.name User,e.action Action,e.outcome Result,e.correlation Correlation,e.detail Detail,e.created_at Date FROM pits_tag_events e LEFT JOIN users u ON u.Id=e.user_id ORDER BY e.id DESC');
+            foreach($rows as &$row) {
+                if($row['Action']!=='capture' || $row['Result']!=='committed')continue;
+                $detail=json_decode($row['Detail'],true);
+                if(!isset($detail['rows'])) {
+                    $detail['historical_note']='Captura histórica sin detalle original de partidas.';
+                    $row['Detail']=json_encode($detail,JSON_UNESCAPED_UNICODE);
+                }
+            }
+            unset($row);
+        }
         elseif($kind==='typeraw') {
             $map=$this->rows("SELECT material,GROUP_CONCAT(DISTINCT type_raw ORDER BY type_raw SEPARATOR ' / ') type_raw FROM rawtype GROUP BY material");
             $types=array_column($map,'type_raw','material');$group=array();
