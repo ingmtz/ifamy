@@ -18,7 +18,7 @@ $mode=$argv[1]??'basic';
 if($mode==='seed') {
  foreach(array('pits_hu_events'=>'hu','pits_hu_audits'=>'hu','pits_hu_corrections'=>'hu','pits_hu_captures'=>'hu','hus'=>'tag') as $t=>$k)query('DELETE FROM '.$t.' WHERE '.$k." LIKE 'ZZHUS_%'");
  query("DELETE FROM masterdata WHERE itemcode LIKE 'ZZHUS_%'");query("DELETE FROM perpetuo WHERE itemcode LIKE 'ZZHUS_%'");query("DELETE FROM locations WHERE wh='ZZHUS_WH'");
- query("INSERT INTO locations(wh,location,area) VALUES('ZZHUS_WH','ZZHUS_LOC','ZZHUS_AREA')");
+ query("INSERT INTO locations(wh,location,area,area_description) VALUES('ZZHUS_WH','ZZHUS_LOC','ZZHUS_AREA','Fixture area description')");
  query("INSERT INTO masterdata(itemcode,description,cost_price,uom) VALUES('ZZHUS_A','Fixture A',1.25,'EA'),('ZZHUS_B','Fixture B',2.5,'EA')");
  query("INSERT INTO perpetuo(itemcode,onhand) VALUES('ZZHUS_A',20),('ZZHUS_B',15)");
  foreach(array('ZZHUS_MULTI26','ZZHUS_RACE26','ZZHUS_FAIL26') as $hu) {
@@ -57,12 +57,16 @@ if($mode==='basic') {
  $baseline=$m->report('progress')['totals'];
  $r=capture('ZZHUS_MULTI26');check($r['partidas']===3,'one scan captures three detail rows');
  check((int)query("SELECT COUNT(*) n FROM hus WHERE tag='ZZHUS_MULTI26' AND status='Used'")->row()->n===3,'all persisted detail rows marked captured');
+ $unit=array_values(array_filter($m->report('progress')['units'],function($row){return $row['HU']==='ZZHUS_MULTI26';}))[0];
+ check($unit['Area Description']==='Fixture area description','progress uses the description from Locations');
+ $event=query("SELECT detail FROM pits_hu_events WHERE hu='ZZHUS_MULTI26' AND outcome='committed'")->row_array();
+ check(count(json_decode($event['detail'],true)['rows'])===3,'operation log stores all original captured rows');
  try{capture('ZZHUS_MULTI26');throw new RuntimeException('duplicate accepted');}catch(UnexpectedValueException $e){check(true,'second scan rejected');}
  $progress=$m->report('progress')['totals'];check($progress['Captured']===$baseline['Captured']+1 && $progress['HUs']===$baseline['HUs'],'progress counts ONE HU rather than THREE rows');
  $v=$m->report('variation');$a=array_values(array_filter($v['rows'],function($r){return $r['Item Code']==='ZZHUS_A';}))[0];
  check(abs((float)$a['Counted']-7.0)<1e-9 && abs((float)$a['Counted USD']-8.75)<1e-9,'variation aggregates repeated article across all HU detail rows');
  $b=array_values(array_filter($v['rows'],function($r){return $r['Item Code']==='ZZHUS_B';}))[0];check(abs((float)$b['Counted']-6.8)<1e-9,'variation includes second article');
- check(!isset($a['Type']) && count(array_filter(array_keys($a),function($s){return strpos($s,'Unit Price')!==false;}))===1,'variation has one Unit Price and no Type');
+ check(!array_key_exists('Type',$a) && count(array_filter(array_keys($a),function($s){return strpos($s,'Unit Price')!==false;}))===1,'variation omits Type and shows one Unit Price');
  check(ceil((float)$b['Variation'])===-8.0,'negative variation rounds toward positive infinity');
  $before=$m->report('variation');$ins=$m->inspect('ZZHUS_MULTI26');
  $m->audit('ZZHUS_MULTI26','ZZHUS_WH','ZZHUS_LOC','No','QA mismatch',99,'qa-audit',$ins['revision']);
@@ -71,13 +75,21 @@ if($mode==='basic') {
  check((int)query("SELECT COUNT(*) n FROM pits_hu_audits WHERE hu='ZZHUS_MULTI26' AND result='No'")->row()->n===1,'audit result saved separately with snapshot');
  $id=$ins['rows'][0]['Id'];$edit=$m->editable($id);
  $m->correct($id,'4.2','ZZHUS_A','QA correction',$edit['revision'],99,'qa-correction');
- check((int)query("SELECT COUNT(*) n FROM pits_hu_corrections WHERE detail_id=?",array($id))->row()->n===1,'correction writes before/after history');
+ $history=query("SELECT before_value,after_value FROM pits_hu_corrections WHERE detail_id=?",array($id))->row_array();
+ $old=json_decode($history['before_value'],true);$new=json_decode($history['after_value'],true);
+ check((float)$old['qty']===1.2 && (float)$new['qty']===4.2,'correction writes before/after quantities');
+ check($old['description']==='Fixture A' && $new['description']===$old['description']
+     && $m->editable($id)['row']['description']===$old['description'],'quantity-only correction preserves the stored description');
  try{$m->correct($id,'9','ZZHUS_A','stale change',$edit['revision'],99,'qa-stale');throw new RuntimeException('stale edit accepted');}catch(UnexpectedValueException $e){check(true,'stale correction rejected');}
  try{$m->audit('ZZHUS_MULTI26','ZZHUS_WH','ZZHUS_LOC','Yes','stale',99,'qa-stale-audit',$ins['revision']);throw new RuntimeException('stale audit accepted');}catch(UnexpectedValueException $e){check(true,'audit requires the content actually inspected');}
  try{$m->capture('ZZHUS_MULTI26','MISSING',99,'qa-location');throw new RuntimeException('invalid location accepted');}catch(DomainException $e){check(true,'unknown location rejected');}
  $c=(int)query("SELECT COUNT(*) n FROM hus WHERE tag='ZZHUS_RACE26' AND status='Used'")->row()->n;
  check($c===3 && (int)query("SELECT COUNT(*) n FROM pits_hu_captures WHERE hu='ZZHUS_RACE26'")->row()->n===1,'concurrent capture has ONE header and THREE details');
  check((int)query("SELECT COUNT(*) n FROM pits_hu_events WHERE hu='ZZHUS_RACE26' AND outcome='committed'")->row()->n===1,'concurrent capture has ONE committed event');
+ $edit=$m->editable($id);
+ $m->correct($id,'4.2','ZZHUS_B','QA item change',$edit['revision'],99,'qa-item-change');
+ $changed=$m->editable($id)['row'];
+ check($changed['itemcode']==='ZZHUS_B' && $changed['description']===null,'item change still clears the previous item description');
  check(true,'core integration suite complete');exit;
 }
 if($mode==='import') {

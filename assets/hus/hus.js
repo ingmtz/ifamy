@@ -6,9 +6,9 @@ function notice(text,error=false){ const n=$('notice'); n.hidden=false;n.classNa
 async function api(path,values=null){
  const options={credentials:'same-origin',headers:{'Accept':'application/json'}};
  if(values!==null){const body=values instanceof FormData?values:new URLSearchParams(values);body.set(cfg.csrfName,cfg.csrf);options.method='POST';options.body=body;}
- let r;try{r=await fetch(cfg.base+'api/'+path,options);}catch(e){throw new Error('Sin conexión. Consulta el HU antes de reintentar: no se ha confirmado el resultado.');}
- let result;try{result=await r.json();}catch(e){throw new Error('Respuesta no confirmada. Consulta el estado antes de reintentar.');}
- if(!r.ok || !result.ok)throw new Error((result.message||'Operación no confirmada')+(cfg.page!=='capture'&&result.correlation?' · Ref. '+result.correlation:''));
+ let r;try{r=await fetch(cfg.base+'api/'+path,options);}catch(e){throw Object.assign(new Error('Sin conexión. Consulta el HU antes de reintentar: no se ha confirmado el resultado.'),{uncertain:true});}
+ let result;try{result=await r.json();}catch(e){throw Object.assign(new Error('Respuesta no confirmada. Consulta el estado antes de reintentar.'),{uncertain:true});}
+ if(!r.ok || !result.ok)throw Object.assign(new Error((result.message||'Operación no confirmada')+(cfg.page!=='capture'&&result.correlation?' · Ref. '+result.correlation:'')),{uncertain:r.status>=500,status:r.status});
  return result.data;
 }
 function table(rows,container,meta={},editable=false){
@@ -72,23 +72,23 @@ function setMenu(open){$('main-menu').hidden=!open;$('menu-toggle').setAttribute
 setMenu(!mobileMenu.matches);$('menu-toggle').addEventListener('click',()=>setMenu($('main-menu').hidden));
 mobileMenu.addEventListener('change',e=>setMenu(!e.matches));
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&mobileMenu.matches)setMenu(false);});
-// Camera-first capture: no editable fields, selection boxes or automatic inventory writes.
+// Camera and text entry share the same capture sequence.
 let scanner=null,cameraGeneration=0,cameraOpening=false,scanBusy=false,scanReady=false,lastScan='',lastScanAt=0;
-const scanMode=cfg.base.includes('PITS-TAGS')?'tag':cfg.base.includes('PITS-BATCH')?'batch':'hu';
-let scanValues={},scanStep=0,scanInspection=null;
-const scanSteps=scanMode==='tag'?['location','tag','itemcode','qty']:['location',scanMode];
-const scanLabels={location:'la locación',hu:'el HU',batch:'el BATCH',tag:'el marbete',itemcode:'el número de parte',qty:'la cantidad'};
-function scanPrompt(){if(!$('scan-instruction'))return;$('scan-instruction').textContent='Escanea '+scanLabels[scanSteps[scanStep]];$('scan-progress').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU',batch:'BATCH',tag:'TAG',itemcode:'Parte',qty:'Cantidad'}[k])+': '+v).join(' · ');}
+const scanMode='hu';
+let scanValues={},scanStep=0,pendingCapture=null;
+const scanSteps=['location','hu'];
+const scanLabels={location:'la locación',hu:'el HU'};
+function scanPrompt(){if(!$('scan-instruction'))return;$('scan-instruction').textContent='Escanea '+scanLabels[scanSteps[scanStep]];$('scan-progress').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU'}[k])+': '+v).join(' · ');}
 async function stopCamera(){cameraGeneration++;scanReady=false;if(scanner){const reader=scanner;scanner=null;try{await reader.stop();}catch(e){}try{reader.clear();}catch(e){}}}
 async function startCamera(){
- if(!$('camera-reader')||cameraOpening||scanner||document.hidden||$('scan-confirm')?.open)return;
+ if(!$('camera-reader')||cameraOpening||scanner||document.hidden)return;
  cameraOpening=true;const generation=++cameraGeneration;$('camera-retry').hidden=true;
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw new Error('Cámara no disponible. Abre esta página con HTTPS.');
   if(!window.Html5Qrcode)throw new Error('No se pudo cargar el escáner. Recarga la página.');
   const reader=new Html5Qrcode('camera-reader',{verbose:false});scanner=reader;
   const options={fps:10,disableFlip:true,videoConstraints:{facingMode:{ideal:'environment'}}};
-  const success=text=>{if(generation===cameraGeneration&&scanReady)processScan(text);};
+  const success=text=>{if(generation===cameraGeneration&&scanReady&&!scannerInput.value.trim())processScan(text);};
   try{await reader.start({facingMode:'environment'},options,success,()=>{});}
   catch(e){if(!/OverconstrainedError|NotFoundError|DevicesNotFoundError/.test(e.name||String(e)))throw e;await reader.start({facingMode:'environment'},{...options,videoConstraints:{}},success,()=>{});}
   if(generation!==cameraGeneration){try{await reader.stop();reader.clear();}catch(e){}if(!document.hidden)setTimeout(startCamera,0);return;}
@@ -99,72 +99,127 @@ async function startCamera(){
 function parseScan(text,key){
  const parts=text.split('|');if(parts.length===1)return text;
  if(key==='hu'&&parts.length===4&&parts[2].startsWith('EXIDV'))return parts[2].slice(5);
- if(key==='batch'&&parts.length===6&&parts[5].startsWith('CHARG'))return parts[5].slice(5);
- if(key==='itemcode'&&parts.length===6&&parts[2].startsWith('MATNR'))return parts[2].slice(5);
  throw new Error('Este código no corresponde a '+scanLabels[key]+'.');
 }
-async function processScan(raw){
- if(scanBusy||$('scan-confirm').open)return;const text=String(raw).trim();if(!text)return;
+async function processScan(raw,manual=false){
+ if(scanBusy||pendingCapture)return;const text=String(raw).trim();if(!text)return;
  $('scan-last-value').textContent='Último escaneo: '+text;
- if(text===lastScan&&Date.now()-lastScanAt<1500)return;lastScan=text;lastScanAt=Date.now();scanBusy=true;
+ if(!manual&&text===lastScan&&Date.now()-lastScanAt<1500)return;lastScan=text;lastScanAt=Date.now();scanBusy=true;
  try{
   const key=scanSteps[scanStep],value=parseScan(text,key);
+  if(!value)throw new Error('El código escaneado está vacío.');
   if(key==='location')await api('checklocation',{location:value});
-  else if(key===scanMode){const data=await api('lookup',{[scanMode]:value});if(data.capture||data.rows.every(r=>r.Status==='Used'))throw new Error('Este '+scanMode.toUpperCase()+' ya fue capturado.');scanInspection=data;}
-  else if(key==='qty'&&(!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>1e14))throw new Error('Escanea una cantidad válida mayor que cero.');
-  let compoundQty=null;if(key==='itemcode'&&text.split('|').length===6){compoundQty=text.split('|')[3].replace(/^PAQTY/,'');if(!Number.isFinite(Number(compoundQty))||Number(compoundQty)<=0||Number(compoundQty)>1e14)throw new Error('Cantidad inválida en etiqueta.');}
-  scanValues[key]=value;playScanSound('beep');scanStep++;if(compoundQty!==null){scanValues.qty=compoundQty;scanStep++;}
-  if(scanStep<scanSteps.length){scanPrompt();$('camera-status').textContent='Escaneado: '+value+'. Continúa con '+scanLabels[scanSteps[scanStep]]+'.';}
-  else{await stopCamera();$('scan-review').textContent=Object.entries(scanValues).map(([k,v])=>({location:'Locación',hu:'HU',batch:'BATCH',tag:'TAG',itemcode:'Parte',qty:'Cantidad'}[k])+': '+v).join('\n')+'\n'+(scanMode==='tag'?'':scanInspection.rows.length+' partidas');$('scan-confirm').showModal();}
+
+  scanValues[key]=value;
+  scanStep++;
+  if(scanStep<scanSteps.length){playScanSound('beep');scanPrompt();$('camera-status').textContent='Escaneado: '+value+'. Continúa con '+scanLabels[scanSteps[scanStep]]+'.';}
+  else await saveScan();
  }catch(e){playScanSound('wrong');notice('Escaneado: '+text+' · '+e.message,true);$('camera-status').textContent='Escaneado: '+text+' · '+e.message;}
  finally{scanBusy=false;}
 }
-function resetScan(){scanValues={};scanStep=0;scanInspection=null;lastScan='';scanPrompt();}
-$('camera-retry')?.addEventListener('click',startCamera);
-$('scan-restart')?.addEventListener('click',()=>{if(scanBusy)return;resetScan();startCamera();});
-$('scan-cancel')?.addEventListener('click',()=>{$('scan-confirm').close();resetScan();startCamera();});
-$('scan-save')?.addEventListener('click',async()=>{
- if(scanBusy)return;scanBusy=true;$('scan-save').disabled=true;$('scan-cancel').disabled=true;
- try{const r=await api('capture',scanValues);$('scan-confirm').close();playScanSound('beep');notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · Locación: ${scanValues.location} · ${r.partidas} partidas guardadas.`);resetScan();}
- catch(e){$('scan-confirm').close();playScanSound('wrong');notice(`${scanMode.toUpperCase()}: ${scanValues[scanMode]} · ${e.message}`,true);resetScan();$('camera-status').textContent='Escanea nuevamente; el servidor verificará el estado antes de permitir una captura.';}
- finally{scanBusy=false;$('scan-save').disabled=false;$('scan-cancel').disabled=false;startCamera();}
+function resetScan(){
+ scannerInput.value='';scanBuffer='';scanValues={};scanStep=0;scanPrompt();
+}
+async function saveScan(){
+ const identifier=scanValues[scanMode],location=scanValues.location;
+ $('scan-instruction').textContent='Guardando captura…';
+ try{
+  const result=await api('capture',scanValues);
+  playScanSound('beep');
+  notice(scanMode.toUpperCase()+': '+identifier+' · Locación: '+location+' · '+result.partidas+' partidas guardadas.');
+  $('camera-status').textContent='Listo para la siguiente locación.';
+ }catch(e){
+  playScanSound('wrong');
+  notice(scanMode.toUpperCase()+': '+identifier+' · '+e.message,true);
+  $('camera-status').textContent=e.message;
+  if(e.uncertain){
+   pendingCapture=identifier;
+   $('scan-check').hidden=false;
+   $('scan-restart').disabled=true;
+  }
+ }finally{
+  resetScan();
+  if(pendingCapture)$('scan-instruction').textContent='Consulta el estado de la captura.';
+ }
+}
+$('scan-check')?.addEventListener('click',async()=>{
+ if(!pendingCapture||scanBusy)return;
+ scanBusy=true;
+ $('scan-check').disabled=true;
+ try{
+  const data=await api('lookup',{[scanMode]:pendingCapture});
+  if(data.capture||data.rows.every(row=>row.Status==='Used'))notice(pendingCapture+': figura como capturado.');
+  else if(data.rows.some(row=>row.Status==='Used'))notice(pendingCapture+': captura parcial. Solicita una revisión.',true);
+  else notice(pendingCapture+': sigue pendiente. Puedes escanearlo otra vez.');
+  pendingCapture=null;
+ }catch(e){
+  notice(e.status===422?pendingCapture+': el identificador no está registrado.':e.message,true);
+  if(e.status===422)pendingCapture=null;
+ }finally{
+  scanBusy=false;
+  $('scan-check').disabled=false;
+  if(!pendingCapture){
+   $('scan-check').hidden=true;
+   $('scan-restart').disabled=false;
+   resetScan();
+  }
+ }
 });
-$('scan-confirm')?.addEventListener('cancel',e=>{e.preventDefault();if(!scanBusy)$('scan-cancel').click();});
+$('camera-retry')?.addEventListener('click',startCamera);
+$('scan-restart')?.addEventListener('click',()=>{
+ if(scanBusy||pendingCapture)return;
+ resetScan();lastScan='';startCamera();
+});
 window.addEventListener('pagehide',stopCamera);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();else startCamera();});
-// Preserve external barcode readers without exposing an additional input field.
-let scanBuffer='',keyAt=0;document.addEventListener('keydown',e=>{if(cfg.page!=='capture'||e.ctrlKey||e.metaKey||e.altKey||$('scan-confirm')?.open||e.target.closest('input,textarea,select'))return;if(e.key==='Enter'){e.preventDefault();const value=scanBuffer;scanBuffer='';processScan(value);}else if(e.key.length===1){if(Date.now()-keyAt>150)scanBuffer='';scanBuffer+=e.key;keyAt=Date.now();}});
-// Use the original HTMLAudio playback path. Mobile needs an explicit gesture, separate from camera permission.
-const scanAudio={players:{},enabled:false,unlocking:false};
-function audioStatus(message,enabled=false){scanAudio.enabled=enabled;if($('sound-status'))$('sound-status').textContent=message;if($('sound-enable'))$('sound-enable').textContent=enabled?'Probar sonido':'Activar sonido';}
-function initScanAudio(){
- if(cfg.page!=='capture'||scanAudio.players.beep)return;
- const mode={hu:'hus',tag:'tags',batch:'batch'}[scanMode];
- for(const name of ['beep','wrong']){const player=new Audio(cfg.base+'assets/'+mode+'/'+name+'.mp3');player.preload='auto';player.volume=1;player.muted=false;player.setAttribute('playsinline','');player.addEventListener('error',()=>audioStatus('No se pudo cargar el sonido. Toca Activar sonido para reintentar.'));scanAudio.players[name]=player;}
- audioStatus('Toca Activar sonido para escuchar el bip de prueba.');
-}
-function prepareAudioSession(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}}
-function unlockScanAudio(){
- initScanAudio();if(scanAudio.unlocking)return;scanAudio.unlocking=true;prepareAudioSession();
- const beep=scanAudio.players.beep,wrong=scanAudio.players.wrong;if(!beep||!wrong){scanAudio.unlocking=false;return;}
- // Both play calls happen synchronously in the trusted click, not after a fetch or await.
- beep.pause();beep.currentTime=0;beep.muted=false;beep.volume=1;
- wrong.pause();wrong.currentTime=0;wrong.muted=true;
- let first,second;
- try{first=beep.play();second=wrong.play();}
- catch(e){audioStatus('El navegador bloqueó el sonido. Toca Activar sonido nuevamente.');wrong.muted=false;scanAudio.unlocking=false;return;}
- Promise.resolve(second).then(()=>{wrong.pause();wrong.currentTime=0;wrong.muted=false;}).catch(()=>{wrong.muted=false;});
- Promise.resolve(first).then(()=>audioStatus('Sonido activado. Si no escuchaste el bip, sube el volumen multimedia.',true)).catch(()=>audioStatus('El navegador bloqueó el sonido. Toca Activar sonido nuevamente.')).finally(()=>{scanAudio.unlocking=false;});
-}
-function playScanSound(name){
- try{initScanAudio();const player=scanAudio.players[name];if(!player||scanAudio.unlocking)return;prepareAudioSession();player.pause();player.currentTime=0;player.muted=false;player.volume=1;
- const playing=player.play();Promise.resolve(playing).then(()=>audioStatus('Sonido activado.',true)).catch(()=>audioStatus('Sonido bloqueado: toca Activar sonido para habilitarlo.'));
- }catch(e){audioStatus('Sonido no disponible: toca Activar sonido para reintentar.');}
-}
-$('sound-enable')?.addEventListener('click',unlockScanAudio);
-if(cfg.page==='capture')initScanAudio();
+const scannerInput=$('scanner');
+$('manual-scan')?.addEventListener('submit',e=>{
+ e.preventDefault();
+ if(scanBusy||pendingCapture)return;
+ const value=scannerInput.value.trim();
+ if(!value)return;
+ scannerInput.value='';
+ processScan(value,true);
+});
 
-if(cfg.page==='capture'){scanPrompt();startCamera();}
+// Support keyboard scanners even when the text field is out of focus.
+let scanBuffer='',keyAt=0;
+if(scannerInput)document.addEventListener('keydown',e=>{
+ if(scanBusy||e.defaultPrevented||e.isComposing||e.ctrlKey||e.metaKey||e.altKey||pendingCapture)return;
+ if(e.target.closest('input,textarea,select,button,a,[contenteditable]')){scanBuffer='';return;}
+ if(e.key==='Enter'&&scanBuffer){e.preventDefault();const value=scanBuffer;scanBuffer='';processScan(value,true);}
+ else if(e.key.length===1){if(Date.now()-keyAt>150)scanBuffer='';scanBuffer+=e.key;keyAt=Date.now();}
+});
+
+let scanAudioContext=null;
+const scanSounds={};
+function initScanAudio(){
+ const AudioContext=window.AudioContext||window.webkitAudioContext;
+ if(!AudioContext)return;
+ try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
+ try{scanAudioContext=new AudioContext();}catch(e){return;}
+ const mode='hus';
+ for(const name of ['beep','wrong']){
+  scanSounds[name]=fetch(cfg.base+'assets/'+mode+'/'+name+'.mp3')
+   .then(response=>{if(!response.ok)throw new Error('Sound unavailable');return response.arrayBuffer();})
+   .then(bytes=>scanAudioContext.decodeAudioData(bytes)).catch(()=>null);
+ }
+ const resume=event=>{
+  if(event.isTrusted&&scanAudioContext.state!=='running')scanAudioContext.resume().catch(()=>{});
+ };
+ for(const event of ['keydown','pointerup','click'])document.addEventListener(event,resume,true);
+}
+async function playScanSound(name){
+ if(!scanAudioContext||scanAudioContext.state!=='running')return;
+ const buffer=await scanSounds[name];
+ if(!buffer||scanAudioContext.state!=='running')return;
+ const sound=scanAudioContext.createBufferSource();
+ sound.buffer=buffer;
+ sound.connect(scanAudioContext.destination);
+ sound.start();
+}
+
+if(scannerInput){initScanAudio();scanPrompt();startCamera();}
 
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 const money=v=>'$'+Math.ceil(Number(v||0)).toLocaleString('en-US');
@@ -175,14 +230,14 @@ function renderVariation(rows){
  const container=$('report');container.replaceChildren();const actions=reportActions(container);const select=el('select');select.setAttribute('aria-label','Filas por página');for(const count of [10,25,50,-1]){const option=el('option',count===-1?'Mostrar todos':count+' filas');option.value=count;option.selected=count===variationSize;select.append(option);}select.onchange=()=>{variationSize=Number(select.value);variationPage=0;renderReport();};actions.append(select);
  const wrap=el('div',undefined,'table-wrap');const t=el('table',undefined,'reference-variation');t.id='variationtable';const head=el('thead');const totals=report.totals;
  const top=el('tr');const pc=Number(totals['On Hand USD'])?Math.min(100,Number(totals['Counted USD'])/Number(totals['On Hand USD'])*100):0;
- const progress=el('th','Progress: '+pc.toFixed(2)+'%','variation-progress');progress.colSpan=2;top.append(progress);
- for(const [label,key,cls,span]of [['On hand','On Hand USD','onhand',3],['Counted','Counted USD','counted',2],['Variation','Variation USD','variation',2]]){const h=el('th',label,cls);h.colSpan=span;const amount=el('th',money(totals[key]),cls+' number'+(key==='Variation USD'&&Number(totals[key])<0?' negative':''));top.append(h,amount);}head.append(top);
- const columns=[['Item Code','Item code'],['Type','Type'],['Description','Description'],['On Hand','Quantity'],['Unit Price USD','Unit price USD'],['On Hand USD','Extended USD'],['Counted','Quantity'],['Unit Price USD','Unit price USD'],['Counted USD','Extended USD'],['Variation','Quantity'],['Unit Price USD','Unit price USD'],['Variation USD','Extended USD']];
+ const progress=el('th','Progress: '+Math.ceil(pc)+'%','variation-progress');progress.colSpan=2;top.append(progress);
+ for(const [label,key,cls,span]of [['On hand','On Hand USD','onhand',3],['Counted','Counted USD','counted',1],['Variation','Variation USD','variation',1]]){const h=el('th',label,cls);h.colSpan=span;const amount=el('th',money(totals[key]),cls+' number'+(key==='Variation USD'&&Number(totals[key])<0?' negative':''));top.append(h,amount);}head.append(top);
+ const columns=[['Item Code','Item code'],['Description','Description'],['On Hand','Quantity'],['Unit Price USD','Unit price USD'],['On Hand USD','Extended USD'],['Counted','Quantity'],['Counted USD','Extended USD'],['Variation','Quantity'],['Variation USD','Extended USD']];
  const titles=el('tr');columns.forEach(([key,label])=>{const th=el('th');const sort=el('button',label,'column-sort');sort.onclick=()=>{variationAscending=variationSort===key?!variationAscending:true;variationSort=key;renderReport();};th.append(sort);titles.append(th);});head.append(titles);t.append(head);
  const sorted=[...rows].sort((a,b)=>{const av=a[variationSort]??'',bv=b[variationSort]??'';return (report.numeric.includes(variationSort)?Number(av)-Number(bv):String(av).localeCompare(String(bv)))*(variationAscending?1:-1);});
  const pages=variationSize===-1?1:Math.max(1,Math.ceil(rows.length/variationSize));variationPage=Math.min(variationPage,pages-1);const visible=variationSize===-1?sorted:sorted.slice(variationPage*variationSize,(variationPage+1)*variationSize);
- const body=el('tbody');visible.forEach(row=>{const tr=el('tr');columns.forEach(([k],i)=>{const value=k==='Type'?(row.Type||''):row[k];const td=el('td',i<3?String(value??''):(k.endsWith('USD')?money(value):integer(value)),i>=3?'number':'');if(k==='Variation USD'&&Number(value)<0)td.classList.add('negative');if(i===0){const b=el('button',String(value),'item-detail');b.onclick=()=>showItem(row['Item Code']);td.replaceChildren(b);}tr.append(td);});body.append(tr);});t.append(body);
- const foot=el('tfoot'),tr=el('tr'),label=el('th','Totals');label.colSpan=3;tr.append(label);for(let i=3;i<columns.length;i++){const k=columns[i][0];const td=el('th',k==='Unit Price USD'?'':(k.endsWith('USD')?money(totals[k]):integer(totals[k])),'number');if(k==='On Hand'||k==='Counted')td.classList.add('quantity-total');if(k==='On Hand USD'||k==='Counted USD')td.classList.add('amount-total');if(k==='Variation USD')td.classList.add(Number(totals[k])<0?'negative':'variation');tr.append(td);}foot.append(tr);t.append(foot);wrap.append(t);container.append(wrap);
+ const body=el('tbody');visible.forEach(row=>{const tr=el('tr');columns.forEach(([k],i)=>{const value=row[k];const td=el('td',i<2?String(value??''):(k.endsWith('USD')?money(value):integer(value)),i>=2?'number':'');if(k==='Variation USD'&&Number(value)<0)td.classList.add('negative');if(i===0){const b=el('button',String(value),'item-detail');b.onclick=()=>showItem(row['Item Code']);td.replaceChildren(b);}tr.append(td);});body.append(tr);});t.append(body);
+ const foot=el('tfoot'),tr=el('tr'),label=el('th','Totals');label.colSpan=2;tr.append(label);for(let i=2;i<columns.length;i++){const k=columns[i][0];const td=el('th',k==='Unit Price USD'?'':(k.endsWith('USD')?money(totals[k]):integer(totals[k])),'number');if(k==='On Hand'||k==='Counted')td.classList.add('quantity-total');if(k==='On Hand USD'||k==='Counted USD')td.classList.add('amount-total');if(k==='Variation USD')td.classList.add(Number(totals[k])<0?'negative':'variation');tr.append(td);}foot.append(tr);t.append(foot);wrap.append(t);container.append(wrap);
  const pager=el('div',undefined,'report-actions');pager.append(el('span',`${rows.length} registros · Página ${variationPage+1} de ${pages}`));for(const [text,delta]of [['Anterior',-1],['Siguiente',1]]){const b=el('button',text,'secondary small');b.disabled=delta<0?variationPage===0:variationPage>=pages-1;b.onclick=()=>{variationPage+=delta;renderReport();};pager.append(b);}container.append(pager);
 }
 async function showItem(code){try{const data=await api('report/total');showDetails('Detail data · '+code,data.rows.filter(r=>r['Item Code']===code));}catch(e){notice(e.message,true);}}

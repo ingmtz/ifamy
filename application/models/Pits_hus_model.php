@@ -11,7 +11,7 @@ class Pits_hus_model extends CI_Model {
     private function rows($sql,$args=array()) { return $this->q($sql,$args)->result_array(); }
     public function event($action,$outcome,$hu,$uid,$cid,$detail) {
         $this->q('INSERT INTO pits_hu_events(hu,user_id,action,outcome,correlation,detail,created_at) VALUES(?,?,?,?,?,?,?)',
-            array($hu,$uid,$action,$outcome,$cid,json_encode($detail,JSON_UNESCAPED_UNICODE),$this->now()));
+            array($hu,$uid,$action,$outcome,$cid,json_encode($detail,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),$this->now()));
     }
     private function begin($exclusive=false) {
         if(!$this->db->trans_begin()) throw new RuntimeException('Cannot start transaction');
@@ -59,12 +59,16 @@ class Pits_hus_model extends CI_Model {
             $this->q('INSERT INTO pits_hu_captures(hu,location,warehouse,user_id,captured_at,correlation) VALUES(?,?,?,?,?,?)',array($hu,$location,$warehouse,$uid,$this->now(),$cid));
             $this->q("UPDATE hus SET status='Used',location=?,iduser=?,datetimecaptured=? WHERE tag=?",array($location,$uid,$this->now(),$hu));
             if($this->db->affected_rows()!==count($items)) throw new RuntimeException('Incomplete HU update');
-            $this->event('capture','committed',$hu,$uid,$cid,array('partidas'=>count($items),'location'=>$location));
+            $snapshot=$this->details($hu);
+            if(count($snapshot)!==count($items))throw new RuntimeException('Incomplete capture snapshot');
+            $this->event('capture','committed',$hu,$uid,$cid,array(
+                'partidas'=>count($items),'location'=>$location,'warehouse'=>$warehouse,'rows'=>$snapshot
+            ));
             $this->commit();
             return array('hu'=>$hu,'partidas'=>count($items),'message'=>'HU saved / HU guardado.','correlation'=>$cid);
         } catch(Throwable $e) {
             $this->db->trans_rollback();
-            try { $this->event('capture',$e instanceof UnexpectedValueException?'duplicate':'rejected',$hu,$uid,$cid,array('reason'=>$e instanceof LogicException?$e->getMessage():'Persistence failed')); }
+            try { $this->event('capture',$e instanceof UnexpectedValueException?'duplicate':'rejected',$hu,$uid,$cid,array('location'=>$location,'reason'=>($e instanceof DomainException || $e instanceof UnexpectedValueException)?$e->getMessage():'Persistence failed')); }
             catch(Throwable $logError) { log_message('error','HUS '.$cid.' capture rejected; database log unavailable'); }
             throw $e;
         }
@@ -90,7 +94,11 @@ class Pits_hus_model extends CI_Model {
             if(!$before || $before['status']!=='Used') throw new DomainException('Captured detail not found.');
             if(!hash_equals(hash('sha256',json_encode($before)),$expected)) throw new UnexpectedValueException('Record changed; reload before editing.');
             if(!$this->q('SELECT Id FROM masterdata WHERE itemcode=?',array($itemcode))->num_rows()) throw new DomainException('Item Code not found in masterdata.');
-            $this->q('UPDATE hus SET qty=?,itemcode=?,description=NULL WHERE Id=?',array($qty,$itemcode,$id));
+            if($itemcode===$before['itemcode']) {
+                $this->q('UPDATE hus SET qty=? WHERE Id=?',array($qty,$id));
+            } else {
+                $this->q('UPDATE hus SET qty=?,itemcode=?,description=NULL WHERE Id=?',array($qty,$itemcode,$id));
+            }
             $after=$this->q('SELECT * FROM hus WHERE Id=?',array($id))->row_array();
             $this->q('INSERT INTO pits_hu_corrections(hu,detail_id,user_id,reason,before_value,after_value,created_at) VALUES(?,?,?,?,?,?,?)',
                 array($before['tag'],$id,$uid,$reason,json_encode($before),json_encode($after),$this->now()));
@@ -106,7 +114,7 @@ class Pits_hus_model extends CI_Model {
         return array('row'=>$row,'revision'=>hash('sha256',json_encode($row)));
     }
     private function variation() {
-        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,COALESCE(m.type,'') AS Type,
+        return $this->rows("SELECT i.itemcode AS `Item Code`,COALESCE(m.description,'') AS Description,
             COALESCE(p.onhand,0) AS `On Hand`,COALESCE(m.cost_price,0) AS `Unit Price USD`,
             COALESCE(p.onhand,0)*COALESCE(m.cost_price,0) AS `On Hand USD`,COALESCE(c.counted,0) AS Counted,
             COALESCE(c.counted,0)*COALESCE(m.cost_price,0) AS `Counted USD`,
@@ -129,13 +137,17 @@ class Pits_hus_model extends CI_Model {
             return array('rows'=>$rows,'totals'=>$totals,'round'=>true,'numeric'=>array_merge($numeric,array('Unit Price USD')));
         }
         if($kind==='progress') {
-            $units=$this->rows("SELECT tag HU,GROUP_CONCAT(DISTINCT itemcode ORDER BY itemcode SEPARATOR ' / ') `Item Code`,
-              GROUP_CONCAT(DISTINCT COALESCE(description,'') ORDER BY description SEPARATOR ' / ') Description,
-              GROUP_CONCAT(DISTINCT warehouse ORDER BY warehouse SEPARATOR ' / ') WAREHOUSE,
-              GROUP_CONCAT(DISTINCT area ORDER BY area SEPARATOR ' / ') AREA,
-              GROUP_CONCAT(DISTINCT COALESCE(area_description,'') ORDER BY area_description SEPARATOR ' / ') `Area Description`,
-              MIN(CASE WHEN status='Used' THEN 1 ELSE 0 END) captured
-              FROM hus WHERE tag IS NOT NULL AND TRIM(tag)<>'' AND COALESCE(status,'')<>'Voided' GROUP BY tag");
+            $units=$this->rows("SELECT h.tag HU,GROUP_CONCAT(DISTINCT h.itemcode ORDER BY h.itemcode SEPARATOR ' / ') `Item Code`,
+              GROUP_CONCAT(DISTINCT COALESCE(h.description,'') ORDER BY h.description SEPARATOR ' / ') Description,
+              GROUP_CONCAT(DISTINCT h.warehouse ORDER BY h.warehouse SEPARATOR ' / ') WAREHOUSE,
+              GROUP_CONCAT(DISTINCT h.area ORDER BY h.area SEPARATOR ' / ') AREA,
+              COALESCE(GROUP_CONCAT(DISTINCT a.description ORDER BY a.description SEPARATOR ' / '),'Sin descripción importada') `Area Description`,
+              MIN(CASE WHEN h.status='Used' THEN 1 ELSE 0 END) captured
+              FROM hus h LEFT JOIN (
+                SELECT wh,area,GROUP_CONCAT(DISTINCT NULLIF(area_description,'') ORDER BY area_description SEPARATOR ' / ') description
+                FROM locations GROUP BY wh,area
+              ) a ON a.wh=h.warehouse AND a.area=h.area
+              WHERE h.tag IS NOT NULL AND TRIM(h.tag)<>'' AND COALESCE(h.status,'')<>'Voided' GROUP BY h.tag");
             $groups=array();$tot=array('WAREHOUSE'=>'TOTAL','AREA'=>'','Area Description'=>'','HUs'=>0,'Captured'=>0,'Pending'=>0);
             foreach($units as $u) {
                 $key=json_encode(array($u['WAREHOUSE'],$u['AREA'],$u['Area Description']));
@@ -151,8 +163,33 @@ class Pits_hus_model extends CI_Model {
             FROM hus h LEFT JOIN (SELECT itemcode,MAX(description) description,MAX(type) type,MAX(cost_price) cost_price FROM masterdata GROUP BY itemcode) m ON m.itemcode=h.itemcode
             LEFT JOIN users u ON u.Id=h.iduser WHERE h.status='Used' ORDER BY h.tag,h.Id");
         elseif($kind==='audit') $rows=$this->rows('SELECT a.id,a.hu HU,a.warehouse WAREHOUSE,a.location Location,a.result Result,a.observations Observations,u.name Auditor,a.created_at Date,a.snapshot Content FROM pits_hu_audits a LEFT JOIN users u ON u.Id=a.user_id ORDER BY a.id DESC');
-        elseif($kind==='history') $rows=$this->rows('SELECT c.id,c.hu HU,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_hu_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');
-        elseif($kind==='logs') $rows=$this->rows('SELECT e.id,e.hu HU,u.name User,e.action Action,e.outcome Result,e.correlation Correlation,e.detail Detail,e.created_at Date FROM pits_hu_events e LEFT JOIN users u ON u.Id=e.user_id ORDER BY e.id DESC');
+        elseif($kind==='history') {
+            $rows=$this->rows('SELECT c.id,c.hu HU,c.detail_id Detail,u.name Administrator,c.reason Reason,c.before_value BeforeValue,c.after_value AfterValue,c.created_at Date FROM pits_hu_corrections c LEFT JOIN users u ON u.Id=c.user_id ORDER BY c.id DESC');
+            foreach($rows as &$row) {
+                foreach(array('BeforeValue','AfterValue') as $field) {
+                    $value=json_decode($row[$field],true);
+                    if(!is_array($value)) {
+                        $row[$field]='Detalle histórico no disponible.';
+                        continue;
+                    }
+                    unset($value['openbox']);
+                    $row[$field]=json_encode($value,JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_SUBSTITUTE);
+                }
+            }
+            unset($row);
+        }
+        elseif($kind==='logs') {
+            $rows=$this->rows('SELECT e.id,e.hu HU,u.name User,e.action Action,e.outcome Result,e.correlation Correlation,e.detail Detail,e.created_at Date FROM pits_hu_events e LEFT JOIN users u ON u.Id=e.user_id ORDER BY e.id DESC');
+            foreach($rows as &$row) {
+                if($row['Action']!=='capture' || $row['Result']!=='committed')continue;
+                $detail=json_decode($row['Detail'],true);
+                if(!isset($detail['rows'])) {
+                    $detail['historical_note']='Captura histórica sin detalle original de partidas.';
+                    $row['Detail']=json_encode($detail,JSON_UNESCAPED_UNICODE);
+                }
+            }
+            unset($row);
+        }
         elseif($kind==='typeraw') {
             $map=$this->rows("SELECT material,GROUP_CONCAT(DISTINCT type_raw ORDER BY type_raw SEPARATOR ' / ') type_raw FROM rawtype GROUP BY material");
             $types=array_column($map,'type_raw','material');$group=array();
